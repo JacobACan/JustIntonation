@@ -1,7 +1,6 @@
 "use client";
 
 import { Note } from "../constants/notes";
-import { RandomGenerator } from "../utils/utils";
 // Helper for random wavy effect
 function wavyRectPath(x: number, y: number, w: number, h: number, waviness = 3) {
   // Generates a path for a rectangle with wavy sides
