@@ -1,3 +1,8 @@
+/*
+The style of this app is handdrawn vector art this means:
+
+*/
+
 @import "tailwindcss";
 
 :root {
@@ -11,7 +16,7 @@
 @theme inline {
   --color-background: var(--background2);
   --color-foreground: var(--foreground2);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-patrick-hand);
   --font-mono: var(--font-geist-mono);
 }
 

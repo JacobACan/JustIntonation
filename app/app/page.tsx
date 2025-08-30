@@ -1,11 +1,14 @@
 "use client"
 
+import Piano from "./components/piano"
+import { Note } from "./constants/notes"
+
 export default function Home() {
   // Helper to play a note by filename
   const playNote = (noteFile: string) => {
     const audio = new Audio(`/notes/${noteFile}`)
     audio.play()
-  }
+  } 
 
   // List of note files
   const noteFiles = [
@@ -37,7 +40,7 @@ export default function Home() {
   ]
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen py-2">
+    <div className="flex flex-col items-center justify-center min-h-screen py-2 font-sans">
       <button
         className="mb-4"
         onClick={() => {
@@ -48,6 +51,7 @@ export default function Home() {
         Play Cadence
       </button>
       <button
+      className="mb-4"
         onClick={() => {
           // play Random note from public/notes
           const random = noteFiles[Math.floor(Math.random() * noteFiles.length)]
@@ -56,6 +60,11 @@ export default function Home() {
       >
         Play Random Note
       </button>
+      <Piano 
+        displayRange={[Note.C3, Note.C5]}
+        notesDown={[Note.C4, Note.Eb4, Note.G4]}
+        width={500}
+      />
     </div>
   )
 }

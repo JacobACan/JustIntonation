@@ -1,5 +1,0 @@
-black: #000000ff
-dark: #1f1f1f;
-mid: #deb887;
-light: #fff5e1;
-white: #ffffffff
