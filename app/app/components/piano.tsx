@@ -24,9 +24,22 @@ function wavyRectPath(x: number, y: number, w: number, h: number, waviness = 3) 
     ];
   return [...top, ...right, ...bottom, ...left, 'Z'].join(' ');
 }
-
+// Simple pseudo-random function with fixed seed for consistency
+let i = 0
 function rand(min: number, max: number) {
-  return Math.random() * (max - min) + min;
+  const randomNumbers = [0.091666,
+  0.576795,
+  0.594139,
+  0.835166,
+  0.896007,
+  0.785177,
+  0.180279,
+  0.218705,
+  0.260117,
+  0.782493]
+  const n = randomNumbers[i] * (max - min) + min;
+  i = (i + 1) % randomNumbers.length;
+  return n;
 }
 
 const WHITE_KEYS = ["A", "B", "C", "D", "E", "F", "G"];
@@ -53,19 +66,31 @@ displayRange - first and last note to display Notes constants/notes.tsx( names, 
 notesDown - an array of Notes(app/app/constants/notes.tsx) that are currently pressed down and visibly pressed down
 width - width of the entire piano in pixels takes into account varying displayRanges. changing the width should change how the piano renders, these constants should actually change respectively based on the width of the entire piano. The height should be a ratio of the width of a key so that the piano looks normal no matter what width you put in.
 */
+
 interface PianoProps {
   /**
    * displayRange: [firstNote, lastNote] to display (e.g. ["A0", "C8"])
-   * notesDown: array of Note enums that are currently pressed
+   * notesDown1: array of Note enums that are currently pressed (primary)
+   * notesDown2: array of Note enums that are currently pressed (secondary)
+   * getFill: function to determine fill color based on note and which notesDown array contains it
    * width: width of the entire piano in pixels (optional)
    */
   displayRange?: [Note, Note];
-  notesDown?: Note[];
+  notesDown1?: Note[];
+  notesDown2?: Note[];
+  getFill?: (note: Note, isDown1: boolean, isDown2: boolean) => string;
   width?: number;
 }
 
 
-export default function Piano({ displayRange = [Note.A0, Note.C8], notesDown = [], width }: PianoProps) {
+
+export default function Piano({
+  displayRange = [Note.A0, Note.C8],
+  notesDown1 = [],
+  notesDown2 = [],
+  getFill,
+  width
+}: PianoProps) {
 
   // Helper to get midi number from note name (e.g. "C4" -> 60)
   function noteNameToMidi(noteName: string): number {
@@ -122,17 +147,26 @@ export default function Piano({ displayRange = [Note.A0, Note.C8], notesDown = [
         {keys
           .filter((k) => !k.black)
           .map((key, i) => {
-            const isDown = notesDown.includes(key.note as Note);
+            const isDown1 = notesDown1.includes(key.note as Note);
+            const isDown2 = notesDown2.includes(key.note as Note);
             // Add slight random offset to each key for cartoon effect
             const x = i * WHITE_KEY_WIDTH + rand(-2, 2);
             const y = rand(-1, 1);
             const w = WHITE_KEY_WIDTH + rand(-1, 1);
             const h = WHITE_KEY_HEIGHT + rand(-2, 2);
+            let fill = "var(--piano-white)";
+            if (getFill) {
+              fill = getFill(key.note as Note, isDown1, isDown2);
+            } else if (isDown1) {
+              fill = "var(--piano-white-down1)";
+            } else if (isDown2) {
+              fill = "var(--piano-white-down2)";
+            }
             return (
               <path
                 key={key.midi}
                 d={wavyRectPath(x, y+5, w, h, 3)}
-                fill={isDown ? "#aaf" : "#fff"}
+                fill={fill}
                 stroke="#222"
                 strokeWidth={2.2}
                 style={{ filter: 'drop-shadow(0 0 0.5px #0002)' }}
@@ -143,17 +177,26 @@ export default function Piano({ displayRange = [Note.A0, Note.C8], notesDown = [
         {keys
           .filter((k) => k.black)
           .map((key) => {
-            const isDown = notesDown.includes(key.note as Note);
+            const isDown1 = notesDown1.includes(key.note as Note);
+            const isDown2 = notesDown2.includes(key.note as Note);
             // Add slight random offset to each key for cartoon effect
             const x = key.x + rand(-1.5, 1.5);
             const y = rand(-1, 1);
             const w = BLACK_KEY_WIDTH + rand(-1, 1);
             const h = BLACK_KEY_HEIGHT + rand(-2, 2);
+            let fill = "var(--piano-black)";
+            if (getFill) {
+              fill = getFill(key.note as Note, isDown1, isDown2);
+            } else if (isDown1) {
+              fill = "var(--piano-black-down1)";
+            } else if (isDown2) {
+              fill = "var(--piano-black-down2)";
+            }
             return (
               <path
                 key={key.midi}
                 d={wavyRectPath(x, y, w, h, 2.5)}
-                fill={isDown ? "#55f" : "#222"}
+                fill={fill}
                 stroke="#111"
                 strokeWidth={2.2}
                 style={{ filter: 'drop-shadow(0 0 0.5px #0004)' }}

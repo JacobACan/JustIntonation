@@ -6,6 +6,8 @@
 # Midi Capture
 
 - Web Midi JS
+- MidiVal
+- react midi hooks
 
 # Audio Synthesis
 

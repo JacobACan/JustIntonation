@@ -11,12 +11,19 @@ The style of this app is handdrawn vector art this means:
   --middleground1: #deb887;
   --foreground: #fff5e1;
   --foreground2: #ffffff;
+  /* Piano accent colors */
+  --piano-white: #fff;
+  --piano-white-down1: #aaf;
+  --piano-white-down2: #faa;
+  --piano-black: #222;
+  --piano-black-down1: #55f;
+  --piano-black-down2: #f55;
 }
 
 @theme inline {
   --color-background: var(--background2);
   --color-foreground: var(--foreground2);
-  --font-sans: var(--font-patrick-hand);
+  --font-sans: var(--font-reenie-beanie);
   --font-mono: var(--font-geist-mono);
 }
 

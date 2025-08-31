@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { Patrick_Hand } from "next/font/google";
+import { Reenie_Beanie } from "next/font/google";
 import "./globals.css";
 
-const patrickHand = Patrick_Hand({
-  variable: "--font-patrick-hand",
+const reenieBeanie = Reenie_Beanie({
+  variable: "--font-reenie-beanie",
   subsets: ["latin"],
   weight: "400",
 });
@@ -21,9 +21,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${patrickHand.variable} antialiased`}
+        className={`${reenieBeanie.variable} antialiased`}
       >
-        {children}
+          {children}
       </body>
     </html>
   );
