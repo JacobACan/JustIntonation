@@ -20,7 +20,7 @@ export const MidiSelector: React.FC<MidiSelectorProps> = ({ onDeviceChange, onNo
 
 	useEffect(() => {
 		if (onNotesChange) onNotesChange(notes);
-	}, [notes, onNotesChange]);
+	}, [notes]);
 
 	return (
 		<div style={{

@@ -75,13 +75,14 @@ export default function Home() {
             if (notes.length > 0) {
               const note = notes[0]
               const notePlayed = midiToNote[note.note]
-              setCurrentNote(notePlayed)
-              console.log("\nPlaying note:", notePlayed)
-              console.log("Question note:", questionNote)
               if (notePlayed === questionNote) {
-                console.log("Correct!")
                 getNextQuestionNote()
               }
+              
+              // timeout to make the piano render after the new note is set in getNextQuestionNote
+              setTimeout(() => {
+                setCurrentNote(notePlayed)
+              }, 10);
             }
           }}
         />
