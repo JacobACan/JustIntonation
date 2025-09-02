@@ -1,6 +1,6 @@
 "use client";
 
-import { Note } from "../constants/notes";
+import { Note, noteToMidi } from "../constants/notes";
 // Helper for random wavy effect
 function wavyRectPath(x: number, y: number, w: number, h: number, waviness = 3) {
   // Generates a path for a rectangle with wavy sides
@@ -92,23 +92,10 @@ export default function Piano({
   width
 }: PianoProps) {
 
-  // Helper to get midi number from note name (e.g. "C4" -> 60)
-  function noteNameToMidi(noteName: string): number {
-    // MIDI note numbers: C-1 = 0, C0 = 12, C4 = 60, A0 = 21
-    const regex = /^([A-G][b#]?)(\d)$/;
-    const match = noteName.match(regex);
-    if (!match) return 0;
-    const [_, note, octaveStr] = match;
-    const notes = ["C", "Cb", "D", "Db", "E", "F", "Fb", "G", "Gb", "A", "Ab", "B"];
-    const noteIndex = notes.indexOf(note);
-    const octave = parseInt(octaveStr, 10);
-    return (octave + 1) * 12 + noteIndex;
-  }
-
 
   // Calculate range
-  const firstMidi = noteNameToMidi(displayRange[0]);
-  const lastMidi = noteNameToMidi(displayRange[1]);
+  const firstMidi = noteToMidi[displayRange[0]];
+  const lastMidi = noteToMidi[displayRange[1]];
   const keys = [];
   let whiteIndex = 0;
   // First, count number of white keys in range

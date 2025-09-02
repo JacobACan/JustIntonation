@@ -82,7 +82,7 @@ export default function Home() {
               // timeout to make the piano render after the new note is set in getNextQuestionNote
               setTimeout(() => {
                 setCurrentNote(notePlayed)
-              }, 10);
+              }, 20);
             }
           }}
         />
