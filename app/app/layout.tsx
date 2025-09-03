@@ -20,11 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${reenieBeanie.variable} antialiased`}
-      >
-          {children}
-      </body>
+      <body className={`${reenieBeanie.variable} antialiased`}>{children}</body>
     </html>
   );
 }
