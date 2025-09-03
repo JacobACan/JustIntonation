@@ -1,3 +1,5 @@
+"use client";
+
 import { MIDINote } from "@react-midi/hooks/dist/types";
 import { useEffect, useState } from "react";
 import {
