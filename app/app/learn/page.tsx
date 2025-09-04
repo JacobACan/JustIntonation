@@ -47,8 +47,10 @@ export default function Learn() {
       .filter(
         (nw) =>
           nw.weight > 0 &&
-          noteToMidi[nw.note] >= noteToMidi[settings.questionRange[0]] &&
-          noteToMidi[nw.note] <= noteToMidi[settings.questionRange[1]]
+          noteToMidi[nw.note] >=
+            noteToMidi[settings?.questionRange[0] ?? Note.C4] &&
+          noteToMidi[nw.note] <=
+            noteToMidi[settings?.questionRange[1] ?? Note.C5]
       )
       .map((nw) => nw.note);
 
@@ -221,11 +223,11 @@ export default function Learn() {
           </svg>
         )}
       </button>
-      {/* <Piano
+      <Piano
         displayRange={settings.questionRange}
         notesDown1={[...(currentNote ? [currentNote] : [])]}
         notesDown2={[...(questionNote ? [questionNote] : [])]}
-      /> */}
+      />
       <div className="hidden">
         <Settings open={true} onClose={() => {}} />
       </div>
