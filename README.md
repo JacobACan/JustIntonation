@@ -1,8 +1,9 @@
-<img width="1042" height="437" alt="image" src="https://github.com/user-attachments/assets/70d2dfd3-bb2f-4549-bc23-32e300fa3d19" />
 # Purpose
 This website helps you to play what you hear on the piano in the context of a "musical center".
 # Site
 [https://just-intonation.vercel.app/](https://just-intonation.vercel.app/)
+<img width="1042" height="437" alt="image" src="https://github.com/user-attachments/assets/70d2dfd3-bb2f-4549-bc23-32e300fa3d19" />
+
 # How To
 1. Go to site
 2. Plug in a midi device
