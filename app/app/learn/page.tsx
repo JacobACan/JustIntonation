@@ -47,10 +47,8 @@ export default function Learn() {
       .filter(
         (nw) =>
           nw.weight > 0 &&
-          noteToMidi[nw.note] >=
-            noteToMidi[settings?.questionRange[0] ?? Note.C4] &&
-          noteToMidi[nw.note] <=
-            noteToMidi[settings?.questionRange[1] ?? Note.C5]
+          noteToMidi[nw.note] >= noteToMidi[settings.questionRange[0]] &&
+          noteToMidi[nw.note] <= noteToMidi[settings.questionRange[1]]
       )
       .map((nw) => nw.note);
 
@@ -229,7 +227,7 @@ export default function Learn() {
         notesDown2={[...(questionNote ? [questionNote] : [])]}
       />
       <div className="hidden">
-        <Settings open={true} onClose={() => {}} />
+        {/* <Settings open={true} onClose={() => {}} /> */}
       </div>
     </div>
   );

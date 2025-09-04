@@ -15,17 +15,22 @@ interface settingsContext {
   updateSettings: (key: keyof settings, value: ValueOf<settings>) => void;
 }
 
-export const SettingsContext = createContext({} as settingsContext);
+const defaultSettings: settings = {
+  questionRange: [Note.C4, Note.C5],
+  questionKey: Key.C,
+  questionScale: Scale.major,
+  questionNoteWeights: noteWeightsForScale(Key.C, Scale.major),
+};
+
+export const SettingsContext = createContext({
+  settings: defaultSettings,
+  updateSettings: () => {},
+} as settingsContext);
 
 export default function SettingsProvider({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const [settings, setSettings] = useState({
-    questionRange: [Note.C4, Note.C5],
-    questionKey: Key.C,
-    questionScale: Scale.major,
-    questionNoteWeights: noteWeightsForScale(Key.C, Scale.major),
-  } as settings);
+  const [settings, setSettings] = useState(defaultSettings as settings);
   const updateSettings = (key: string, value: any) => {
     setSettings((prevSettings) => ({ ...prevSettings, [key]: value }));
   };
