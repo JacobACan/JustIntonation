@@ -1,3 +1,5 @@
+import { ValueOf } from "next/dist/shared/lib/constants";
+
 export enum Note {
   A0 = "A0",
   Bb0 = "Bb0",
@@ -179,11 +181,11 @@ export const midiToNote: { [midi: number]: Note } = {
   106: Note.Bb7,
   107: Note.B7,
   108: Note.C8,
-}
+};
 
 export const noteToMidi: { [key in Note]: number } = {
   [Note.A0]: 21,
-  [Note.Bb0]: 20,
+  [Note.Bb0]: 22,
   [Note.B0]: 23,
   [Note.C1]: 24,
   [Note.Db1]: 25,
@@ -270,126 +272,86 @@ export const noteToMidi: { [key in Note]: number } = {
   [Note.Bb7]: 106,
   [Note.B7]: 107,
   [Note.C8]: 108,
-}
+};
 
-export enum noteFiles {
+export enum NoteFile {
+  A2 = "A2.ogg",
   A3 = "A3.ogg",
   A4 = "A4.ogg",
+  A5 = "A5.ogg",
+  A6 = "A6.ogg",
+  Ab2 = "Ab2.ogg",
   Ab3 = "Ab3.ogg",
   Ab4 = "Ab4.ogg",
+  Ab5 = "Ab5.ogg",
+  Ab6 = "Ab6.ogg",
+  B2 = "B2.ogg",
   B3 = "B3.ogg",
   B4 = "B4.ogg",
+  B5 = "B5.ogg",
+  B6 = "B6.ogg",
+  Bb2 = "Bb2.ogg",
   Bb3 = "Bb3.ogg",
   Bb4 = "Bb4.ogg",
+  Bb5 = "Bb5.ogg",
+  Bb6 = "Bb6.ogg",
+  C2 = "C2.ogg",
   C3 = "C3.ogg",
   C4 = "C4.ogg",
   C5 = "C5.ogg",
+  C6 = "C6.ogg",
+  C7 = "C7.ogg",
+  D2 = "D2.ogg",
   D3 = "D3.ogg",
   D4 = "D4.ogg",
+  D5 = "D5.ogg",
+  D6 = "D6.ogg",
+  Db2 = "Db2.ogg",
   Db3 = "Db3.ogg",
   Db4 = "Db4.ogg",
+  Db5 = "Db5.ogg",
+  Db6 = "Db6.ogg",
+  E2 = "E2.ogg",
   E3 = "E3.ogg",
   E4 = "E4.ogg",
+  E5 = "E5.ogg",
+  E6 = "E6.ogg",
+  Eb2 = "Eb2.ogg",
   Eb3 = "Eb3.ogg",
   Eb4 = "Eb4.ogg",
+  Eb5 = "Eb5.ogg",
+  Eb6 = "Eb6.ogg",
+  F2 = "F2.ogg",
   F3 = "F3.ogg",
   F4 = "F4.ogg",
+  F5 = "F5.ogg",
+  F6 = "F6.ogg",
+  G2 = "G2.ogg",
   G3 = "G3.ogg",
   G4 = "G4.ogg",
+  G5 = "G5.ogg",
+  G6 = "G6.ogg",
+  Gb2 = "Gb2.ogg",
   Gb3 = "Gb3.ogg",
   Gb4 = "Gb4.ogg",
+  Gb5 = "Gb5.ogg",
+  Gb6 = "Gb6.ogg",
 }
 
-export const noteFilesArray = [
-  noteFiles.A4,
-  noteFiles.B4,
-  noteFiles.C4,
-  noteFiles.D4,
-  noteFiles.E4,
-  noteFiles.F4,
-  noteFiles.G4,
-]
+export const midiNotesValues = Object.values(noteToMidi).sort((a, b) => a - b);
 
-type NotesWithFiles =
-  | Note.A3
-  | Note.A4
-  | Note.Ab3
-  | Note.Ab4
-  | Note.B3
-  | Note.B4
-  | Note.Bb3
-  | Note.Bb4
-  | Note.C3
-  | Note.C4
-  | Note.C5
-  | Note.D3
-  | Note.D4
-  | Note.Db3
-  | Note.Db4
-  | Note.E3
-  | Note.E4
-  | Note.Eb3
-  | Note.Eb4
-  | Note.F3
-  | Note.F4
-  | Note.G3
-  | Note.G4
-  | Note.Gb3
-  | Note.Gb4
+export const noteToNoteFile = (note: ValueOf<Note>): NoteFile => {
+  const noteFileKey = note as keyof typeof NoteFile;
+  if (NoteFile[noteFileKey]) {
+    return NoteFile[noteFileKey];
+  }
+  throw new Error(`No NoteFile found for note: ${note}`);
+};
 
-export const notesToNotesFiles: { [key in NotesWithFiles]: noteFiles } = {
-  [Note.A3]: noteFiles.A3,
-  [Note.A4]: noteFiles.A4,
-  [Note.Ab3]: noteFiles.Ab3,
-  [Note.Ab4]: noteFiles.Ab4,
-  [Note.B3]: noteFiles.B3,
-  [Note.B4]: noteFiles.B4,
-  [Note.Bb3]: noteFiles.Bb3,
-  [Note.Bb4]: noteFiles.Bb4,
-  [Note.C3]: noteFiles.C3,
-  [Note.C4]: noteFiles.C4,
-  [Note.C5]: noteFiles.C5,
-  [Note.D3]: noteFiles.D3,
-  [Note.D4]: noteFiles.D4,
-  [Note.Db3]: noteFiles.Db3,
-  [Note.Db4]: noteFiles.Db4,
-  [Note.E3]: noteFiles.E3,
-  [Note.E4]: noteFiles.E4,
-  [Note.Eb3]: noteFiles.Eb3,
-  [Note.Eb4]: noteFiles.Eb4,
-  [Note.F3]: noteFiles.F3,
-  [Note.F4]: noteFiles.F4,
-  [Note.G3]: noteFiles.G3,
-  [Note.G4]: noteFiles.G4,
-  [Note.Gb3]: noteFiles.Gb3,
-  [Note.Gb4]: noteFiles.Gb4,
-  // For simplicity, only include notes that have files
-}
-
-export const noteFilesToNotes: { [key in noteFiles]: NotesWithFiles } = {
-  [noteFiles.A3]: Note.A3,
-  [noteFiles.A4]: Note.A4,
-  [noteFiles.Ab3]: Note.Ab3,
-  [noteFiles.Ab4]: Note.Ab4,
-  [noteFiles.B3]: Note.B3,
-  [noteFiles.B4]: Note.B4,
-  [noteFiles.Bb3]: Note.Bb3,
-  [noteFiles.Bb4]: Note.Bb4,
-  [noteFiles.C3]: Note.C3,
-  [noteFiles.C4]: Note.C4,
-  [noteFiles.C5]: Note.C5,
-  [noteFiles.D3]: Note.D3,
-  [noteFiles.D4]: Note.D4,
-  [noteFiles.Db3]: Note.Db3,
-  [noteFiles.Db4]: Note.Db4,
-  [noteFiles.E3]: Note.E3,
-  [noteFiles.E4]: Note.E4,
-  [noteFiles.Eb3]: Note.Eb3,
-  [noteFiles.Eb4]: Note.Eb4,
-  [noteFiles.F3]: Note.F3,
-  [noteFiles.F4]: Note.F4,
-  [noteFiles.G3]: Note.G3,
-  [noteFiles.G4]: Note.G4,
-  [noteFiles.Gb3]: Note.Gb3,
-  [noteFiles.Gb4]: Note.Gb4,
-}
+export const noteFileToNote = (noteFile: ValueOf<NoteFile>): ValueOf<Note> => {
+  const noteKey = noteFile.toString().split(".")[0] as keyof typeof Note;
+  if (Note[noteKey]) {
+    return Note[noteKey];
+  }
+  throw new Error(`No Note found for noteFile: ${noteFile}`);
+};

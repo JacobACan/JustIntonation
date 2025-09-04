@@ -32,15 +32,8 @@ function wavyRectPath(
   ];
   return [...top, ...right, ...bottom, ...left, "Z"].join(" ");
 }
-// Simple pseudo-random function with fixed seed for consistency
-let i = 0;
 function rand(min: number, max: number) {
-  const randomNumbers = [
-    0.091666, 0.576795, 0.594139, 0.835166, 0.896007, 0.785177, 0.180279,
-    0.218705, 0.260117, 0.782493,
-  ];
-  const n = randomNumbers[i] * (max - min) + min;
-  i = (i + 1) % randomNumbers.length;
+  const n = 0.5 * (max - min) + min;
   return n;
 }
 
@@ -73,13 +66,6 @@ function midiNoteName(midi: number) {
   const note = notes[midi % 12];
   return `${note}${octave}`;
 }
-
-/*
-Parameters:
-displayRange - first and last note to display Notes constants/notes.tsx( names, e.g. "A0" to "C8")
-notesDown - an array of Notes(app/app/constants/notes.tsx) that are currently pressed down and visibly pressed down
-width - width of the entire piano in pixels takes into account varying displayRanges. changing the width should change how the piano renders, these constants should actually change respectively based on the width of the entire piano. The height should be a ratio of the width of a key so that the piano looks normal no matter what width you put in.
-*/
 
 interface PianoProps {
   /**
@@ -116,7 +102,7 @@ export default function Piano({
   const numWhiteKeys = tempWhiteIndex;
 
   // Calculate dynamic key sizes
-  const svgWidth = width || numWhiteKeys * 22; // fallback to 22px per key if no width
+  const svgWidth = width || numWhiteKeys * 50; // fallback to 22px per key if no width
   const WHITE_KEY_WIDTH = svgWidth / numWhiteKeys;
   // Height is 5.45 times the width (120/22 from original ratio)
   const WHITE_KEY_HEIGHT = WHITE_KEY_WIDTH * 5.45;

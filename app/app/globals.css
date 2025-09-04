@@ -12,10 +12,10 @@ The style of this app is handdrawn vector art this means:
   --foreground: #fff5e1;
   --foreground2: #ffffff;
   /* Piano accent colors */
-  --piano-white: #fff;
+  --piano-white: #fdf3e6;
   --piano-white-down1: #aaf;
   --piano-white-down2: #faa;
-  --piano-black: #222;
+  --piano-black: var(--middleground1);
   --piano-black-down1: #55f;
   --piano-black-down2: #f55;
 }

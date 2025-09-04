@@ -15,15 +15,15 @@ export const MidiSelector = ({ onDeviceChange }: MidiSelectorProps) => {
   }, [input, onDeviceChange]);
 
   return (
-    <div className="max-w-[400px] mx-auto my-4 p-4 rounded-xl">
-      <label htmlFor="midi-device" className="block text-sm font-medium mb-1">
-        MIDI Device:
+    <div className="flex flex-col">
+      <label htmlFor="midi-device" className="">
+        MIDI Device
       </label>
       <select
         id="midi-device"
         value={selectedInputId || ""}
         onChange={(e) => selectInput(e.target.value)}
-        className="w-full p-2 rounded-lg border"
+        className=""
       >
         <option value="">Select a device...</option>
         {inputs.map((input) => (
