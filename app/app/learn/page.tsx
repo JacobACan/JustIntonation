@@ -221,11 +221,11 @@ export default function Learn() {
           </svg>
         )}
       </button>
-      <Piano
+      {/* <Piano
         displayRange={settings.questionRange}
         notesDown1={[...(currentNote ? [currentNote] : [])]}
         notesDown2={[...(questionNote ? [questionNote] : [])]}
-      />
+      /> */}
       <div className="hidden">
         <Settings open={true} onClose={() => {}} />
       </div>
