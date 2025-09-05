@@ -8,6 +8,7 @@ interface settings {
   questionKey: Key; // The key that the questions are centered around
   questionScale: Scale; // The scale that the questions are centered around
   questionNoteWeights: NoteWeight[]; // The notes that the musician is questioned on.  If the weight is higher, the note is more likely to be chosen.
+  questionsInARow: number; // The number of questions answered correctly in a row to move on
 }
 
 interface settingsContext {
@@ -20,6 +21,7 @@ const defaultSettings: settings = {
   questionKey: Key.C,
   questionScale: Scale.major,
   questionNoteWeights: noteWeightsForScale(Key.C, Scale.major),
+  questionsInARow: 30,
 };
 
 export const SettingsContext = createContext({

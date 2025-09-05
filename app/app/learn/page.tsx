@@ -14,6 +14,10 @@ import { keyToCadence } from "../constants/cadences";
 import Settings from "../components/settings/settings";
 import Piano from "../components/piano";
 import { SettingsContext } from "../provider/settingsProvider";
+import { Key, NoteWeight, noteWeightsForScale, Scale } from "../constants/keys";
+import { get } from "http";
+
+const TIME_BEFORE_QUESTION_AFTER_CADENCE = 1400; // Time in ms
 
 export default function Learn() {
   // Helper to play a note by filename
@@ -22,28 +26,46 @@ export default function Learn() {
     audio.play();
   };
   // Helper to play a note by filename
-  const playCadence = () => {
-    const cadenceFile = keyToCadence[settings.questionKey];
+  const playCadence = (key?: Key) => {
+    let cadenceFile = keyToCadence[settings.questionKey];
+    if (key) {
+      cadenceFile = keyToCadence[key];
+    }
+    console.log("Playing cadence in key of ", settings.questionKey);
     const audio = new Audio(`/cadences/${cadenceFile}`);
     audio.play();
-  };
-  // Helper to convert Note[] to NoteFile[]
-  const notesToNoteFiles = (n: Note[], nf: NoteFile[]): NoteFile[] => {
-    return n.map((p) => noteToNoteFile(p));
   };
 
   //currentNote usestate var
   const [currentNote, setCurrentNote] = useState<Note | null>(null);
   const [questionNote, setQuestionNote] = useState<Note | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const { settings } = useContext(SettingsContext);
   const [isLearning, setIsLearning] = useState(false);
+  const [questionsInARow, setQuestionsInARow] = useState(0);
+  const { settings, updateSettings } = useContext(SettingsContext);
   const notes = useMIDINotes();
 
-  const getNextQuestionNote = () => {
+  const chooseRandomSettings = () => {
+    const randomKey =
+      Object.values(Key)[Math.floor(Math.random() * Object.values(Key).length)];
+    const randomScale =
+      Object.values(Scale)[
+        Math.floor(Math.random() * Object.values(Scale).length)
+      ];
+    const newNoteWeights = noteWeightsForScale(randomKey, randomScale);
+    console.log("New key: ", randomKey, " New scale: ", randomScale);
+    updateSettings("questionKey", randomKey);
+    updateSettings("questionScale", randomScale);
+    updateSettings("questionNoteWeights", newNoteWeights);
+
+    playCadence(randomKey);
+    getNextQuestionNote(newNoteWeights);
+  };
+
+  const getNextQuestionNote = (specificNoteWeights?: NoteWeight[]) => {
     // Get all notes in the question range with weight > 0
 
-    const questionNotes = settings.questionNoteWeights
+    let questionNotes = settings.questionNoteWeights
       .filter(
         (nw) =>
           nw.weight > 0 &&
@@ -51,6 +73,16 @@ export default function Learn() {
           noteToMidi[nw.note] <= noteToMidi[settings.questionRange[1]]
       )
       .map((nw) => nw.note);
+    if (specificNoteWeights) {
+      questionNotes = specificNoteWeights
+        .filter(
+          (nw) =>
+            nw.weight > 0 &&
+            noteToMidi[nw.note] >= noteToMidi[settings.questionRange[0]] &&
+            noteToMidi[nw.note] <= noteToMidi[settings.questionRange[1]]
+        )
+        .map((nw) => nw.note);
+    }
 
     const randomNote =
       questionNotes[Math.floor(Math.random() * questionNotes.length)];
@@ -73,7 +105,11 @@ export default function Learn() {
       const note = notes[0];
       const notePlayed = midiToNote[note.note];
       if (notePlayed === questionNote) {
+        console.log(questionsInARow, settings.questionsInARow);
         getNextQuestionNote();
+        setQuestionsInARow(questionsInARow + 1);
+      } else {
+        setQuestionsInARow(0);
       }
       setCurrentNote(notePlayed);
     }
@@ -167,7 +203,9 @@ export default function Learn() {
         onClick={async () => {
           setIsLearning(true);
           playCadence();
-          await new Promise((res) => setTimeout(res, 1200));
+          await new Promise((res) =>
+            setTimeout(res, TIME_BEFORE_QUESTION_AFTER_CADENCE)
+          );
           if (questionNote) {
             playNote(noteToNoteFile(questionNote));
           } else {
@@ -226,9 +264,9 @@ export default function Learn() {
         notesDown1={[...(currentNote ? [currentNote] : [])]}
         notesDown2={[...(questionNote ? [questionNote] : [])]}
       />
-      <div className="hidden">
-        {/* <Settings open={true} onClose={() => {}} /> */}
-      </div>
+      <h2 className=" mt-8 font-bold text-[var(--middleground1)]">
+        {questionsInARow}
+      </h2>
     </div>
   );
 }
