@@ -9,3 +9,4 @@ export const MINOR_SIXTH = 8;
 export const MAJOR_SIXTH = 9;
 export const MINOR_SEVENTH = 10;
 export const MAJOR_SEVENTH = 11;
+export const OCTAVE = 12;

@@ -1,8 +1,11 @@
-import React from "react";
+import React, { useContext } from "react";
 import { MidiSelector } from "./midiSelector";
 import QuestionNoteRangeSelector from "./questionRangeSelector";
 import QuestionKeySelector from "./questionKeySelector";
 import QuestionScaleSelector from "./questionScaleSelector";
+import LearningModeSelector from "./learningModeSelector";
+import { LearningMode, SettingsContext } from "@/app/provider/settingsProvider";
+import ChordSizeSelector from "./chordSizeSelector";
 
 interface SettingsProps {
   open: boolean;
@@ -11,6 +14,7 @@ interface SettingsProps {
 
 export default function Settings({ open, onClose }: SettingsProps) {
   if (!open) return null;
+  const { settings } = useContext(SettingsContext);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
       <div className="relative w-full max-w-md mx-auto bg-[var(--background2)] rounded-md shadow-lg p-6 overflow-y-auto">
@@ -25,6 +29,10 @@ export default function Settings({ open, onClose }: SettingsProps) {
         {/* Settings content here */}
         <div className="flex flex-col gap-4">
           <MidiSelector />
+          <LearningModeSelector />
+          {settings.learningMode === LearningMode.Chords && (
+            <ChordSizeSelector />
+          )}
           <QuestionNoteRangeSelector />
           <QuestionKeySelector />
           <QuestionScaleSelector />

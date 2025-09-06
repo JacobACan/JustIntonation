@@ -1,5 +1,7 @@
 import { Key } from "./keys";
 
+export const TIME_BEFORE_QUESTION_AFTER_CADENCE = 1400; // Time in ms
+
 export enum cadenceFiles {
   A4 = "A4.ogg",
   Ab4 = "Ab4.ogg",

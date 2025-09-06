@@ -5,12 +5,19 @@ import { Key, NoteWeight } from "../constants/keys";
 import { Scale } from "../constants/scale";
 import { noteWeightsForScale } from "../lib/key";
 
+export enum LearningMode {
+  Notes = "Notes",
+  Chords = "Chords",
+}
+
 export interface Settings {
   questionRange: [Note, Note]; // The Range of notes that a musician is questioned on
   questionKey: Key; // The key that the questions are centered around
   questionScale: Scale; // The scale that the questions are centered around
   questionNoteWeights: NoteWeight[]; // The notes that the musician is questioned on.  If the weight is higher, the note is more likely to be chosen.
   questionsInARow: number; // The number of questions answered correctly in a row to move on
+  learningMode: LearningMode; // Whether the user is in learning mode (can replay questions) or test mode (cannot replay questions)
+  chordSize: number; // If in chord mode, the size of the chords to be played
 }
 
 interface settingsContext {
@@ -24,6 +31,8 @@ const defaultSettings: Settings = {
   questionScale: Scale.major,
   questionNoteWeights: noteWeightsForScale(Key.C, Scale.major),
   questionsInARow: 30,
+  learningMode: LearningMode.Notes,
+  chordSize: 2,
 };
 
 export const SettingsContext = createContext({
@@ -38,7 +47,7 @@ export default function SettingsProvider({
   const updateSettings = (key: string, value: any) => {
     setSettings((prevSettings) => ({ ...prevSettings, [key]: value }));
   };
-  const chooseRandomSettings = () => {
+  const chooseRandomKeyAndScale = () => {
     const randomKey =
       Object.values(Key)[Math.floor(Math.random() * Object.values(Key).length)];
     const randomScale =

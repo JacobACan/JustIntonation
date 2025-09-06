@@ -1,10 +1,15 @@
 import { HALF_STEP, WHOLE_STEP } from "./intervals";
 
 export enum Scale {
-  major = "major",
-  minor = "minor",
-  harmonicMinor = "harmonicMinor",
-  melodicMinor = "melodicMinor",
+  major = "major (ionian)",
+  minor = "minor (aeolian)",
+  harmonicMinor = "harmonic minor",
+  melodicMinor = "melodic minor",
+  dorian = "dorian",
+  phrygian = "phrygian",
+  lydian = "lydian",
+  mixolydian = "mixolydian",
+  locrian = "locrian",
 }
 
 export const scaleToInterval = {
@@ -43,5 +48,50 @@ export const scaleToInterval = {
     WHOLE_STEP,
     WHOLE_STEP,
     HALF_STEP,
+  ],
+  [Scale.dorian]: [
+    WHOLE_STEP,
+    HALF_STEP,
+    WHOLE_STEP,
+    WHOLE_STEP,
+    WHOLE_STEP,
+    HALF_STEP,
+    WHOLE_STEP,
+  ],
+  [Scale.phrygian]: [
+    HALF_STEP,
+    WHOLE_STEP,
+    WHOLE_STEP,
+    WHOLE_STEP,
+    HALF_STEP,
+    WHOLE_STEP,
+    WHOLE_STEP,
+  ],
+  [Scale.lydian]: [
+    WHOLE_STEP,
+    WHOLE_STEP,
+    WHOLE_STEP,
+    HALF_STEP,
+    WHOLE_STEP,
+    WHOLE_STEP,
+    HALF_STEP,
+  ],
+  [Scale.mixolydian]: [
+    WHOLE_STEP,
+    WHOLE_STEP,
+    HALF_STEP,
+    WHOLE_STEP,
+    WHOLE_STEP,
+    HALF_STEP,
+    WHOLE_STEP,
+  ],
+  [Scale.locrian]: [
+    HALF_STEP,
+    WHOLE_STEP,
+    WHOLE_STEP,
+    HALF_STEP,
+    WHOLE_STEP,
+    WHOLE_STEP,
+    WHOLE_STEP,
   ],
 };

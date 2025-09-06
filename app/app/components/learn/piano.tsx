@@ -1,7 +1,8 @@
 "use client";
 
-import { noteToMidi } from "../constants/midi";
-import { Note } from "../constants/notes";
+import { noteToMidi } from "@/app/constants/midi";
+import { Note } from "@/app/constants/notes";
+
 // Helper for random wavy effect
 function wavyRectPath(
   x: number,

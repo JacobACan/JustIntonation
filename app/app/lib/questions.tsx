@@ -1,6 +1,7 @@
 import { NoteWeight } from "../constants/keys";
 import { noteToMidi } from "../constants/midi";
 import { Note } from "../constants/notes";
+import { isNoteToBeAddedPlayableBy1Hand } from "./notes";
 
 export const getNextQuestionNote = (
   questionNoteWeights: NoteWeight[],
@@ -20,4 +21,30 @@ export const getNextQuestionNote = (
   const randomNote =
     questionNotes[Math.floor(Math.random() * questionNotes.length)];
   return randomNote;
+};
+
+export const getNextQuestionChord = (
+  questionNoteWeights: NoteWeight[],
+  questionRange: [Note, Note],
+  numNotes: number
+): Note[] => {
+  const questionNotes = questionNoteWeights
+    .filter(
+      (nw) =>
+        nw.weight > 0 &&
+        noteToMidi[nw.note] >= noteToMidi[questionRange[0]] &&
+        noteToMidi[nw.note] <= noteToMidi[questionRange[1]]
+    )
+    .map((nw) => nw.note);
+  if (questionNotes.length >= numNotes) {
+    const selectedNotes: Note[] = [];
+    while (selectedNotes.length < numNotes) {
+      const randomNote =
+        questionNotes[Math.floor(Math.random() * questionNotes.length)];
+      if (isNoteToBeAddedPlayableBy1Hand(randomNote, selectedNotes))
+        selectedNotes.push(randomNote);
+    }
+    return selectedNotes;
+  }
+  return [];
 };
