@@ -1,5 +1,3 @@
-import { ValueOf } from "next/dist/shared/lib/constants";
-
 export enum Note {
   A0 = "A0",
   Bb0 = "Bb0",
@@ -183,97 +181,6 @@ export const midiToNote: { [midi: number]: Note } = {
   108: Note.C8,
 };
 
-export const noteToMidi: { [key in Note]: number } = {
-  [Note.A0]: 21,
-  [Note.Bb0]: 22,
-  [Note.B0]: 23,
-  [Note.C1]: 24,
-  [Note.Db1]: 25,
-  [Note.D1]: 26,
-  [Note.Eb1]: 27,
-  [Note.E1]: 28,
-  [Note.F1]: 29,
-  [Note.Gb1]: 30,
-  [Note.G1]: 31,
-  [Note.Ab1]: 32,
-  [Note.A1]: 33,
-  [Note.Bb1]: 34,
-  [Note.B1]: 35,
-  [Note.C2]: 36,
-  [Note.Db2]: 37,
-  [Note.D2]: 38,
-  [Note.Eb2]: 39,
-  [Note.E2]: 40,
-  [Note.F2]: 41,
-  [Note.Gb2]: 42,
-  [Note.G2]: 43,
-  [Note.Ab2]: 44,
-  [Note.A2]: 45,
-  [Note.Bb2]: 46,
-  [Note.B2]: 47,
-  [Note.C3]: 48,
-  [Note.Db3]: 49,
-  [Note.D3]: 50,
-  [Note.Eb3]: 51,
-  [Note.E3]: 52,
-  [Note.F3]: 53,
-  [Note.Gb3]: 54,
-  [Note.G3]: 55,
-  [Note.Ab3]: 56,
-  [Note.A3]: 57,
-  [Note.Bb3]: 58,
-  [Note.B3]: 59,
-  [Note.C4]: 60,
-  [Note.Db4]: 61,
-  [Note.D4]: 62,
-  [Note.Eb4]: 63,
-  [Note.E4]: 64,
-  [Note.F4]: 65,
-  [Note.Gb4]: 66,
-  [Note.G4]: 67,
-  [Note.Ab4]: 68,
-  [Note.A4]: 69,
-  [Note.Bb4]: 70,
-  [Note.B4]: 71,
-  [Note.C5]: 72,
-  [Note.Db5]: 73,
-  [Note.D5]: 74,
-  [Note.Eb5]: 75,
-  [Note.E5]: 76,
-  [Note.F5]: 77,
-  [Note.Gb5]: 78,
-  [Note.G5]: 79,
-  [Note.Ab5]: 80,
-  [Note.A5]: 81,
-  [Note.Bb5]: 82,
-  [Note.B5]: 83,
-  [Note.C6]: 84,
-  [Note.Db6]: 85,
-  [Note.D6]: 86,
-  [Note.Eb6]: 87,
-  [Note.E6]: 88,
-  [Note.F6]: 89,
-  [Note.Gb6]: 90,
-  [Note.G6]: 91,
-  [Note.Ab6]: 92,
-  [Note.A6]: 93,
-  [Note.Bb6]: 94,
-  [Note.B6]: 95,
-  [Note.C7]: 96,
-  [Note.Db7]: 97,
-  [Note.D7]: 98,
-  [Note.Eb7]: 99,
-  [Note.E7]: 100,
-  [Note.F7]: 101,
-  [Note.Gb7]: 102,
-  [Note.G7]: 103,
-  [Note.Ab7]: 104,
-  [Note.A7]: 105,
-  [Note.Bb7]: 106,
-  [Note.B7]: 107,
-  [Note.C8]: 108,
-};
-
 export enum NoteFile {
   A2 = "A2.ogg",
   A3 = "A3.ogg",
@@ -337,21 +244,3 @@ export enum NoteFile {
   Gb5 = "Gb5.ogg",
   Gb6 = "Gb6.ogg",
 }
-
-export const midiNotesValues = Object.values(noteToMidi).sort((a, b) => a - b);
-
-export const noteToNoteFile = (note: ValueOf<Note>): NoteFile => {
-  const noteFileKey = note as keyof typeof NoteFile;
-  if (NoteFile[noteFileKey]) {
-    return NoteFile[noteFileKey];
-  }
-  throw new Error(`No NoteFile found for note: ${note}`);
-};
-
-export const noteFileToNote = (noteFile: ValueOf<NoteFile>): ValueOf<Note> => {
-  const noteKey = noteFile.toString().split(".")[0] as keyof typeof Note;
-  if (Note[noteKey]) {
-    return Note[noteKey];
-  }
-  throw new Error(`No Note found for noteFile: ${noteFile}`);
-};

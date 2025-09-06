@@ -1,4 +1,5 @@
-import { noteWeightsForScale, Scale } from "@/app/constants/keys";
+import { Scale } from "@/app/constants/scale";
+import { noteWeightsForScale } from "@/app/lib/key";
 import { SettingsContext } from "@/app/provider/settingsProvider";
 import { useContext } from "react";
 

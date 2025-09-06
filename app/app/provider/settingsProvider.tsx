@@ -1,9 +1,11 @@
 import { createContext, useState } from "react";
 import { Note } from "../constants/notes";
 import { ValueOf } from "next/dist/shared/lib/constants";
-import { Key, NoteWeight, noteWeightsForScale, Scale } from "../constants/keys";
+import { Key, NoteWeight } from "../constants/keys";
+import { Scale } from "../constants/scale";
+import { noteWeightsForScale } from "../lib/key";
 
-interface settings {
+export interface Settings {
   questionRange: [Note, Note]; // The Range of notes that a musician is questioned on
   questionKey: Key; // The key that the questions are centered around
   questionScale: Scale; // The scale that the questions are centered around
@@ -12,11 +14,11 @@ interface settings {
 }
 
 interface settingsContext {
-  settings: settings;
-  updateSettings: (key: keyof settings, value: ValueOf<settings>) => void;
+  settings: Settings;
+  updateSettings: (key: keyof Settings, value: ValueOf<Settings>) => void;
 }
 
-const defaultSettings: settings = {
+const defaultSettings: Settings = {
   questionRange: [Note.C4, Note.C5],
   questionKey: Key.C,
   questionScale: Scale.major,
@@ -32,9 +34,22 @@ export const SettingsContext = createContext({
 export default function SettingsProvider({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const [settings, setSettings] = useState(defaultSettings as settings);
+  const [settings, setSettings] = useState(defaultSettings as Settings);
   const updateSettings = (key: string, value: any) => {
     setSettings((prevSettings) => ({ ...prevSettings, [key]: value }));
+  };
+  const chooseRandomSettings = () => {
+    const randomKey =
+      Object.values(Key)[Math.floor(Math.random() * Object.values(Key).length)];
+    const randomScale =
+      Object.values(Scale)[
+        Math.floor(Math.random() * Object.values(Scale).length)
+      ];
+    const newNoteWeights = noteWeightsForScale(randomKey, randomScale);
+    console.log("New key: ", randomKey, " New scale: ", randomScale);
+    updateSettings("questionKey", randomKey);
+    updateSettings("questionScale", randomScale);
+    updateSettings("questionNoteWeights", newNoteWeights);
   };
   const value = { settings, updateSettings };
 

@@ -1,6 +1,7 @@
 import { useContext } from "react";
 import { SettingsContext } from "../../provider/settingsProvider";
-import { midiToNote, Note, noteToMidi } from "../../constants/notes";
+import { midiToNote, Note } from "../../constants/notes";
+import { noteToMidi } from "@/app/constants/midi";
 
 export default function QuestionNoteRangeSelector() {
   const { settings, updateSettings } = useContext(SettingsContext);
