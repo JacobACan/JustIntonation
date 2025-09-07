@@ -22,6 +22,7 @@ export default function Chords() {
   }, [notes]);
 
   useEffect(() => {
+    setCurrentChord([]);
     setQuestionChord(null);
   }, [settings]);
 
@@ -40,7 +41,7 @@ export default function Chords() {
         setQuestionChord(nextQuestionChord);
         playChord(nextQuestionChord);
         setQuestionsInARow(questionsInARow + 1);
-        setCurrentChord(chordPlayed);
+        if (!settings.showQuestionNotes) setCurrentChord(chordPlayed);
       } else {
         setQuestionsInARow(0);
         setCurrentChord(chordPlayed);
@@ -51,13 +52,13 @@ export default function Chords() {
     <div className="flex flex-col items-center justify-center min-h-screen py-2 ">
       <PlayReplayButton
         onPlay={async () => {
-          playCadence(settings.questionKey);
-          await new Promise((res) =>
-            setTimeout(res, TIME_BEFORE_QUESTION_AFTER_CADENCE)
-          );
           if (questionChord) {
             playChord(questionChord);
           } else {
+            playCadence(settings.questionKey);
+            await new Promise((res) =>
+              setTimeout(res, TIME_BEFORE_QUESTION_AFTER_CADENCE)
+            );
             const nextQuestionChord = getNextQuestionChord(
               settings.questionNoteWeights,
               settings.questionRange,
@@ -70,8 +71,8 @@ export default function Chords() {
       />
       <Piano
         displayRange={settings.questionRange}
-        notesDown1={currentChord ? currentChord : []}
-        notesDown2={
+        notesDown2={currentChord ? currentChord : []}
+        notesDown1={
           settings.showQuestionNotes ? (questionChord ? questionChord : []) : []
         }
       />

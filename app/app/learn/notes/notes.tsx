@@ -46,13 +46,13 @@ export default function Notes() {
     <div className="flex flex-col items-center justify-center min-h-screen py-2 ">
       <PlayReplayButton
         onPlay={async () => {
-          playCadence(settings.questionKey);
-          await new Promise((res) =>
-            setTimeout(res, TIME_BEFORE_QUESTION_AFTER_CADENCE)
-          );
           if (questionNote) {
             playNote(noteToNoteFile(questionNote));
           } else {
+            playCadence(settings.questionKey);
+            await new Promise((res) =>
+              setTimeout(res, TIME_BEFORE_QUESTION_AFTER_CADENCE)
+            );
             const nextQuestionNote = getNextQuestionNote(
               settings.questionNoteWeights,
               settings.questionRange
@@ -64,8 +64,8 @@ export default function Notes() {
       />
       <Piano
         displayRange={settings.questionRange}
-        notesDown1={[...(currentNote ? [currentNote] : [])]}
-        notesDown2={[
+        notesDown2={[...(currentNote ? [currentNote] : [])]}
+        notesDown1={[
           ...(settings.showQuestionNotes
             ? questionNote
               ? [questionNote]
