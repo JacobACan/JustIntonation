@@ -18,6 +18,7 @@ export interface Settings {
   questionsInARow: number; // The number of questions answered correctly in a row to move on
   learningMode: LearningMode; // Whether the user is in learning mode (can replay questions) or test mode (cannot replay questions)
   chordSize: number; // If in chord mode, the size of the chords to be played
+  showQuestionNotes: boolean;
 }
 
 interface settingsContext {
@@ -33,6 +34,7 @@ const defaultSettings: Settings = {
   questionsInARow: 30,
   learningMode: LearningMode.Notes,
   chordSize: 2,
+  showQuestionNotes: true,
 };
 
 export const SettingsContext = createContext({

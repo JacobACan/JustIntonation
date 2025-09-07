@@ -40,7 +40,7 @@ export default function Chords() {
         setQuestionChord(nextQuestionChord);
         playChord(nextQuestionChord);
         setQuestionsInARow(questionsInARow + 1);
-        setCurrentChord([]);
+        setCurrentChord(chordPlayed);
       } else {
         setQuestionsInARow(0);
         setCurrentChord(chordPlayed);
@@ -71,7 +71,9 @@ export default function Chords() {
       <Piano
         displayRange={settings.questionRange}
         notesDown1={currentChord ? currentChord : []}
-        notesDown2={questionChord ? questionChord : []}
+        notesDown2={
+          settings.showQuestionNotes ? (questionChord ? questionChord : []) : []
+        }
       />
       <h2 className=" mt-8 font-bold text-[var(--middleground1)]">
         {questionsInARow}

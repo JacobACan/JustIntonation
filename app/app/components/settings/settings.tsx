@@ -6,6 +6,7 @@ import QuestionScaleSelector from "./questionScaleSelector";
 import LearningModeSelector from "./learningModeSelector";
 import { LearningMode, SettingsContext } from "@/app/provider/settingsProvider";
 import ChordSizeSelector from "./chordSizeSelector";
+import ShowQuestionNotesSelector from "./showQuestionNotesSelector";
 
 interface SettingsProps {
   open: boolean;
@@ -36,6 +37,7 @@ export default function Settings({ open, onClose }: SettingsProps) {
           <QuestionNoteRangeSelector />
           <QuestionKeySelector />
           <QuestionScaleSelector />
+          <ShowQuestionNotesSelector />
         </div>
       </div>
     </div>

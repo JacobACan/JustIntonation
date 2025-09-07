@@ -65,7 +65,13 @@ export default function Notes() {
       <Piano
         displayRange={settings.questionRange}
         notesDown1={[...(currentNote ? [currentNote] : [])]}
-        notesDown2={[...(questionNote ? [questionNote] : [])]}
+        notesDown2={[
+          ...(settings.showQuestionNotes
+            ? questionNote
+              ? [questionNote]
+              : []
+            : []),
+        ]}
       />
       <h2 className=" mt-8 font-bold text-[var(--middleground1)]">
         {questionsInARow}
