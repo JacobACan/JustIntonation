@@ -16,9 +16,10 @@ export interface Settings {
   questionScale: Scale; // The scale that the questions are centered around
   questionNoteWeights: NoteWeight[]; // The notes that the musician is questioned on.  If the weight is higher, the note is more likely to be chosen.
   questionsInARow: number; // The number of questions answered correctly in a row to move on
-  learningMode: LearningMode; // Whether the user is in learning mode (can replay questions) or test mode (cannot replay questions)
+  learningMode: LearningMode;
   chordSize: number; // If in chord mode, the size of the chords to be played
   showQuestionNotes: boolean;
+  playCadence: boolean;
 }
 
 interface settingsContext {
@@ -35,6 +36,7 @@ const defaultSettings: Settings = {
   learningMode: LearningMode.Notes,
   chordSize: 2,
   showQuestionNotes: true,
+  playCadence: true,
 };
 
 export const SettingsContext = createContext({

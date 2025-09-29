@@ -10,9 +10,24 @@ export enum Scale {
   lydian = "lydian",
   mixolydian = "mixolydian",
   locrian = "locrian",
+  chromatic = "chromatic",
 }
 
 export const scaleToInterval = {
+  [Scale.chromatic]: [
+    HALF_STEP,
+    HALF_STEP,
+    HALF_STEP,
+    HALF_STEP,
+    HALF_STEP,
+    HALF_STEP,
+    HALF_STEP,
+    HALF_STEP,
+    HALF_STEP,
+    HALF_STEP,
+    HALF_STEP,
+    HALF_STEP,
+  ],
   [Scale.major]: [
     WHOLE_STEP,
     WHOLE_STEP,

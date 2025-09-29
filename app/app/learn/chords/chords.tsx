@@ -55,7 +55,7 @@ export default function Chords() {
           if (questionChord) {
             playChord(questionChord);
           } else {
-            playCadence(settings.questionKey);
+            if (settings.playCadence) playCadence(settings.questionKey);
             await new Promise((res) =>
               setTimeout(res, TIME_BEFORE_QUESTION_AFTER_CADENCE)
             );
