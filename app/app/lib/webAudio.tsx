@@ -3,7 +3,10 @@ import { keyToCadence } from "../constants/cadences";
 import { Key } from "../constants/keys";
 import { noteToNoteFile } from "./notes";
 
+console.log("Initializing Web Audio API");
+
 let audioContext: AudioContext;
+
 try {
   audioContext = new window.AudioContext();
 } catch (e) {
@@ -30,12 +33,17 @@ export const playChord = async (chord: Note[]) => {
         })
       );
 
+      // Gain Node to Normalize Volume of chord
+      const gainNode = audioContext.createGain();
+      gainNode.gain.value = 1 / audioBuffers.length;
       // Schedule all notes to play at the exact same time
       const startTime = audioContext.currentTime;
       audioBuffers.forEach((buffer) => {
         const source = audioContext.createBufferSource();
         source.buffer = buffer;
+        source.connect(gainNode);
         source.connect(audioContext.destination);
+        // Interesting! Sources play from the start and go through the entire connected chain can can be started at a precise time
         source.start(startTime);
       });
     } catch (error) {
