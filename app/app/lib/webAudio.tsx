@@ -1,4 +1,4 @@
-import { Note, NoteFile } from "../constants/notes";
+import { MelodicNote, Note, NoteFile } from "../constants/notes";
 import { keyToCadence } from "../constants/cadences";
 import { Key } from "../constants/keys";
 import { noteToNoteFile } from "./notes";
@@ -24,14 +24,7 @@ export const playChord = async (chord: Note[]) => {
   const noteFiles = chord.map((note) => noteToNoteFile(note));
   if (audioContext) {
     try {
-      // Load all audio buffers
-      const audioBuffers = await Promise.all(
-        noteFiles.map(async (noteFile) => {
-          const response = await fetch(`/notes/${noteFile}`);
-          const arrayBuffer = await response.arrayBuffer();
-          return audioContext.decodeAudioData(arrayBuffer);
-        })
-      );
+      const audioBuffers = await loadAudioBuffers(noteFiles);
 
       // Gain Node to Normalize Volume of chord
       const gainNode = audioContext.createGain();
@@ -64,4 +57,37 @@ export const playCadence = (key: Key) => {
   console.log("Playing cadence in key of ", key);
   const audio = new Audio(`/cadences/${cadenceFile}`);
   audio.play();
+};
+
+export const playMelody = async (notes: MelodicNote[]) => {
+  const noteFiles = notes.map((n) => noteToNoteFile(n.note));
+  const noteDurations = notes.map((n) => n.duration);
+
+  const audioBuffers = await loadAudioBuffers(noteFiles);
+
+  const bpm = 120;
+  let delay = 0;
+  let i = 0;
+  const delayOffset = 60 / bpm;
+  audioBuffers.forEach((b) => {
+    const noteLength = delayOffset * noteDurations[i];
+
+    const source = audioContext.createBufferSource();
+    source.buffer = b;
+    source.connect(audioContext.destination);
+
+    source.start(audioContext.currentTime + delay);
+    delay += noteLength;
+    i++;
+  });
+};
+
+const loadAudioBuffers = async (noteFiles: NoteFile[]) => {
+  return await Promise.all(
+    noteFiles.map(async (noteFile) => {
+      const response = await fetch(`/notes/${noteFile}`);
+      const arrayBuffer = await response.arrayBuffer();
+      return audioContext.decodeAudioData(arrayBuffer);
+    })
+  );
 };

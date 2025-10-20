@@ -3,6 +3,7 @@ import { useContext } from "react";
 import Chords from "./chords/chords";
 import Notes from "./notes/notes";
 import { LearningMode, SettingsContext } from "../provider/settingsProvider";
+import Melodies from "./melodies/melodies";
 
 export default function Learn() {
   const { settings } = useContext(SettingsContext);
@@ -13,6 +14,8 @@ export default function Learn() {
         return <Notes />;
       case LearningMode.Chords:
         return <Chords />;
+      case LearningMode.Melodies:
+        return <Melodies />;
       default:
         return <Notes />;
     }

@@ -8,6 +8,7 @@ import { noteWeightsForScale } from "../lib/key";
 export enum LearningMode {
   Notes = "Notes",
   Chords = "Chords",
+  Melodies = "Melodies",
 }
 
 export interface Settings {
