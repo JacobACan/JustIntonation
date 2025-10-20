@@ -72,11 +72,19 @@ export const playMelody = async (notes: MelodicNote[]) => {
   audioBuffers.forEach((b) => {
     const noteLength = delayOffset * noteDurations[i];
 
+    const decayNode = audioContext.createGain();
     const source = audioContext.createBufferSource();
     source.buffer = b;
-    source.connect(audioContext.destination);
 
+    source.connect(decayNode);
+    decayNode.connect(audioContext.destination);
+
+    decayNode.gain.exponentialRampToValueAtTime(
+      0.1,
+      audioContext.currentTime + delay + noteLength
+    );
     source.start(audioContext.currentTime + delay);
+
     delay += noteLength;
     i++;
   });
