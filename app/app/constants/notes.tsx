@@ -247,7 +247,7 @@ export enum NoteFile {
 
 export interface MelodicNote {
   note: Note;
-  durration: Duration;
+  duration: Duration;
 }
 
 export enum Duration {

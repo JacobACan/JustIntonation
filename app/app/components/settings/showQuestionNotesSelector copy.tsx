@@ -8,7 +8,6 @@ export default function ShowQuestionNotesSelector() {
       <h2>Show Question Notes : {settings.showQuestionNotes}</h2>
       <input
         onChange={(e) => {
-          console.log(settings.showQuestionNotes);
           updateSettings("showQuestionNotes", e.target.checked);
         }}
         type="checkbox"

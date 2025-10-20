@@ -4,6 +4,7 @@ import { ValueOf } from "next/dist/shared/lib/constants";
 import { Key, NoteWeight } from "../constants/keys";
 import { Scale } from "../constants/scale";
 import { noteWeightsForScale } from "../lib/key";
+import { cadenceGainNode } from "../lib/webAudio";
 
 export enum LearningMode {
   Notes = "Notes",
@@ -21,6 +22,7 @@ export interface Settings {
   chordSize: number; // If in chord mode, the size of the chords to be played
   showQuestionNotes: boolean;
   playCadence: boolean;
+  cadenceVolume: number;
 }
 
 interface settingsContext {
@@ -38,6 +40,7 @@ const defaultSettings: Settings = {
   chordSize: 2,
   showQuestionNotes: true,
   playCadence: true,
+  cadenceVolume: 0.8,
 };
 
 export const SettingsContext = createContext({

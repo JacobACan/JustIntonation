@@ -5,10 +5,17 @@ import { noteToNoteFile } from "./notes";
 
 console.log("Initializing Web Audio API");
 
-let audioContext: AudioContext;
+export let audioContext: AudioContext;
+export let masterGainNode: GainNode;
+export let cadenceGainNode: GainNode;
 
 try {
   audioContext = new window.AudioContext();
+  masterGainNode = audioContext.createGain();
+  masterGainNode.connect(audioContext.destination);
+  cadenceGainNode = audioContext.createGain();
+  cadenceGainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
+  cadenceGainNode.connect(audioContext.destination);
 } catch (e) {
   console.error("Web Audio API is not supported in this browser:", e);
 }
@@ -52,11 +59,29 @@ export const playChord = async (chord: Note[]) => {
 };
 
 // Helper to play a note by filename
-export const playCadence = (key: Key) => {
+export const playCadence = async (key: Key) => {
   const cadenceFile = keyToCadence[key];
-  console.log("Playing cadence in key of ", key);
-  const audio = new Audio(`/cadences/${cadenceFile}`);
-  audio.play();
+  const res = await fetch(`/cadences/${cadenceFile}`);
+
+  const resBuffer = await res.arrayBuffer();
+  const cadence = audioContext.createBufferSource();
+  cadence.buffer = await audioContext.decodeAudioData(resBuffer);
+
+  const delay = audioContext.createDelay(10);
+  delay.delayTime.setValueAtTime(10, audioContext.currentTime);
+
+  const gain = audioContext.createGain();
+  gain.gain.setValueAtTime(1, audioContext.currentTime);
+
+  cadence.connect(delay);
+  console.log(cadenceGainNode);
+  delay.connect(cadenceGainNode);
+  delay.connect(gain);
+  gain.connect(delay);
+
+  cadence.connect(cadenceGainNode);
+
+  cadence.start();
 };
 
 export const playMelody = async (notes: MelodicNote[]) => {
