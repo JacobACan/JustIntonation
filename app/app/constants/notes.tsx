@@ -245,14 +245,14 @@ export enum NoteFile {
   Gb6 = "Gb6.ogg",
 }
 
-export interface MelodicNote {
-  note: Note;
+export interface QuestionMelody {
+  notes: Note[];
   duration: Duration;
 }
 
 export enum Duration {
-  EigthNote = 0.25,
-  SixteenthNote = 0.5,
+  SixteenthNote = 0.25,
+  EigthNote = 0.5,
   QuarterNote = 1,
   HalfNote = 2,
   WholeNote = 4,

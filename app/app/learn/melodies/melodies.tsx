@@ -30,10 +30,10 @@ export default function Melodies() {
       <PlayReplayButton
         onPlay={async () => {
           playMelody([
-            { note: Note.G3, duration: Duration.EigthNote },
-            { note: Note.A3, duration: Duration.EigthNote },
-            { note: Note.C4, duration: Duration.QuarterNote },
-            { note: Note.D4, duration: Duration.WholeNote },
+            { notes: [Note.G3, Note.C3], duration: Duration.EigthNote },
+            { notes: [Note.A3], duration: Duration.EigthNote },
+            { notes: [Note.C4], duration: Duration.QuarterNote },
+            { notes: [Note.D4, Note.G4], duration: Duration.WholeNote },
           ]);
         }}
       />

@@ -1,4 +1,4 @@
-import { MelodicNote, Note, NoteFile } from "../constants/notes";
+import { QuestionMelody, Note, NoteFile } from "../constants/notes";
 import { keyToCadence } from "../constants/cadences";
 import { Key } from "../constants/keys";
 import { noteToNoteFile } from "./notes";
@@ -84,35 +84,35 @@ export const playCadence = async (key: Key) => {
   cadence.start();
 };
 
-export const playMelody = async (notes: MelodicNote[]) => {
-  const noteFiles = notes.map((n) => noteToNoteFile(n.note));
-  const noteDurations = notes.map((n) => n.duration);
-
-  const audioBuffers = await loadAudioBuffers(noteFiles);
-
+export const playMelody = async (melody: QuestionMelody[]) => {
   const bpm = 120;
+
+  const noteDurations = melody.map((n) => n.duration);
   let delay = 0;
-  let i = 0;
   const delayOffset = 60 / bpm;
-  audioBuffers.forEach((b) => {
-    const noteLength = delayOffset * noteDurations[i];
+  for (let j = 0; j < melody.length; j++) {
+    const noteFiles = melody[j].notes.map((n) => noteToNoteFile(n));
+    const noteDuration = noteDurations[j];
+
+    const audioBuffers = await loadAudioBuffers(noteFiles);
+    const noteLength = delayOffset * noteDuration;
 
     const decayNode = audioContext.createGain();
-    const source = audioContext.createBufferSource();
-    source.buffer = b;
-
-    source.connect(decayNode);
     decayNode.connect(audioContext.destination);
-
     decayNode.gain.exponentialRampToValueAtTime(
       0.1,
       audioContext.currentTime + delay + noteLength
     );
-    source.start(audioContext.currentTime + delay);
+
+    audioBuffers.forEach((b) => {
+      const source = audioContext.createBufferSource();
+      source.buffer = b;
+      source.connect(decayNode);
+      source.start(audioContext.currentTime + delay);
+    });
 
     delay += noteLength;
-    i++;
-  });
+  }
 };
 
 const loadAudioBuffers = async (noteFiles: NoteFile[]) => {
