@@ -4,7 +4,10 @@ import QuestionNoteRangeSelector from "./questionRangeSelector";
 import QuestionKeySelector from "./questionKeySelector";
 import QuestionScaleSelector from "./questionScaleSelector";
 import LearningModeSelector from "./learningModeSelector";
-import { LearningMode, SettingsContext } from "@/app/provider/settingsProvider";
+import {
+  LearningMode,
+  SettingsContext,
+} from "@/components/providers/settingsProvider";
 import ChordSizeSelector from "./chordSizeSelector";
 import PlayCadence from "./playCadence";
 import ShowQuestionNotesSelector from "./showQuestionNotesSelector copy";

@@ -1,10 +1,10 @@
 import { createContext, useState } from "react";
-import { Note } from "../constants/notes";
+import { Note } from "../../constants/notes";
 import { ValueOf } from "next/dist/shared/lib/constants";
-import { Key, NoteWeight } from "../constants/keys";
-import { Scale } from "../constants/scale";
-import { noteWeightsForScale } from "../lib/key";
-import { cadenceGainNode } from "../lib/webAudio";
+import { Key, NoteWeight } from "../../constants/keys";
+import { Scale } from "../../constants/scale";
+import { noteWeightsForScale } from "../../lib/key";
+import { cadenceGainNode } from "../../lib/webAudio";
 
 export enum LearningMode {
   Notes = "Notes",

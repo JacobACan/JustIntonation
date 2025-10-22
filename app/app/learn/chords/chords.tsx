@@ -1,10 +1,10 @@
-import Piano from "@/app/components/learn/piano";
-import PlayReplayButton from "@/app/components/learn/playReplayButton";
-import { TIME_BEFORE_QUESTION_AFTER_CADENCE } from "@/app/constants/cadences";
-import { midiToNote, Note } from "@/app/constants/notes";
-import { getNextQuestionChord } from "@/app/lib/questions";
-import { playCadence, playChord } from "@/app/lib/webAudio";
-import { SettingsContext } from "@/app/provider/settingsProvider";
+import Piano from "@/components/learn/piano";
+import PlayReplayButton from "@/components/learn/playReplayButton";
+import { TIME_BEFORE_QUESTION_AFTER_CADENCE } from "@/constants/cadences";
+import { midiToNote, Note } from "@/constants/notes";
+import { getNextQuestionChord } from "@/lib/questions";
+import { playCadence, playChord } from "@/lib/webAudio";
+import { SettingsContext } from "@/components/providers/settingsProvider";
 import { useMIDINotes } from "@react-midi/hooks";
 import { MIDINote } from "@react-midi/hooks/dist/types";
 import { useContext, useEffect, useState } from "react";

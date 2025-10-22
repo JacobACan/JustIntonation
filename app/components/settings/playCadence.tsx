@@ -1,5 +1,5 @@
-import { audioContext, cadenceGainNode } from "@/app/lib/webAudio";
-import { SettingsContext } from "@/app/provider/settingsProvider";
+import { audioContext, cadenceGainNode } from "@/lib/webAudio";
+import { SettingsContext } from "@/components/providers/settingsProvider";
 import { useContext } from "react";
 
 export default function PlayCadence() {

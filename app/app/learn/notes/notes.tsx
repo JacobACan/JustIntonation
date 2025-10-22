@@ -2,20 +2,23 @@
 
 import { MIDINote } from "@react-midi/hooks/dist/types";
 import { useContext, useEffect, useState } from "react";
-import { midiToNote, Note } from "../../constants/notes";
+import { midiToNote, Note } from "../../../constants/notes";
 import { useMIDINotes } from "@react-midi/hooks";
-import { SettingsContext } from "../../provider/settingsProvider";
-import { noteToNoteFile } from "../../lib/notes";
-import { playCadence, playNote } from "../../lib/webAudio";
-import { getNextQuestionNote } from "../../lib/questions";
-import Piano from "@/app/components/learn/piano";
-import PlayReplayButton from "@/app/components/learn/playReplayButton";
-import { TIME_BEFORE_QUESTION_AFTER_CADENCE } from "@/app/constants/cadences";
+import { SettingsContext } from "../../../components/providers/settingsProvider";
+import { noteToNoteFile } from "../../../lib/notes";
+import { playCadence, playNote } from "../../../lib/webAudio";
+import { getNextQuestionNote } from "../../../lib/questions";
+import Piano from "@/components/learn/piano";
+import PlayReplayButton from "@/components/learn/playReplayButton";
+import { TIME_BEFORE_QUESTION_AFTER_CADENCE } from "@/constants/cadences";
+import { Progress } from "@/components/ui/progress";
+import { CountdownContext } from "@/components/providers/countdownProvider";
 
 export default function Notes() {
   const [currentNote, setCurrentNote] = useState<Note | null>(null);
   const [questionNote, setQuestionNote] = useState<Note | null>(null);
   const [questionsInARow, setQuestionsInARow] = useState(0);
+  const { startCountdownTimer, countdownTimer } = useContext(CountdownContext);
   const { settings } = useContext(SettingsContext);
   const notes = useMIDINotes();
 
@@ -59,9 +62,15 @@ export default function Notes() {
             );
             setQuestionNote(nextQuestionNote);
             playNote(noteToNoteFile(nextQuestionNote));
+            await startCountdownTimer(10, 50);
+            console.log(countdownTimer);
           }
         }}
       />
+      <Progress
+        value={(countdownTimer.timeLeft / countdownTimer.totalTime) * 100}
+        className="w-[375px] m-2"
+      ></Progress>
       <Piano
         displayRange={settings.questionRange}
         notesDown2={[...(currentNote ? [currentNote] : [])]}

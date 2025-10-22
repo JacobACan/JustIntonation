@@ -1,4 +1,4 @@
-import { SettingsContext } from "@/app/provider/settingsProvider";
+import { SettingsContext } from "@/components/providers/settingsProvider";
 import { useContext, useEffect, useState } from "react";
 
 interface PlayReplayButtonProps {

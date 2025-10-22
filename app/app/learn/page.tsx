@@ -2,7 +2,10 @@
 import { useContext } from "react";
 import Chords from "./chords/chords";
 import Notes from "./notes/notes";
-import { LearningMode, SettingsContext } from "../provider/settingsProvider";
+import {
+  LearningMode,
+  SettingsContext,
+} from "../../components/providers/settingsProvider";
 import Melodies from "./melodies/melodies";
 
 export default function Learn() {

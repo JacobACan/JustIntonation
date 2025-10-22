@@ -1,6 +1,6 @@
-import { Key } from "@/app/constants/keys";
-import { noteWeightsForScale } from "@/app/lib/key";
-import { SettingsContext } from "@/app/provider/settingsProvider";
+import { Key } from "@/constants/keys";
+import { noteWeightsForScale } from "@/lib/key";
+import { SettingsContext } from "@/components/providers/settingsProvider";
 import { useContext } from "react";
 
 export default function QuestionKeySelector() {

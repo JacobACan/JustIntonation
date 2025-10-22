@@ -1,4 +1,5 @@
-import { Note, QuestionMelody } from "../constants/notes";
+import { Duration, Note, QuestionMelody } from "../constants/notes";
+import { audioContext } from "./webAudio";
 
 export interface GuessMelody {
   notes: Note[];
@@ -10,12 +11,21 @@ export enum GuessMelodyStatus {
   CompletelyCorrect,
 }
 export let melodyGuess: GuessMelody[] = [];
-export let melodyQuestion: QuestionMelody[] = [];
+export let melodyQuestion: QuestionMelody[] = [
+  { notes: [Note.G3, Note.C3], duration: Duration.EigthNote },
+  { notes: [Note.A3], duration: Duration.EigthNote },
+  { notes: [Note.C4], duration: Duration.QuarterNote },
+  { notes: [Note.D4, Note.G4], duration: Duration.WholeNote },
+];
 
-//
-export const pushGuess = (note: Note, timeStamp: number) => {
-  const notePlayedAtSameTimeAsLastNote =
-    melodyGuess[melodyGuess.length - 1].timeStamp + 0.1 >= timeStamp;
+//Pushes next guess to the global guess object list
+export const pushGuess = (note: Note) => {
+  const timeStamp = audioContext.currentTime;
+  let notePlayedAtSameTimeAsLastNote = false;
+  if (melodyGuess.length > 0) {
+    notePlayedAtSameTimeAsLastNote =
+      melodyGuess[melodyGuess.length - 1].timeStamp + 0.1 >= timeStamp;
+  }
 
   if (notePlayedAtSameTimeAsLastNote) {
     melodyGuess[melodyGuess.length - 1].notes.push(note);
@@ -23,9 +33,10 @@ export const pushGuess = (note: Note, timeStamp: number) => {
   } else {
     melodyGuess.push({ notes: [note], timeStamp: timeStamp });
   }
+  console.log(melodyGuess);
 };
 
-// returns
+// Checks the global guess object list
 export const checkGuessRealTime = (): GuessMelodyStatus => {
   if (melodyGuess.length < melodyQuestion.length) {
     if (guessMatchesQuestionToCurrent()) {
@@ -42,6 +53,10 @@ export const checkGuessRealTime = (): GuessMelodyStatus => {
   } else {
     return GuessMelodyStatus.Wrong;
   }
+};
+
+export const resetGlobalGuessObject = () => {
+  melodyGuess = [];
 };
 
 const guessMatchesQuestionToCurrent = (): boolean => {

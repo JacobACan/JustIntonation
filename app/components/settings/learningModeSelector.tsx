@@ -1,4 +1,7 @@
-import { LearningMode, SettingsContext } from "@/app/provider/settingsProvider";
+import {
+  LearningMode,
+  SettingsContext,
+} from "@/components/providers/settingsProvider";
 import { useContext } from "react";
 
 export default function LearningModeSelector() {

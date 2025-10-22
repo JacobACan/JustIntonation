@@ -74,7 +74,6 @@ export const playCadence = async (key: Key) => {
   gain.gain.setValueAtTime(1, audioContext.currentTime);
 
   cadence.connect(delay);
-  console.log(cadenceGainNode);
   delay.connect(cadenceGainNode);
   delay.connect(gain);
   gain.connect(delay);
@@ -84,8 +83,11 @@ export const playCadence = async (key: Key) => {
   cadence.start();
 };
 
-export const playMelody = async (melody: QuestionMelody[]) => {
-  const bpm = 120;
+export const playMelody = async (
+  melody: QuestionMelody[],
+  relGain: number = 1
+) => {
+  const bpm = 60;
 
   const noteDurations = melody.map((n) => n.duration);
   let delay = 0;
@@ -97,8 +99,12 @@ export const playMelody = async (melody: QuestionMelody[]) => {
     const audioBuffers = await loadAudioBuffers(noteFiles);
     const noteLength = delayOffset * noteDuration;
 
+    const relativeGain = audioContext.createGain();
+    relativeGain.gain.setValueAtTime(relGain, audioContext.currentTime);
+    relativeGain.connect(audioContext.destination);
+
     const decayNode = audioContext.createGain();
-    decayNode.connect(audioContext.destination);
+    decayNode.connect(relativeGain);
     decayNode.gain.exponentialRampToValueAtTime(
       0.1,
       audioContext.currentTime + delay + noteLength
