@@ -1,5 +1,5 @@
 import Piano from "@/components/learn/piano";
-import PlayReplayButton from "@/components/learn/playReplayButton";
+import PlayReplayButton from "@/components/learn/learningUserEvent";
 import { TIME_BEFORE_QUESTION_AFTER_CADENCE } from "@/constants/cadences";
 import { midiToNote, Note } from "@/constants/notes";
 import { getNextQuestionChord } from "@/lib/questions";
@@ -8,6 +8,8 @@ import { SettingsContext } from "@/components/providers/settingsProvider";
 import { useMIDINotes } from "@react-midi/hooks";
 import { MIDINote } from "@react-midi/hooks/dist/types";
 import { useContext, useEffect, useState } from "react";
+import { CountdownContext } from "@/components/providers/countdownProvider";
+import { Progress } from "@/components/ui/progress";
 
 export default function Chords() {
   //currentNote usestate var
@@ -25,6 +27,8 @@ export default function Chords() {
     setCurrentChord([]);
     setQuestionChord(null);
   }, [settings]);
+
+  const { startCountdownTimer, countdownTimer } = useContext(CountdownContext);
 
   const handleIncomingMidiNotes = (notes: MIDINote[]) => {
     if (notes.length == settings.chordSize) {
@@ -69,6 +73,11 @@ export default function Chords() {
           }
         }}
       />
+      <Progress
+        value={countdownTimer.timeLeft}
+        max={countdownTimer.totalTime}
+        className="w-[375px] m-2"
+      ></Progress>
       <Piano
         displayRange={settings.questionRange}
         notesDown2={currentChord ? currentChord : []}

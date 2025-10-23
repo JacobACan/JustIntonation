@@ -18,6 +18,7 @@ export enum cadenceFiles {
 }
 
 export const keyToCadence: { [key in Key]: cadenceFiles } = {
+  [Key.Ab]: cadenceFiles.Ab4,
   [Key.A]: cadenceFiles.A4,
   [Key.B]: cadenceFiles.B4,
   [Key.Bb]: cadenceFiles.Bb4,

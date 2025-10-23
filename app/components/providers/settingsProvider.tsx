@@ -4,12 +4,17 @@ import { ValueOf } from "next/dist/shared/lib/constants";
 import { Key, NoteWeight } from "../../constants/keys";
 import { Scale } from "../../constants/scale";
 import { noteWeightsForScale } from "../../lib/key";
-import { cadenceGainNode } from "../../lib/webAudio";
 
 export enum LearningMode {
   Notes = "Notes",
   Chords = "Chords",
   Melodies = "Melodies",
+}
+
+export enum SkipReview {
+  None,
+  Correct,
+  Both,
 }
 
 export interface Settings {
@@ -23,6 +28,10 @@ export interface Settings {
   showQuestionNotes: boolean;
   playCadence: boolean;
   cadenceVolume: number;
+  numberOfQuestions: number;
+  questionNumber: number;
+  skipReviewOn: SkipReview;
+  timeToAnswerQuestion: number; // in miliseconds
 }
 
 interface settingsContext {
@@ -30,7 +39,7 @@ interface settingsContext {
   updateSettings: (key: keyof Settings, value: ValueOf<Settings>) => void;
 }
 
-const defaultSettings: Settings = {
+export const defaultSettings: Settings = {
   questionRange: [Note.C4, Note.C5],
   questionKey: Key.C,
   questionScale: Scale.major,
@@ -41,6 +50,10 @@ const defaultSettings: Settings = {
   showQuestionNotes: true,
   playCadence: true,
   cadenceVolume: 0.8,
+  numberOfQuestions: 20,
+  questionNumber: 0,
+  skipReviewOn: SkipReview.Correct,
+  timeToAnswerQuestion: 5000,
 };
 
 export const SettingsContext = createContext({

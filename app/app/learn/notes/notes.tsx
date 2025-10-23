@@ -9,8 +9,7 @@ import { noteToNoteFile } from "../../../lib/notes";
 import { playCadence, playNote } from "../../../lib/webAudio";
 import { getNextQuestionNote } from "../../../lib/questions";
 import Piano from "@/components/learn/piano";
-import PlayReplayButton from "@/components/learn/playReplayButton";
-import { TIME_BEFORE_QUESTION_AFTER_CADENCE } from "@/constants/cadences";
+import PlayReplayButton from "@/components/learn/learningUserEvent";
 import { Progress } from "@/components/ui/progress";
 import { CountdownContext } from "@/components/providers/countdownProvider";
 
@@ -47,26 +46,7 @@ export default function Notes() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-2 ">
-      <PlayReplayButton
-        onPlay={async () => {
-          if (questionNote) {
-            playNote(noteToNoteFile(questionNote));
-          } else {
-            if (settings.playCadence) playCadence(settings.questionKey);
-            await new Promise((res) =>
-              setTimeout(res, TIME_BEFORE_QUESTION_AFTER_CADENCE)
-            );
-            const nextQuestionNote = getNextQuestionNote(
-              settings.questionNoteWeights,
-              settings.questionRange
-            );
-            setQuestionNote(nextQuestionNote);
-            playNote(noteToNoteFile(nextQuestionNote));
-            await startCountdownTimer(10, 50);
-            console.log(countdownTimer);
-          }
-        }}
-      />
+      <PlayButton />
       <Progress
         value={(countdownTimer.timeLeft / countdownTimer.totalTime) * 100}
         className="w-[375px] m-2"

@@ -8,9 +8,9 @@ interface Countdown {
 }
 
 const initialCountdownTimer: Countdown = {
-  timeLeft: 0,
+  timeLeft: 1,
   startTime: 0,
-  totalTime: 0,
+  totalTime: 1,
 };
 
 export const CountdownContext = createContext(
@@ -22,7 +22,9 @@ export const CountdownContext = createContext(
 
 export default function CountdownProvider({
   children,
-}: Readonly<{ children: React.ReactNode }>) {
+}: {
+  children: React.ReactNode;
+}) {
   const [countdownTimer, setCountdownTimer] = useState(initialCountdownTimer);
 
   const intervalicCheck = async (
@@ -60,9 +62,5 @@ export default function CountdownProvider({
 
   const value = { startCountdownTimer, countdownTimer };
 
-  return (
-    <CountdownContext.Provider value={value}>
-      {children}
-    </CountdownContext.Provider>
-  );
+  return <CountdownContext value={value}>{children}</CountdownContext>;
 }

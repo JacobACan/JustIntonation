@@ -9,7 +9,7 @@ import { noteToNoteFile } from "../../../lib/notes";
 import { playCadence, playMelody, playNote } from "../../../lib/webAudio";
 import { getNextQuestionNote } from "../../../lib/questions";
 import Piano from "@/components/learn/piano";
-import PlayReplayButton from "@/components/learn/playReplayButton";
+import PlayReplayButton from "@/components/learn/learningUserEvent";
 import { TIME_BEFORE_QUESTION_AFTER_CADENCE } from "@/constants/cadences";
 import {
   checkGuessRealTime,
