@@ -46,10 +46,10 @@ export default function CountdownProvider({
     }
   };
 
-  const startCountdownTimer = async (seconds: number, interval: number) => {
+  const startCountdownTimer = async (ms: number, interval: number) => {
     console.log("STARTING!!!");
     const startTime = audioContext.currentTime;
-    const totalTime = seconds;
+    const totalTime = ms / 1000;
 
     setCountdownTimer({
       totalTime,

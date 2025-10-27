@@ -11,6 +11,13 @@ import {
 import ChordSizeSelector from "./chordSizeSelector";
 import PlayCadence from "./playCadence";
 import ShowQuestionNotesSelector from "./showQuestionNotesSelector copy";
+import LearningUserEvent from "../learn/learningUserEvent";
+import ContinueIcon from "../icon/continueIcon";
+import { MusicLearnerEvent } from "@/machines/musicLearningProcess";
+import BackIcon from "../icon/backIcon";
+import PlayIcon from "../icon/playIcon";
+import ReplayIcon from "../icon/replayIcon";
+import XIcon from "../icon/xIcon";
 
 export default function Settings() {
   const { settings } = useContext(SettingsContext);
@@ -20,6 +27,9 @@ export default function Settings() {
         <h2 className="text-2xl mb-4 font-bold">Settings</h2>
         {/* Settings content here */}
         <div className="flex flex-col gap-4">
+          <LearningUserEvent eventType={MusicLearnerEvent.START}>
+            <PlayIcon />
+          </LearningUserEvent>
           <MidiSelector />
           <LearningModeSelector />
           {settings.learningMode === LearningMode.Chords && (

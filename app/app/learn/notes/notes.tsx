@@ -6,12 +6,21 @@ import { midiToNote, Note } from "../../../constants/notes";
 import { useMIDINotes } from "@react-midi/hooks";
 import { SettingsContext } from "../../../components/providers/settingsProvider";
 import { noteToNoteFile } from "../../../lib/notes";
-import { playCadence, playNote } from "../../../lib/webAudio";
+import { playNote } from "../../../lib/webAudio";
 import { getNextQuestionNote } from "../../../lib/questions";
 import Piano from "@/components/learn/piano";
-import PlayReplayButton from "@/components/learn/learningUserEvent";
 import { Progress } from "@/components/ui/progress";
 import { CountdownContext } from "@/components/providers/countdownProvider";
+import LearningUserEvent from "@/components/learn/learningUserEvent";
+import PlayIcon from "@/components/icon/playIcon";
+import {
+  MusicLearnerEvent,
+  MusicLearnerState,
+} from "@/machines/musicLearningProcess";
+import { MusicLearnerContext } from "@/components/providers/learningStateMachineProvider";
+import { useSelector } from "@xstate/react";
+import ReplayIcon from "@/components/icon/replayIcon";
+import ContinueIcon from "@/components/icon/continueIcon";
 
 export default function Notes() {
   const [currentNote, setCurrentNote] = useState<Note | null>(null);
@@ -20,6 +29,23 @@ export default function Notes() {
   const { startCountdownTimer, countdownTimer } = useContext(CountdownContext);
   const { settings } = useContext(SettingsContext);
   const notes = useMIDINotes();
+  const musicLearner = useContext(MusicLearnerContext);
+  if (!musicLearner) return;
+
+  const { isIdle, isGuessing, isReviewing, totalQuestions, questionNumber } =
+    useSelector(musicLearner, (s) => {
+      return {
+        isIdle: s.matches(MusicLearnerState.IDLE),
+        isGuessing: s.matches(MusicLearnerState.GUESSING),
+        isReviewing: s.matches(MusicLearnerState.REVIEWING),
+        totalQuestions: s.context.numberOfQuestions,
+        questionNumber: s.context.questionNumber,
+      };
+    });
+
+  useEffect(() => {
+    if (isGuessing) startCountdownTimer(settings.timeToAnswerQuestion, 50);
+  }, [isGuessing]);
 
   useEffect(() => {
     handleIncomingMidiNotes(notes);
@@ -44,9 +70,31 @@ export default function Notes() {
     }
   };
 
+  const renderUserActions = () => {
+    return (
+      <section>
+        {isIdle && (
+          <LearningUserEvent eventType={MusicLearnerEvent.START}>
+            <PlayIcon />
+          </LearningUserEvent>
+        )}
+        {isGuessing && (
+          <LearningUserEvent eventType={MusicLearnerEvent.REPLAY}>
+            <ReplayIcon />
+          </LearningUserEvent>
+        )}
+        {isReviewing && (
+          <LearningUserEvent eventType={MusicLearnerEvent.CONTINUE}>
+            <ContinueIcon />
+          </LearningUserEvent>
+        )}
+      </section>
+    );
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-2 ">
-      <PlayButton />
+      {renderUserActions()}
       <Progress
         value={(countdownTimer.timeLeft / countdownTimer.totalTime) * 100}
         className="w-[375px] m-2"
@@ -63,7 +111,7 @@ export default function Notes() {
         ]}
       />
       <h2 className=" mt-8 font-bold text-[var(--middleground1)]">
-        {questionsInARow}
+        {questionNumber} / {totalQuestions}
       </h2>
     </div>
   );
