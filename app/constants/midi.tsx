@@ -95,6 +95,7 @@ export const noteToMidi: { [key in Note]: number } = {
 export const midiNotesValues = Object.values(noteToMidi).sort((a, b) => a - b);
 
 export const keyToMidi = {
+  [Key.Ab]: noteToMidi[Note.Ab1],
   [Key.C]: noteToMidi[Note.C1],
   [Key.Db]: noteToMidi[Note.Db1],
   [Key.D]: noteToMidi[Note.D1],
