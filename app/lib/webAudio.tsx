@@ -17,7 +17,7 @@ try {
   cadenceGainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
   cadenceGainNode.connect(audioContext.destination);
 } catch (e) {
-  console.error("Web Audio API is not supported in this browser:", e);
+  // console.error("Web Audio API is not supported in this browser:", e);
 }
 
 // Helper to play a note by filename

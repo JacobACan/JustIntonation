@@ -2,12 +2,12 @@
 
 import { MIDINote } from "@react-midi/hooks/dist/types";
 import { useContext, useEffect, useState } from "react";
-import { midiToNote, Note } from "../../../constants/notes";
+import { midiToNote, Note } from "../../constants/notes";
 import { useMIDINotes } from "@react-midi/hooks";
-import { SettingsContext } from "../../../components/providers/settingsProvider";
-import { noteToNoteFile } from "../../../lib/notes";
-import { playNote } from "../../../lib/webAudio";
-import { getNextQuestionNote } from "../../../lib/questions";
+import { SettingsContext } from "../../components/providers/settingsProvider";
+import { noteToNoteFile } from "../../lib/notes";
+import { playNote } from "../../lib/webAudio";
+import { getNextQuestionNote } from "../../lib/questions";
 import Piano from "@/components/learn/piano";
 import { Progress } from "@/components/ui/progress";
 import { CountdownContext } from "@/components/providers/countdownProvider";
@@ -22,7 +22,7 @@ import { useSelector } from "@xstate/react";
 import ReplayIcon from "@/components/icon/replayIcon";
 import ContinueIcon from "@/components/icon/continueIcon";
 
-export default function Notes() {
+export default function LearnQuestions() {
   const [currentNote, setCurrentNote] = useState<Note | null>(null);
   const [questionNote, setQuestionNote] = useState<Note | null>(null);
   const [questionsInARow, setQuestionsInARow] = useState(0);
@@ -72,7 +72,7 @@ export default function Notes() {
 
   const renderUserActions = () => {
     return (
-      <section>
+      <section className="w-[50px] h-[50px]">
         {isIdle && (
           <LearningUserEvent eventType={MusicLearnerEvent.START}>
             <PlayIcon />

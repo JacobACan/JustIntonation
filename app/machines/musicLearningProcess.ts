@@ -4,14 +4,10 @@ import {
   Settings,
   SkipReview,
 } from "@/components/providers/settingsProvider";
-import {
-  ActorRef,
-  ActorRefFrom,
-  assign,
-  fromPromise,
-  setup,
-  transition,
-} from "xstate";
+import { noteToNoteFile } from "@/lib/notes";
+import { getNextQuestionNote } from "@/lib/questions";
+import { playCadence, playNote } from "@/lib/webAudio";
+import { fromPromise, setup } from "xstate";
 
 export enum MusicLearnerEvent {
   START = "start",
@@ -51,23 +47,32 @@ export const musicLearner = setup({
     playMusicContext: fromPromise(async ({ input }: { input: Settings }) => {
       switch (input.learningMode) {
         case LearningMode.Notes:
+          playCadence(input.questionKey);
           break;
         case LearningMode.Chords:
           break;
         case LearningMode.Melodies:
           break;
       }
+      await new Promise((r) => setTimeout(r, 1000));
       return;
     }),
     playQuestion: fromPromise(async ({ input }: { input: Settings }) => {
       switch (input.learningMode) {
         case LearningMode.Notes:
+          const note = getNextQuestionNote(
+            input.questionNoteWeights,
+            input.questionRange
+          );
+          playNote(noteToNoteFile(note));
           break;
         case LearningMode.Chords:
           break;
         case LearningMode.Melodies:
           break;
       }
+      await new Promise((r) => setTimeout(r, 1000));
+
       return;
     }),
     replayQuestion: fromPromise(async ({ input }: { input: Settings }) => {
