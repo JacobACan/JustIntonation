@@ -1,60 +1,16 @@
-import { createContext, useState } from "react";
-import { Note } from "../../constants/notes";
+import { createContext, useContext, useState } from "react";
 import { ValueOf } from "next/dist/shared/lib/constants";
-import { Key, NoteWeight } from "../../constants/keys";
+import { Key } from "../../constants/keys";
 import { Scale } from "../../constants/scale";
 import { noteWeightsForScale } from "../../lib/key";
-
-export enum LearningMode {
-  Notes = "Notes",
-  Chords = "Chords",
-  Melodies = "Melodies",
-}
-
-export enum SkipReview {
-  None,
-  Correct,
-  Both,
-}
-
-export interface Settings {
-  questionRange: [Note, Note]; // The Range of notes that a musician is questioned on
-  questionKey: Key; // The key that the questions are centered around
-  questionScale: Scale; // The scale that the questions are centered around
-  questionNoteWeights: NoteWeight[]; // The notes that the musician is questioned on.  If the weight is higher, the note is more likely to be chosen.
-  questionsInARow: number; // The number of questions answered correctly in a row to move on
-  learningMode: LearningMode;
-  chordSize: number; // If in chord mode, the size of the chords to be played
-  showQuestionNotes: boolean;
-  playCadence: boolean;
-  cadenceVolume: number;
-  numberOfQuestions: number;
-  questionNumber: number;
-  skipReviewOn: SkipReview;
-  timeToAnswerQuestion: number; // in miliseconds
-}
+import { MusicLearnerContext } from "./learningStateMachineProvider";
+import { MusicLearnerEvent } from "@/machines/musicLearningProcess";
+import { defaultSettings, Settings } from "@/constants/settings";
 
 interface settingsContext {
   settings: Settings;
   updateSettings: (key: keyof Settings, value: ValueOf<Settings>) => void;
 }
-
-export const defaultSettings: Settings = {
-  questionRange: [Note.C4, Note.C5],
-  questionKey: Key.C,
-  questionScale: Scale.major,
-  questionNoteWeights: noteWeightsForScale(Key.C, Scale.major),
-  questionsInARow: 30,
-  learningMode: LearningMode.Notes,
-  chordSize: 2,
-  showQuestionNotes: true,
-  playCadence: true,
-  cadenceVolume: 0.8,
-  numberOfQuestions: 20,
-  questionNumber: 0,
-  skipReviewOn: SkipReview.Correct,
-  timeToAnswerQuestion: 5000,
-};
 
 export const SettingsContext = createContext({
   settings: defaultSettings,
@@ -65,9 +21,21 @@ export default function SettingsProvider({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const [settings, setSettings] = useState(defaultSettings as Settings);
-  const updateSettings = (key: string, value: any) => {
+  const musicLearner = useContext(MusicLearnerContext);
+  if (!musicLearner) return;
+
+  const updateSettings = <K extends keyof Settings = keyof Settings>(
+    key: K,
+    value: Settings[K]
+  ) => {
+    musicLearner.send({
+      type: MusicLearnerEvent.UPDATE_SETTING,
+      key: key,
+      value: value,
+    });
     setSettings((prevSettings) => ({ ...prevSettings, [key]: value }));
   };
+
   const chooseRandomKeyAndScale = () => {
     const randomKey =
       Object.values(Key)[Math.floor(Math.random() * Object.values(Key).length)];

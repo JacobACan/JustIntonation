@@ -15,7 +15,7 @@ export default function Learn() {
   );
   const learningMode = useSelector(
     musicLearnerActorRef,
-    (s) => s.context.learningMode
+    (s) => s.context.settings.learningMode
   );
 
   return (

@@ -1,7 +1,5 @@
-import {
-  LearningMode,
-  SettingsContext,
-} from "@/components/providers/settingsProvider";
+import { SettingsContext } from "@/components/providers/settingsProvider";
+import { LearningMode } from "@/constants/settings";
 import { useContext } from "react";
 
 export default function LearningModeSelector() {

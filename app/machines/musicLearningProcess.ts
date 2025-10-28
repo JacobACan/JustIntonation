@@ -3,11 +3,11 @@ import {
   LearningMode,
   Settings,
   SkipReview,
-} from "@/components/providers/settingsProvider";
+} from "@/constants/settings";
 import { noteToNoteFile } from "@/lib/notes";
 import { getNextQuestionNote } from "@/lib/questions";
 import { playCadence, playNote } from "@/lib/webAudio";
-import { fromPromise, setup } from "xstate";
+import { assign, fromPromise, setup } from "xstate";
 
 export enum MusicLearnerEvent {
   START = "start",
@@ -16,6 +16,7 @@ export enum MusicLearnerEvent {
   CHANGE_LEARNING_APPROACH = "change learning approach",
   CORRECT_GUESS = "correct guess",
   INCORRECT_GUESS = "incorrect guess",
+  UPDATE_SETTING = "update setting",
 }
 
 export enum MusicLearnerState {
@@ -30,17 +31,28 @@ export enum MusicLearnerState {
   REPLAYING_QUESTION = "replaying question",
 }
 
+type UpdateSettingEvent<K extends keyof Settings = keyof Settings> = {
+  type: MusicLearnerEvent.UPDATE_SETTING;
+  key: K;
+  value: Settings[K];
+};
+
 export type MusicLearnerEvents =
   | { type: MusicLearnerEvent.START }
   | { type: MusicLearnerEvent.CONTINUE }
   | { type: MusicLearnerEvent.REPLAY }
   | { type: MusicLearnerEvent.CHANGE_LEARNING_APPROACH }
   | { type: MusicLearnerEvent.CORRECT_GUESS }
+  | UpdateSettingEvent
   | { type: MusicLearnerEvent.INCORRECT_GUESS };
+
+export interface MusicLearnerContext {
+  settings: Settings;
+}
 
 export const musicLearner = setup({
   types: {
-    context: {} as Settings,
+    context: {} as MusicLearnerContext,
     events: {} as MusicLearnerEvents,
   },
   actors: {
@@ -91,15 +103,26 @@ export const musicLearner = setup({
     stopAllAudio: () => {},
   },
   delays: {
-    answerTime: (ctx) => ctx.context.timeToAnswerQuestion,
+    answerTime: (ctx) => ctx.context.settings.timeToAnswerQuestion,
   },
 }).createMachine({
   id: "musicLearningMachine",
-  context: defaultSettings,
+  context: { settings: defaultSettings },
   initial: MusicLearnerState.SELECTING_LEARNING_APPROACH,
   states: {
     [MusicLearnerState.SELECTING_LEARNING_APPROACH]: {
-      on: { [MusicLearnerEvent.START]: { target: "idle" } },
+      on: {
+        [MusicLearnerEvent.START]: { target: "idle" },
+        [MusicLearnerEvent.UPDATE_SETTING]: {
+          actions: assign({
+            settings: (c) => {
+              console.log(c.event);
+              return { ...c.context.settings, [c.event.key]: c.event.value };
+            },
+          }),
+          target: MusicLearnerState.SELECTING_LEARNING_APPROACH,
+        },
+      },
     },
     [MusicLearnerState.IDLE]: {
       on: {
@@ -109,6 +132,9 @@ export const musicLearner = setup({
         [MusicLearnerEvent.CHANGE_LEARNING_APPROACH]: {
           target: MusicLearnerState.SELECTING_LEARNING_APPROACH,
         },
+      },
+      entry: (c) => {
+        console.log(c.context);
       },
     },
     [MusicLearnerState.PLAYING_MUSIC_CONTEXT]: {
@@ -121,7 +147,7 @@ export const musicLearner = setup({
       invoke: {
         id: "playMusicContext",
         src: "playMusicContext",
-        input: (stateMachine) => stateMachine.context,
+        input: (stateMachine) => stateMachine.context.settings,
         onDone: { target: MusicLearnerState.PLAYING_NEW_QUESTION },
       },
     },
@@ -135,7 +161,7 @@ export const musicLearner = setup({
       invoke: {
         id: "playQuestion",
         src: "playQuestion",
-        input: (stateMachine) => stateMachine.context,
+        input: (stateMachine) => stateMachine.context.settings,
         onDone: { target: MusicLearnerState.GUESSING },
       },
     },
@@ -151,19 +177,21 @@ export const musicLearner = setup({
           {
             target: MusicLearnerState.PLAYING_NEW_QUESTION,
             guard: (stmch) =>
-              stmch.context.skipReviewOn == SkipReview.Both ||
-              stmch.context.skipReviewOn == SkipReview.Correct,
+              stmch.context.settings.skipReviewOn == SkipReview.Both ||
+              stmch.context.settings.skipReviewOn == SkipReview.Correct,
           },
           {
             target: MusicLearnerState.REVIEWING,
-            guard: (stmch) => stmch.context.skipReviewOn == SkipReview.None,
+            guard: (stmch) =>
+              stmch.context.settings.skipReviewOn == SkipReview.None,
           },
         ],
         [MusicLearnerEvent.INCORRECT_GUESS]: [
           { target: MusicLearnerState.REVIEWING },
           {
             target: MusicLearnerState.PLAYING_NEW_QUESTION,
-            guard: (stmch) => stmch.context.skipReviewOn == SkipReview.Both,
+            guard: (stmch) =>
+              stmch.context.settings.skipReviewOn == SkipReview.Both,
           },
         ],
         [MusicLearnerEvent.CHANGE_LEARNING_APPROACH]: {
@@ -172,9 +200,9 @@ export const musicLearner = setup({
         },
       },
       exit: (c) => {
-        c.context.questionNumber++;
+        c.context.settings.questionNumber++;
         console.log(
-          `Question ${c.context.questionNumber} / ${c.context.numberOfQuestions}`
+          `Question ${c.context.settings.questionNumber} / ${c.context.settings.numberOfQuestions}`
         );
       },
       states: {
@@ -186,7 +214,7 @@ export const musicLearner = setup({
           },
           invoke: {
             src: "replayQuestion",
-            input: (s) => s.context,
+            input: (s) => s.context.settings,
             onDone: { target: MusicLearnerState.WAITING_FOR_GUESS },
           },
         },
@@ -205,13 +233,15 @@ export const musicLearner = setup({
           {
             target: MusicLearnerState.VIEWING_RESULTS,
             guard: (c) =>
-              c.context.numberOfQuestions == c.context.questionNumber,
+              c.context.settings.numberOfQuestions ==
+              c.context.settings.questionNumber,
             actions: "stopAllAudio",
           },
           {
             target: MusicLearnerState.PLAYING_NEW_QUESTION,
             guard: (c) =>
-              c.context.questionNumber <= c.context.numberOfQuestions,
+              c.context.settings.questionNumber <=
+              c.context.settings.numberOfQuestions,
           },
         ],
         [MusicLearnerEvent.CHANGE_LEARNING_APPROACH]: {

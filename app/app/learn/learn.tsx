@@ -38,8 +38,8 @@ export default function LearnQuestions() {
         isIdle: s.matches(MusicLearnerState.IDLE),
         isGuessing: s.matches(MusicLearnerState.GUESSING),
         isReviewing: s.matches(MusicLearnerState.REVIEWING),
-        totalQuestions: s.context.numberOfQuestions,
-        questionNumber: s.context.questionNumber,
+        totalQuestions: s.context.settings.numberOfQuestions,
+        questionNumber: s.context.settings.questionNumber,
       };
     });
 

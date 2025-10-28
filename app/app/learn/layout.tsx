@@ -13,11 +13,11 @@ export default function LearnLayout({
   return (
     <>
       <MIDIProvider>
-        <SettingsProvider>
-          <CountdownProvider>
-            <MusicLearnerProvider>{children}</MusicLearnerProvider>
-          </CountdownProvider>
-        </SettingsProvider>
+        <MusicLearnerProvider>
+          <SettingsProvider>
+            <CountdownProvider>{children}</CountdownProvider>
+          </SettingsProvider>
+        </MusicLearnerProvider>
       </MIDIProvider>
     </>
   );

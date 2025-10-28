@@ -1,4 +1,7 @@
-import { musicLearner } from "@/machines/musicLearningProcess";
+import {
+  musicLearner,
+  MusicLearnerEvent,
+} from "@/machines/musicLearningProcess";
 import { useActorRef, useMachine } from "@xstate/react";
 import { createContext } from "react";
 import { ActorRefFrom } from "xstate";
