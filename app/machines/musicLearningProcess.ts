@@ -1,12 +1,13 @@
+import { Note, QuestionMelody } from "@/constants/notes";
 import {
   defaultSettings,
   LearningMode,
   Settings,
   SkipReview,
 } from "@/constants/settings";
+import { playMusicContext, playQuestion } from "@/lib/learningProcessActors";
 import { noteToNoteFile } from "@/lib/notes";
-import { getNextQuestionNote } from "@/lib/questions";
-import { playCadence, playNote } from "@/lib/webAudio";
+import { playChord, playMelody, playNote } from "@/lib/webAudio";
 import { assign, fromPromise, setup } from "xstate";
 
 export enum MusicLearnerEvent {
@@ -46,8 +47,21 @@ export type MusicLearnerEvents =
   | UpdateSettingEvent
   | { type: MusicLearnerEvent.INCORRECT_GUESS };
 
+export interface QuestionContext {
+  currentNote: Note | undefined;
+  currentChord: Note[] | undefined;
+  currentMelody: QuestionMelody[] | undefined;
+}
+
+const defautQuestionContext: QuestionContext = {
+  currentNote: undefined,
+  currentChord: undefined,
+  currentMelody: undefined,
+};
+
 export interface MusicLearnerContext {
   settings: Settings;
+  questionContext: QuestionContext;
 }
 
 export const musicLearner = setup({
@@ -56,48 +70,35 @@ export const musicLearner = setup({
     events: {} as MusicLearnerEvents,
   },
   actors: {
-    playMusicContext: fromPromise(async ({ input }: { input: Settings }) => {
-      switch (input.learningMode) {
-        case LearningMode.Notes:
-          playCadence(input.questionKey);
-          break;
-        case LearningMode.Chords:
-          break;
-        case LearningMode.Melodies:
-          break;
+    playMusicContext: fromPromise(
+      async ({ input }: { input: MusicLearnerContext }) => {
+        return await playMusicContext(input);
       }
-      await new Promise((r) => setTimeout(r, 1000));
-      return;
-    }),
-    playQuestion: fromPromise(async ({ input }: { input: Settings }) => {
-      switch (input.learningMode) {
-        case LearningMode.Notes:
-          const note = getNextQuestionNote(
-            input.questionNoteWeights,
-            input.questionRange
-          );
-          playNote(noteToNoteFile(note));
-          break;
-        case LearningMode.Chords:
-          break;
-        case LearningMode.Melodies:
-          break;
+    ),
+    playQuestion: fromPromise(
+      async ({ input }: { input: MusicLearnerContext }) => {
+        return await playQuestion(input);
       }
-      await new Promise((r) => setTimeout(r, 1000));
-
-      return;
-    }),
-    replayQuestion: fromPromise(async ({ input }: { input: Settings }) => {
-      switch (input.learningMode) {
-        case LearningMode.Notes:
-          break;
-        case LearningMode.Chords:
-          break;
-        case LearningMode.Melodies:
-          break;
+    ),
+    replayQuestion: fromPromise(
+      async ({ input }: { input: MusicLearnerContext }) => {
+        switch (input.settings.learningMode) {
+          case LearningMode.Notes:
+            if (input.questionContext.currentNote)
+              playNote(noteToNoteFile(input.questionContext.currentNote));
+            break;
+          case LearningMode.Chords:
+            if (input.questionContext.currentChord)
+              playChord(input.questionContext.currentChord);
+            break;
+          case LearningMode.Melodies:
+            if (input.questionContext.currentMelody)
+              playMelody(input.questionContext.currentMelody);
+            break;
+        }
+        return;
       }
-      return;
-    }),
+    ),
   },
   actions: {
     stopAllAudio: () => {},
@@ -107,7 +108,10 @@ export const musicLearner = setup({
   },
 }).createMachine({
   id: "musicLearningMachine",
-  context: { settings: defaultSettings },
+  context: {
+    settings: defaultSettings,
+    questionContext: defautQuestionContext,
+  },
   initial: MusicLearnerState.SELECTING_LEARNING_APPROACH,
   states: {
     [MusicLearnerState.SELECTING_LEARNING_APPROACH]: {
@@ -147,7 +151,7 @@ export const musicLearner = setup({
       invoke: {
         id: "playMusicContext",
         src: "playMusicContext",
-        input: (stateMachine) => stateMachine.context.settings,
+        input: (stateMachine) => stateMachine.context,
         onDone: { target: MusicLearnerState.PLAYING_NEW_QUESTION },
       },
     },
@@ -161,7 +165,7 @@ export const musicLearner = setup({
       invoke: {
         id: "playQuestion",
         src: "playQuestion",
-        input: (stateMachine) => stateMachine.context.settings,
+        input: (stateMachine) => stateMachine.context,
         onDone: { target: MusicLearnerState.GUESSING },
       },
     },
@@ -214,7 +218,7 @@ export const musicLearner = setup({
           },
           invoke: {
             src: "replayQuestion",
-            input: (s) => s.context.settings,
+            input: (s) => s.context,
             onDone: { target: MusicLearnerState.WAITING_FOR_GUESS },
           },
         },

@@ -8,6 +8,7 @@ console.log("Initializing Web Audio API");
 export let audioContext: AudioContext;
 export let masterGainNode: GainNode;
 export let cadenceGainNode: GainNode;
+export let cadence: AudioBufferSourceNode;
 
 try {
   audioContext = new window.AudioContext();
@@ -16,6 +17,7 @@ try {
   cadenceGainNode = audioContext.createGain();
   cadenceGainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
   cadenceGainNode.connect(audioContext.destination);
+  cadence = audioContext.createBufferSource();
 } catch (e) {
   // console.error("Web Audio API is not supported in this browser:", e);
 }
@@ -64,7 +66,6 @@ export const playCadence = async (key: Key) => {
   const res = await fetch(`/cadences/${cadenceFile}`);
 
   const resBuffer = await res.arrayBuffer();
-  const cadence = audioContext.createBufferSource();
   cadence.buffer = await audioContext.decodeAudioData(resBuffer);
 
   const delay = audioContext.createDelay(10);
@@ -74,9 +75,8 @@ export const playCadence = async (key: Key) => {
   gain.gain.setValueAtTime(1, audioContext.currentTime);
 
   cadence.connect(delay);
-  delay.connect(cadenceGainNode);
   delay.connect(gain);
-  gain.connect(delay);
+  gain.connect(delay).connect(cadenceGainNode);
 
   cadence.connect(cadenceGainNode);
 
