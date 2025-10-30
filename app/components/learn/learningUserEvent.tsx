@@ -24,7 +24,9 @@ export default function LearningUserEvent({
         cursor: "pointer",
       }}
       onClick={() => {
-        musicLearnerActorRef.send({ type: eventType });
+        musicLearnerActorRef.send({
+          type: eventType,
+        });
       }}
     >
       {children}

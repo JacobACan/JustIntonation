@@ -34,8 +34,8 @@ export enum MusicLearnerState {
 
 type UpdateSettingEvent<K extends keyof Settings = keyof Settings> = {
   type: MusicLearnerEvent.UPDATE_SETTING;
-  key: K;
-  value: Settings[K];
+  key?: K;
+  value?: Settings[K];
 };
 
 export type MusicLearnerEvents =
@@ -44,8 +44,8 @@ export type MusicLearnerEvents =
   | { type: MusicLearnerEvent.REPLAY }
   | { type: MusicLearnerEvent.CHANGE_LEARNING_APPROACH }
   | { type: MusicLearnerEvent.CORRECT_GUESS }
-  | UpdateSettingEvent
-  | { type: MusicLearnerEvent.INCORRECT_GUESS };
+  | { type: MusicLearnerEvent.INCORRECT_GUESS }
+  | UpdateSettingEvent;
 
 export interface QuestionContext {
   currentNote: Note | undefined;
@@ -121,7 +121,10 @@ export const musicLearner = setup({
           actions: assign({
             settings: (c) => {
               console.log(c.event);
-              return { ...c.context.settings, [c.event.key]: c.event.value };
+              return {
+                ...c.context.settings,
+                [c.event.key as keyof Settings]: c.event.value,
+              };
             },
           }),
           target: MusicLearnerState.SELECTING_LEARNING_APPROACH,
