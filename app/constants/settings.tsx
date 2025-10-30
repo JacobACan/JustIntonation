@@ -27,7 +27,6 @@ export interface Settings {
   playCadence: boolean;
   cadenceVolume: number;
   numberOfQuestions: number;
-  questionNumber: number;
   skipReviewOn: SkipReview;
   timeToAnswerQuestion: number; // in miliseconds
 }
@@ -43,8 +42,7 @@ export const defaultSettings: Settings = {
   showQuestionNotes: true,
   playCadence: true,
   cadenceVolume: 0.8,
-  numberOfQuestions: 20,
-  questionNumber: 0,
+  numberOfQuestions: 5,
   skipReviewOn: SkipReview.Correct,
   timeToAnswerQuestion: 5000,
 };

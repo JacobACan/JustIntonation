@@ -7,7 +7,13 @@ import {
 } from "@/constants/settings";
 import { playMusicContext, playQuestion } from "@/lib/learningProcessActors";
 import { noteToNoteFile } from "@/lib/notes";
-import { playChord, playMelody, playNote } from "@/lib/webAudio";
+import {
+  beginLearningPhaseAudio,
+  playChord,
+  playMelody,
+  playNote,
+  stopLearningPhaseAudio,
+} from "@/lib/webAudio";
 import { assign, fromPromise, setup } from "xstate";
 
 export enum MusicLearnerEvent {
@@ -51,12 +57,14 @@ export interface QuestionContext {
   currentNote: Note | undefined;
   currentChord: Note[] | undefined;
   currentMelody: QuestionMelody[] | undefined;
+  questionNumber: number;
 }
 
 const defautQuestionContext: QuestionContext = {
   currentNote: undefined,
   currentChord: undefined,
   currentMelody: undefined,
+  questionNumber: 0,
 };
 
 export interface MusicLearnerContext {
@@ -101,7 +109,18 @@ export const musicLearner = setup({
     ),
   },
   actions: {
-    stopAllAudio: () => {},
+    stopLearningPhaseAudio: () => {
+      stopLearningPhaseAudio();
+    },
+    initializeLearningPhase: (c) => {
+      beginLearningPhaseAudio();
+      c.context.questionContext = {
+        currentChord: undefined,
+        currentMelody: undefined,
+        currentNote: undefined,
+        questionNumber: 0,
+      };
+    },
   },
   delays: {
     answerTime: (ctx) => ctx.context.settings.timeToAnswerQuestion,
@@ -115,12 +134,15 @@ export const musicLearner = setup({
   initial: MusicLearnerState.SELECTING_LEARNING_APPROACH,
   states: {
     [MusicLearnerState.SELECTING_LEARNING_APPROACH]: {
+      entry: "stopLearningPhaseAudio",
       on: {
-        [MusicLearnerEvent.START]: { target: "idle" },
+        [MusicLearnerEvent.START]: {
+          target: "idle",
+          actions: "initializeLearningPhase",
+        },
         [MusicLearnerEvent.UPDATE_SETTING]: {
           actions: assign({
             settings: (c) => {
-              console.log(c.event);
               return {
                 ...c.context.settings,
                 [c.event.key as keyof Settings]: c.event.value,
@@ -140,15 +162,12 @@ export const musicLearner = setup({
           target: MusicLearnerState.SELECTING_LEARNING_APPROACH,
         },
       },
-      entry: (c) => {
-        console.log(c.context);
-      },
     },
     [MusicLearnerState.PLAYING_MUSIC_CONTEXT]: {
       on: {
         [MusicLearnerEvent.CHANGE_LEARNING_APPROACH]: {
           target: MusicLearnerState.SELECTING_LEARNING_APPROACH,
-          actions: "stopAllAudio",
+          actions: "stopLearningPhaseAudio",
         },
       },
       invoke: {
@@ -162,7 +181,6 @@ export const musicLearner = setup({
       on: {
         [MusicLearnerEvent.CHANGE_LEARNING_APPROACH]: {
           target: MusicLearnerState.SELECTING_LEARNING_APPROACH,
-          actions: "stopAllAudio",
         },
       },
       invoke: {
@@ -203,14 +221,10 @@ export const musicLearner = setup({
         ],
         [MusicLearnerEvent.CHANGE_LEARNING_APPROACH]: {
           target: MusicLearnerState.SELECTING_LEARNING_APPROACH,
-          actions: "stopAllAudio",
         },
       },
       exit: (c) => {
-        c.context.settings.questionNumber++;
-        console.log(
-          `Question ${c.context.settings.questionNumber} / ${c.context.settings.numberOfQuestions}`
-        );
+        c.context.questionContext.questionNumber++;
       },
       states: {
         [MusicLearnerState.REPLAYING_QUESTION]: {
@@ -241,19 +255,17 @@ export const musicLearner = setup({
             target: MusicLearnerState.VIEWING_RESULTS,
             guard: (c) =>
               c.context.settings.numberOfQuestions ==
-              c.context.settings.questionNumber,
-            actions: "stopAllAudio",
+              c.context.questionContext.questionNumber,
           },
           {
             target: MusicLearnerState.PLAYING_NEW_QUESTION,
             guard: (c) =>
-              c.context.settings.questionNumber <=
+              c.context.questionContext.questionNumber <=
               c.context.settings.numberOfQuestions,
           },
         ],
         [MusicLearnerEvent.CHANGE_LEARNING_APPROACH]: {
           target: MusicLearnerState.SELECTING_LEARNING_APPROACH,
-          actions: "stopAllAudio",
         },
       },
     },
@@ -261,9 +273,13 @@ export const musicLearner = setup({
       on: {
         [MusicLearnerEvent.CONTINUE]: {
           target: MusicLearnerState.PLAYING_MUSIC_CONTEXT,
+          actions: "initializeLearningPhase",
+        },
+        [MusicLearnerEvent.CHANGE_LEARNING_APPROACH]: {
+          target: MusicLearnerState.SELECTING_LEARNING_APPROACH,
         },
       },
-      entry: "stopAllAudio",
+      entry: "stopLearningPhaseAudio",
     },
   },
 });

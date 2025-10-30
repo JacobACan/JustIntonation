@@ -7,17 +7,27 @@ console.log("Initializing Web Audio API");
 
 export let audioContext: AudioContext;
 export let masterGainNode: GainNode;
+export let learningStateGainNode: GainNode;
 export let cadenceGainNode: GainNode;
 export let cadence: AudioBufferSourceNode;
 
+// Processing Nodes that create infinite audio
+const activeProcessingNodes: AudioNode[] = [];
+// Source Nodes that play for longer than the user will stay on the change learning approach screen
+const activeSourceNodes: AudioBufferSourceNode[] = [];
+
 try {
   audioContext = new window.AudioContext();
+
   masterGainNode = audioContext.createGain();
   masterGainNode.connect(audioContext.destination);
+
+  learningStateGainNode = audioContext.createGain();
+  learningStateGainNode.connect(masterGainNode);
   cadenceGainNode = audioContext.createGain();
+
   cadenceGainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
-  cadenceGainNode.connect(audioContext.destination);
-  cadence = audioContext.createBufferSource();
+  cadenceGainNode.connect(learningStateGainNode);
 } catch (e) {
   // console.error("Web Audio API is not supported in this browser:", e);
 }
@@ -44,7 +54,7 @@ export const playChord = async (chord: Note[]) => {
         const source = audioContext.createBufferSource();
         source.buffer = buffer;
         source.connect(gainNode);
-        source.connect(audioContext.destination);
+        source.connect(learningStateGainNode);
         // Interesting! Sources play from the start and go through the entire connected chain can can be started at a precise time
         source.start(startTime);
       });
@@ -66,9 +76,12 @@ export const playCadence = async (key: Key) => {
   const res = await fetch(`/cadences/${cadenceFile}`);
 
   const resBuffer = await res.arrayBuffer();
+  const cadence = audioContext.createBufferSource();
   cadence.buffer = await audioContext.decodeAudioData(resBuffer);
+  activeSourceNodes.push(cadence);
 
   const delay = audioContext.createDelay(10);
+  activeProcessingNodes.push(delay);
   delay.delayTime.setValueAtTime(10, audioContext.currentTime);
 
   const gain = audioContext.createGain();
@@ -101,7 +114,7 @@ export const playMelody = async (
 
     const relativeGain = audioContext.createGain();
     relativeGain.gain.setValueAtTime(relGain, audioContext.currentTime);
-    relativeGain.connect(audioContext.destination);
+    relativeGain.connect(learningStateGainNode);
 
     const decayNode = audioContext.createGain();
     decayNode.connect(relativeGain);
@@ -121,6 +134,30 @@ export const playMelody = async (
   }
   await new Promise((r) => setTimeout(r, delay * 1000));
   return;
+};
+
+export const stopLearningPhaseAudio = async () => {
+  const secondsToFadeOutAudio = 1;
+  learningStateGainNode.gain.exponentialRampToValueAtTime(
+    0.001,
+    audioContext.currentTime + secondsToFadeOutAudio
+  );
+  await new Promise((c) => setTimeout(c, secondsToFadeOutAudio * 1000));
+  stopActiveNodes();
+};
+
+export const beginLearningPhaseAudio = async () => {
+  learningStateGainNode.gain.exponentialRampToValueAtTime(
+    1,
+    audioContext.currentTime + 1.01
+  );
+};
+
+export const stopActiveNodes = () => {
+  activeProcessingNodes.forEach((n) => n.disconnect());
+  activeProcessingNodes.length = 0;
+  activeSourceNodes.forEach((n) => n.stop());
+  activeSourceNodes.length = 0;
 };
 
 const loadAudioBuffers = async (noteFiles: NoteFile[]) => {

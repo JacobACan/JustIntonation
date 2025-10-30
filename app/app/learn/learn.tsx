@@ -21,27 +21,33 @@ import { MusicLearnerContext } from "@/components/providers/learningStateMachine
 import { useSelector } from "@xstate/react";
 import ReplayIcon from "@/components/icon/replayIcon";
 import ContinueIcon from "@/components/icon/continueIcon";
+import BackIcon from "@/components/icon/backIcon";
 
 export default function LearnQuestions() {
   const [currentNote, setCurrentNote] = useState<Note | null>(null);
-  const [questionNote, setQuestionNote] = useState<Note | null>(null);
-  const [questionsInARow, setQuestionsInARow] = useState(0);
   const { startCountdownTimer, countdownTimer } = useContext(CountdownContext);
   const { settings } = useContext(SettingsContext);
   const notes = useMIDINotes();
   const musicLearner = useContext(MusicLearnerContext);
   if (!musicLearner) return;
 
-  const { isIdle, isGuessing, isReviewing, totalQuestions, questionNumber } =
-    useSelector(musicLearner, (s) => {
-      return {
-        isIdle: s.matches(MusicLearnerState.IDLE),
-        isGuessing: s.matches(MusicLearnerState.GUESSING),
-        isReviewing: s.matches(MusicLearnerState.REVIEWING),
-        totalQuestions: s.context.settings.numberOfQuestions,
-        questionNumber: s.context.settings.questionNumber,
-      };
-    });
+  const {
+    isIdle,
+    isGuessing,
+    isReviewing,
+    isViewingResults,
+    totalQuestions,
+    questionContext,
+  } = useSelector(musicLearner, (s) => {
+    return {
+      isIdle: s.matches(MusicLearnerState.IDLE),
+      isGuessing: s.matches(MusicLearnerState.GUESSING),
+      isReviewing: s.matches(MusicLearnerState.REVIEWING),
+      isViewingResults: s.matches(MusicLearnerState.VIEWING_RESULTS),
+      totalQuestions: s.context.settings.numberOfQuestions,
+      questionContext: s.context.questionContext,
+    };
+  });
 
   useEffect(() => {
     if (isGuessing) startCountdownTimer(settings.timeToAnswerQuestion, 50);
@@ -55,17 +61,6 @@ export default function LearnQuestions() {
     if (notes.length > 0) {
       const note = notes[0];
       const notePlayed = midiToNote[note.note];
-      if (notePlayed === questionNote) {
-        const nextQuestionNote = getNextQuestionNote(
-          settings.questionNoteWeights,
-          settings.questionRange
-        );
-        setQuestionNote(nextQuestionNote);
-        playNote(noteToNoteFile(nextQuestionNote));
-        setQuestionsInARow(questionsInARow + 1);
-      } else {
-        setQuestionsInARow(0);
-      }
       setCurrentNote(notePlayed);
     }
   };
@@ -83,7 +78,7 @@ export default function LearnQuestions() {
             <ReplayIcon />
           </LearningUserEvent>
         )}
-        {isReviewing && (
+        {(isReviewing || isViewingResults) && (
           <LearningUserEvent eventType={MusicLearnerEvent.CONTINUE}>
             <ContinueIcon />
           </LearningUserEvent>
@@ -92,26 +87,32 @@ export default function LearnQuestions() {
     );
   };
 
+  const getProgressValue = (): number => {
+    if (isGuessing) {
+      return (countdownTimer.timeLeft / countdownTimer.totalTime) * 100;
+    }
+    return 100;
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-2 ">
+      <LearningUserEvent
+        className=" absolute left-3 top-3"
+        eventType={MusicLearnerEvent.CHANGE_LEARNING_APPROACH}
+      >
+        <BackIcon />
+      </LearningUserEvent>
       {renderUserActions()}
-      <Progress
-        value={(countdownTimer.timeLeft / countdownTimer.totalTime) * 100}
-        className="w-[375px] m-2"
-      ></Progress>
+      <Progress value={getProgressValue()} className="w-[375px] m-2"></Progress>
       <Piano
         displayRange={settings.questionRange}
         notesDown2={[...(currentNote ? [currentNote] : [])]}
-        notesDown1={[
-          ...(settings.showQuestionNotes
-            ? questionNote
-              ? [questionNote]
-              : []
-            : []),
-        ]}
+        notesDown1={
+          questionContext.currentNote ? [questionContext.currentNote] : []
+        }
       />
       <h2 className=" mt-8 font-bold text-[var(--middleground1)]">
-        {questionNumber} / {totalQuestions}
+        {questionContext.questionNumber} / {totalQuestions}
       </h2>
     </div>
   );

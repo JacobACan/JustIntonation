@@ -18,8 +18,8 @@ export default function Settings() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center ">
-      <div className="relative w-full max-w-md mx-auto bg-[var(--background2)] rounded-md shadow-lg p-6 overflow-y-auto">
-        <h2 className="text-2xl mb-4 font-bold">Settings</h2>
+      <div className="relative w-full max-w-md mx-auto bg-[var(--background2)] rounded-md  p-6 overflow-y-auto">
+        <h2 className="text-2xl mb-4 font-bold">Learning Approach</h2>
         {/* Settings content here */}
         <div className="flex flex-col gap-4">
           <LearningUserEvent eventType={MusicLearnerEvent.START}>
