@@ -119,6 +119,8 @@ export const playMelody = async (
 
     delay += noteLength;
   }
+  await new Promise((r) => setTimeout(r, delay * 1000));
+  return;
 };
 
 const loadAudioBuffers = async (noteFiles: NoteFile[]) => {

@@ -1,6 +1,10 @@
 import { LearningMode, Settings } from "@/constants/settings";
 import { playCadence, playChord, playMelody, playNote } from "./webAudio";
-import { getNextQuestionChord, getNextQuestionNote } from "./questions";
+import {
+  getNextQuestionChord,
+  getNextQuestionMelody,
+  getNextQuestionNote,
+} from "./questions";
 import { noteToNoteFile } from "./notes";
 import { MusicLearnerContext } from "@/machines/musicLearningProcess";
 
@@ -39,7 +43,14 @@ export const playQuestion = async (input: MusicLearnerContext) => {
       await new Promise((r) => setTimeout(r, 1000));
       break;
     case LearningMode.Melodies:
-      playMelody([]);
+      const melody = getNextQuestionMelody(
+        input.settings.questionNoteWeights,
+        input.settings.questionRange,
+        5
+      );
+      await playMelody(melody);
+      input.questionContext.currentMelody = melody;
+
       break;
   }
 

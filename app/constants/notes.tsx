@@ -252,6 +252,7 @@ export interface QuestionMelody {
 
 export enum Duration {
   SixteenthNote = 0.25,
+  TrippletNote = 0.33,
   EigthNote = 0.5,
   QuarterNote = 1,
   HalfNote = 2,

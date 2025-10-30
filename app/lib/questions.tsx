@@ -1,6 +1,6 @@
 import { NoteWeight } from "../constants/keys";
 import { noteToMidi } from "../constants/midi";
-import { Note } from "../constants/notes";
+import { Duration, Note, QuestionMelody } from "../constants/notes";
 import { isNoteToBeAddedPlayableBy1Hand } from "./notes";
 
 export const getNextQuestionNote = (
@@ -47,4 +47,34 @@ export const getNextQuestionChord = (
     return selectedNotes;
   }
   return [];
+};
+
+export const getNextQuestionMelody = (
+  questionNoteWeights: NoteWeight[],
+  questionRange: [Note, Note],
+  length: number
+): QuestionMelody[] => {
+  const qm: QuestionMelody[] = [];
+
+  const questionNotes = questionNoteWeights
+    .filter(
+      (nw) =>
+        nw.weight > 0 &&
+        noteToMidi[nw.note] >= noteToMidi[questionRange[0]] &&
+        noteToMidi[nw.note] <= noteToMidi[questionRange[1]]
+    )
+    .map((nw) => nw.note);
+
+  for (let i = 0; i < length; i++) {
+    const randomDuration = [
+      Duration.QuarterNote,
+      Duration.EigthNote,
+      Duration.SixteenthNote,
+    ][Math.floor(Math.random() * 3)];
+    const randomNote =
+      questionNotes[Math.floor(questionNotes.length * Math.random())];
+    qm.push({ duration: randomDuration, notes: [randomNote] });
+  }
+
+  return qm;
 };
