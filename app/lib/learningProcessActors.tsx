@@ -30,7 +30,7 @@ export const playQuestion = async (input: MusicLearnerContext) => {
       );
       playNote(noteToNoteFile(note));
       input.questionContext.currentNote = note;
-      await new Promise((r) => setTimeout(r, 1000));
+      await new Promise((r) => setTimeout(r, 200));
       break;
     case LearningMode.Chords:
       const chord = getNextQuestionChord(
@@ -40,7 +40,7 @@ export const playQuestion = async (input: MusicLearnerContext) => {
       );
       playChord(chord);
       input.questionContext.currentChord = chord;
-      await new Promise((r) => setTimeout(r, 1000));
+      await new Promise((r) => setTimeout(r, 200));
       break;
     case LearningMode.Melodies:
       const melody = getNextQuestionMelody(

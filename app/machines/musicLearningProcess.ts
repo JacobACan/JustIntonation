@@ -202,8 +202,18 @@ export const musicLearner = setup({
           {
             target: MusicLearnerState.PLAYING_NEW_QUESTION,
             guard: (stmch) =>
-              stmch.context.settings.skipReviewOn == SkipReview.Both ||
-              stmch.context.settings.skipReviewOn == SkipReview.Correct,
+              (stmch.context.settings.skipReviewOn == SkipReview.Both ||
+                stmch.context.settings.skipReviewOn == SkipReview.Correct) &&
+              stmch.context.questionContext.questionNumber <
+                stmch.context.settings.numberOfQuestions - 1,
+          },
+          {
+            target: MusicLearnerState.VIEWING_RESULTS,
+            guard: (stmch) =>
+              (stmch.context.settings.skipReviewOn == SkipReview.Both ||
+                stmch.context.settings.skipReviewOn == SkipReview.Correct) &&
+              stmch.context.questionContext.questionNumber >=
+                stmch.context.settings.numberOfQuestions - 1,
           },
           {
             target: MusicLearnerState.REVIEWING,
@@ -216,7 +226,16 @@ export const musicLearner = setup({
           {
             target: MusicLearnerState.PLAYING_NEW_QUESTION,
             guard: (stmch) =>
-              stmch.context.settings.skipReviewOn == SkipReview.Both,
+              stmch.context.settings.skipReviewOn == SkipReview.Both &&
+              stmch.context.questionContext.questionNumber <
+                stmch.context.settings.numberOfQuestions - 1,
+          },
+          {
+            target: MusicLearnerState.VIEWING_RESULTS,
+            guard: (stmch) =>
+              stmch.context.settings.skipReviewOn == SkipReview.Both &&
+              stmch.context.questionContext.questionNumber >=
+                stmch.context.settings.numberOfQuestions - 1,
           },
         ],
         [MusicLearnerEvent.CHANGE_LEARNING_APPROACH]: {

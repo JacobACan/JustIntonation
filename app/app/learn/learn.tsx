@@ -3,11 +3,8 @@
 import { MIDINote } from "@react-midi/hooks/dist/types";
 import { useContext, useEffect, useState } from "react";
 import { midiToNote, Note } from "../../constants/notes";
-import { useMIDINotes } from "@react-midi/hooks";
+import { useMIDINote, useMIDINotes } from "@react-midi/hooks";
 import { SettingsContext } from "../../components/providers/settingsProvider";
-import { noteToNoteFile } from "../../lib/notes";
-import { playNote } from "../../lib/webAudio";
-import { getNextQuestionNote } from "../../lib/questions";
 import Piano from "@/components/learn/piano";
 import { Progress } from "@/components/ui/progress";
 import { CountdownContext } from "@/components/providers/countdownProvider";
@@ -22,12 +19,16 @@ import { useSelector } from "@xstate/react";
 import ReplayIcon from "@/components/icon/replayIcon";
 import ContinueIcon from "@/components/icon/continueIcon";
 import BackIcon from "@/components/icon/backIcon";
+import MonitorNotes from "@/components/learn/midiInputUserEvents/notes";
+import { LearningMode } from "@/constants/settings";
+import MonitorChords from "@/components/learn/midiInputUserEvents/chords";
 
 export default function LearnQuestions() {
-  const [currentNote, setCurrentNote] = useState<Note | null>(null);
-  const { startCountdownTimer, countdownTimer } = useContext(CountdownContext);
+  const { pauseCountdownTimer, startCountdownTimer, countdownTimer } =
+    useContext(CountdownContext);
   const { settings } = useContext(SettingsContext);
   const notes = useMIDINotes();
+  const note = useMIDINote();
   const musicLearner = useContext(MusicLearnerContext);
   if (!musicLearner) return;
 
@@ -50,20 +51,17 @@ export default function LearnQuestions() {
   });
 
   useEffect(() => {
-    if (isGuessing) startCountdownTimer(settings.timeToAnswerQuestion, 50);
+    if (isGuessing) {
+      countdownTimer.timeLeft = 0;
+      startCountdownTimer(settings.timeToAnswerQuestion);
+    }
   }, [isGuessing]);
 
   useEffect(() => {
-    handleIncomingMidiNotes(notes);
-  }, [notes]);
-
-  const handleIncomingMidiNotes = (notes: MIDINote[]) => {
-    if (notes.length > 0) {
-      const note = notes[0];
-      const notePlayed = midiToNote[note.note];
-      setCurrentNote(notePlayed);
+    if (isReviewing) {
+      pauseCountdownTimer();
     }
-  };
+  }, [isReviewing]);
 
   const renderUserActions = () => {
     return (
@@ -88,32 +86,54 @@ export default function LearnQuestions() {
   };
 
   const getProgressValue = (): number => {
-    if (isGuessing) {
+    if (isGuessing && countdownTimer.timeLeft != 0) {
       return (countdownTimer.timeLeft / countdownTimer.totalTime) * 100;
     }
     return 100;
   };
 
+  const getNotesDown2 = () => {
+    //Notes User Is Playing
+    if (settings.learningMode == LearningMode.Notes) {
+      if (note && note.on) return [midiToNote[note.note]];
+    }
+    if (settings.learningMode == LearningMode.Chords) {
+      if (notes.length > 0) return notes.map((n) => midiToNote[n.note]);
+    }
+    return [];
+  };
+
+  const getNotesDown1 = () => {
+    if (settings.learningMode == LearningMode.Notes) {
+      if (questionContext.currentNote) return [questionContext.currentNote];
+    }
+    if (settings.learningMode == LearningMode.Chords) {
+      if (questionContext.currentChord) return questionContext.currentChord;
+    }
+    return [];
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-2 ">
       <LearningUserEvent
-        className=" absolute left-3 top-3"
+        className=" absolute left-5 top-5"
         eventType={MusicLearnerEvent.CHANGE_LEARNING_APPROACH}
       >
-        <BackIcon />
+        <BackIcon height={40} width={40} />
       </LearningUserEvent>
       {renderUserActions()}
       <Progress value={getProgressValue()} className="w-[375px] m-2"></Progress>
       <Piano
         displayRange={settings.questionRange}
-        notesDown2={[...(currentNote ? [currentNote] : [])]}
-        notesDown1={
-          questionContext.currentNote ? [questionContext.currentNote] : []
-        }
+        notesDown2={getNotesDown2()}
+        notesDown1={getNotesDown1()}
       />
       <h2 className=" mt-8 font-bold text-[var(--middleground1)]">
         {questionContext.questionNumber} / {totalQuestions}
       </h2>
+      {isGuessing &&
+        ((settings.learningMode == LearningMode.Notes && <MonitorNotes />) ||
+          (settings.learningMode == LearningMode.Chords && <MonitorChords />))}
     </div>
   );
 }

@@ -16,9 +16,14 @@ const initialCountdownTimer: Countdown = {
 export const CountdownContext = createContext(
   {} as {
     countdownTimer: Countdown;
-    startCountdownTimer: (seconds: number, interval: number) => void;
+    startCountdownTimer: (ms: number) => void;
+    pauseCountdownTimer: () => void;
   }
 );
+
+const UPDATE_SPEED = 50; //ms
+let continueUpdate = true;
+let isTimerRunning = false;
 
 export default function CountdownProvider({
   children,
@@ -26,40 +31,54 @@ export default function CountdownProvider({
   children: React.ReactNode;
 }) {
   const [countdownTimer, setCountdownTimer] = useState(initialCountdownTimer);
-
-  const intervalicCheck = async (
-    ms: number,
-    totalTime: number,
-    startTime: number
-  ) => {
-    while (true) {
+  const intervalicUpdate = async (totalTime: number, startTime: number) => {
+    isTimerRunning = true;
+    while (continueUpdate) {
       const timeLeft = totalTime - (audioContext.currentTime - startTime);
-
       if (timeLeft <= 0) {
         setCountdownTimer((prev) => ({ ...prev, timeLeft: 0 }));
+        isTimerRunning = false;
+
         return;
       }
 
       setCountdownTimer((prev) => ({ ...prev, timeLeft }));
 
-      await new Promise((r) => setTimeout(r, ms));
+      await new Promise((r) => setTimeout(r, UPDATE_SPEED));
     }
+    continueUpdate = true;
+    isTimerRunning = false;
   };
 
-  const startCountdownTimer = async (ms: number, interval: number) => {
+  const startCountdownTimer = async (ms: number) => {
+    if (isTimerRunning) await pauseCountdownTimer();
     const startTime = audioContext.currentTime;
     const totalTime = ms / 1000;
 
-    setCountdownTimer({
+    setCountdownTimer(() => ({
       totalTime,
       startTime,
       timeLeft: totalTime,
-    });
+    }));
 
-    await intervalicCheck(interval, totalTime, startTime);
+    countdownTimer.totalTime = totalTime;
+    countdownTimer.startTime = startTime;
+    countdownTimer.timeLeft = totalTime;
+
+    await intervalicUpdate(totalTime, startTime);
   };
 
-  const value = { startCountdownTimer, countdownTimer };
+  const pauseCountdownTimer = async () => {
+    continueUpdate = false;
+    setCountdownTimer(() => ({
+      totalTime: 0,
+      startTime: 0,
+      timeLeft: 0,
+    }));
+    await new Promise((g) => setTimeout(g, UPDATE_SPEED));
+  };
+
+  const value = { startCountdownTimer, pauseCountdownTimer, countdownTimer };
 
   return <CountdownContext value={value}>{children}</CountdownContext>;
 }
