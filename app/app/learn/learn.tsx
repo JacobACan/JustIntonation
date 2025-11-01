@@ -24,7 +24,7 @@ import { LearningMode } from "@/constants/settings";
 import MonitorChords from "@/components/learn/midiInputUserEvents/chords";
 
 export default function LearnQuestions() {
-  const { pauseCountdownTimer, startCountdownTimer, countdownTimer } =
+  const { startCountdown, stopCountdown, countdown } =
     useContext(CountdownContext);
   const { settings } = useContext(SettingsContext);
   const notes = useMIDINotes();
@@ -52,16 +52,15 @@ export default function LearnQuestions() {
 
   useEffect(() => {
     if (isGuessing) {
-      countdownTimer.timeLeft = 0;
-      startCountdownTimer(settings.timeToAnswerQuestion);
+      startCountdown(settings.timeToAnswerQuestion);
     }
   }, [isGuessing]);
 
   useEffect(() => {
-    if (isReviewing) {
-      pauseCountdownTimer();
+    if (isReviewing || isViewingResults) {
+      stopCountdown();
     }
-  }, [isReviewing]);
+  }, [isReviewing, isViewingResults]);
 
   const renderUserActions = () => {
     return (
@@ -86,8 +85,8 @@ export default function LearnQuestions() {
   };
 
   const getProgressValue = (): number => {
-    if (isGuessing && countdownTimer.timeLeft != 0) {
-      return (countdownTimer.timeLeft / countdownTimer.totalTime) * 100;
+    if (isGuessing && countdown.timeLeft != 0) {
+      return (countdown.timeLeft / countdown.totalTime) * 100;
     }
     return 100;
   };
