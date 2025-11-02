@@ -22,6 +22,7 @@ import BackIcon from "@/components/icon/backIcon";
 import MonitorNotes from "@/components/learn/midiInputUserEvents/notes";
 import { LearningMode } from "@/constants/settings";
 import MonitorChords from "@/components/learn/midiInputUserEvents/chords";
+import MonitorMelodies from "@/components/learn/midiInputUserEvents/melodies";
 
 export default function LearnQuestions() {
   const { startCountdown, stopCountdown, countdown } =
@@ -132,7 +133,10 @@ export default function LearnQuestions() {
       </h2>
       {isGuessing &&
         ((settings.learningMode == LearningMode.Notes && <MonitorNotes />) ||
-          (settings.learningMode == LearningMode.Chords && <MonitorChords />))}
+          (settings.learningMode == LearningMode.Chords && <MonitorChords />) ||
+          (settings.learningMode == LearningMode.Melodies && (
+            <MonitorMelodies />
+          )))}
     </div>
   );
 }

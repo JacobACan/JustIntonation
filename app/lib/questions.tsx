@@ -1,6 +1,6 @@
 import { NoteWeight } from "../constants/keys";
 import { noteToMidi } from "../constants/midi";
-import { Duration, Note, QuestionMelody } from "../constants/notes";
+import { Duration, JIMIDINote, Note } from "../constants/notes";
 import { isNoteToBeAddedPlayableBy1Hand } from "./notes";
 
 export const getNextQuestionNote = (
@@ -53,8 +53,8 @@ export const getNextQuestionMelody = (
   questionNoteWeights: NoteWeight[],
   questionRange: [Note, Note],
   length: number
-): QuestionMelody[] => {
-  const qm: QuestionMelody[] = [];
+): JIMIDINote[] => {
+  const qm: JIMIDINote[] = [];
 
   const questionNotes = questionNoteWeights
     .filter(
@@ -73,7 +73,13 @@ export const getNextQuestionMelody = (
     ][Math.floor(Math.random() * 3)];
     const randomNote =
       questionNotes[Math.floor(questionNotes.length * Math.random())];
-    qm.push({ duration: randomDuration, notes: [randomNote] });
+    qm.push({
+      secondsSinceLastNote: randomDuration,
+      note: noteToMidi[randomNote],
+      channel: 1,
+      on: true,
+      velocity: 1,
+    });
   }
 
   return qm;

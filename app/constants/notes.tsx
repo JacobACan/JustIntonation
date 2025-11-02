@@ -1,3 +1,5 @@
+import { MIDIMessage, MIDINote } from "@react-midi/hooks/dist/types";
+
 export enum Note {
   A0 = "A0",
   Bb0 = "Bb0",
@@ -245,11 +247,11 @@ export enum NoteFile {
   Gb6 = "Gb6.ogg",
 }
 
-export interface QuestionMelody {
-  notes: Note[];
-  duration: Duration;
+export interface JIMIDINote extends MIDINote {
+  secondsSinceLastNote: number;
 }
 
+//seconds
 export enum Duration {
   SixteenthNote = 0.25,
   TrippletNote = 0.33,

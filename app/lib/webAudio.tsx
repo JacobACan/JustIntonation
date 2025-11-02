@@ -1,4 +1,4 @@
-import { QuestionMelody, Note, NoteFile } from "../constants/notes";
+import { JIMIDINote, midiToNote, Note, NoteFile } from "../constants/notes";
 import { keyToCadence } from "../constants/cadences";
 import { Key } from "../constants/keys";
 import { noteToNoteFile } from "./notes";
@@ -96,43 +96,42 @@ export const playCadence = async (key: Key) => {
   cadence.start();
 };
 
-export const playMelody = async (
-  melody: QuestionMelody[],
-  relGain: number = 1
-) => {
-  const bpm = 60;
+export const playMelody = async (melody: JIMIDINote[], relGain: number = 1) => {
+  let totalSecondsDelay = 0;
 
-  const noteDurations = melody.map((n) => n.duration);
-  let delay = 0;
-  const delayOffset = 60 / bpm;
+  const noteFiles = melody.map((n) => noteToNoteFile(midiToNote[n.note]));
+  const audioBuffers = await loadAudioBuffers(noteFiles);
+
+  const startTime = audioContext.currentTime;
+
   for (let j = 0; j < melody.length; j++) {
-    const noteFiles = melody[j].notes.map((n) => noteToNoteFile(n));
-    const noteDuration = noteDurations[j];
+    const noteOffDecayNode = audioContext.createGain();
 
-    const audioBuffers = await loadAudioBuffers(noteFiles);
-    const noteLength = delayOffset * noteDuration;
-
-    const relativeGain = audioContext.createGain();
-    relativeGain.gain.setValueAtTime(relGain, audioContext.currentTime);
-    relativeGain.connect(learningStateGainNode);
-
-    const decayNode = audioContext.createGain();
-    decayNode.connect(relativeGain);
-    decayNode.gain.exponentialRampToValueAtTime(
-      0.1,
-      audioContext.currentTime + delay + noteLength
-    );
-
-    audioBuffers.forEach((b) => {
+    if (melody[j].on) {
+      const currentBuffer = audioBuffers[j];
       const source = audioContext.createBufferSource();
-      source.buffer = b;
-      source.connect(decayNode);
-      source.start(audioContext.currentTime + delay);
-    });
+      source.buffer = currentBuffer;
 
-    delay += noteLength;
+      source.start(startTime + totalSecondsDelay);
+
+      const velocity = audioContext.createGain();
+      velocity.gain.setValueAtTime(relGain, audioContext.currentTime);
+      source
+        .connect(noteOffDecayNode)
+        .connect(velocity)
+        .connect(learningStateGainNode);
+    } else {
+      noteOffDecayNode.gain.exponentialRampToValueAtTime(
+        0.1,
+        startTime + totalSecondsDelay
+      );
+    }
+
+    totalSecondsDelay += melody[j].secondsSinceLastNote;
   }
-  await new Promise((r) => setTimeout(r, delay * 1000));
+
+  // Time to let melody play out
+  await new Promise((r) => setTimeout(r, totalSecondsDelay * 1000));
   return;
 };
 

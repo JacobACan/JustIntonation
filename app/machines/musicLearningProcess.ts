@@ -1,4 +1,4 @@
-import { Note, QuestionMelody } from "@/constants/notes";
+import { JIMIDINote, Note } from "@/constants/notes";
 import {
   defaultSettings,
   LearningMode,
@@ -56,7 +56,7 @@ export type MusicLearnerEvents =
 export interface QuestionContext {
   currentNote: Note | undefined;
   currentChord: Note[] | undefined;
-  currentMelody: QuestionMelody[] | undefined;
+  currentMelody: JIMIDINote[] | undefined;
   questionNumber: number;
 }
 

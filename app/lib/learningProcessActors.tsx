@@ -46,7 +46,7 @@ export const playQuestion = async (input: MusicLearnerContext) => {
       const melody = getNextQuestionMelody(
         input.settings.questionNoteWeights,
         input.settings.questionRange,
-        5
+        3
       );
       await playMelody(melody);
       input.questionContext.currentMelody = melody;
