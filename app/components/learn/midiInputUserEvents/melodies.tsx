@@ -1,10 +1,7 @@
 import { MusicLearnerContext } from "@/components/providers/learningStateMachineProvider";
 import { JIMIDINote } from "@/constants/notes";
 import { audioContext } from "@/lib/webAudio";
-import {
-  musicLearner,
-  MusicLearnerEvent,
-} from "@/machines/musicLearningProcess";
+import { MusicLearnerEvent } from "@/machines/musicLearningProcess";
 import { useMIDINote } from "@react-midi/hooks";
 import { useSelector } from "@xstate/react";
 import { useContext, useEffect, useRef } from "react";
