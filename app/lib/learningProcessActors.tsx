@@ -9,14 +9,15 @@ import { noteToNoteFile } from "./notes";
 import { MusicLearnerContext } from "@/machines/musicLearningProcess";
 
 export const playMusicContext = async (input: MusicLearnerContext) => {
-  switch (input.settings.learningMode) {
-    case LearningMode.Notes:
-    case LearningMode.Chords:
-    case LearningMode.Melodies:
-      playCadence(input.settings.questionKey);
-      await new Promise((r) => setTimeout(r, 2000));
-      break;
-  }
+  if (input.settings.playCadence)
+    switch (input.settings.learningMode) {
+      case LearningMode.Notes:
+      case LearningMode.Chords:
+      case LearningMode.Melodies:
+        playCadence(input.settings.questionKey);
+        await new Promise((r) => setTimeout(r, 2000));
+        break;
+    }
   return;
 };
 

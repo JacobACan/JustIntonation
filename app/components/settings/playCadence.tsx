@@ -9,7 +9,6 @@ export default function PlayCadence() {
       <h2>Play Cadence : {settings.playCadence}</h2>
       <input
         onChange={(e) => {
-          console.log(settings.playCadence);
           updateSettings("playCadence", e.target.checked);
         }}
         type="checkbox"
