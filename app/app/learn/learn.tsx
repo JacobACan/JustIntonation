@@ -1,15 +1,11 @@
 "use client";
 
-import { MIDINote } from "@react-midi/hooks/dist/types";
-import { useContext, useEffect, useState } from "react";
+import { useContext } from "react";
 import { midiToNote, Note } from "../../constants/notes";
 import { useMIDINote, useMIDINotes } from "@react-midi/hooks";
 import { SettingsContext } from "../../components/providers/settingsProvider";
 import Piano from "@/components/learn/piano";
-import { Progress } from "@/components/ui/progress";
-import CountdownProvider, {
-  CountdownContext,
-} from "@/components/providers/countdownProvider";
+import CountdownProvider from "@/components/providers/countdownProvider";
 import LearningUserEvent from "@/components/learn/learningUserEvent";
 import PlayIcon from "@/components/icon/playIcon";
 import {

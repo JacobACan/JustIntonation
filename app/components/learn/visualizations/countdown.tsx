@@ -1,8 +1,8 @@
 import { CountdownContext } from "@/components/providers/countdownProvider";
 import { MusicLearnerContext } from "@/components/providers/learningStateMachineProvider";
 import { SettingsContext } from "@/components/providers/settingsProvider";
+import { Progress } from "@/components/ui/progress";
 import { MusicLearnerState } from "@/machines/musicLearningProcess";
-import { Progress } from "@radix-ui/react-progress";
 import { useSelector } from "@xstate/react";
 import { useContext, useEffect } from "react";
 
@@ -42,5 +42,9 @@ export default function CountdownVisualization() {
       stopCountdown();
     }
   }, [isReviewing, isViewingResults]);
-  return <Progress value={getProgressValue()} className="w-[375px] m-2" />;
+  return (
+    <Progress value={getProgressValue()} className="w-[375px] m-2">
+      {getProgressValue()}
+    </Progress>
+  );
 }
