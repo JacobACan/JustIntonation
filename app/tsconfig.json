@@ -13,6 +13,7 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
+    "skipDefaultLibCheck": true,
     "plugins": [
       {
         "name": "next"
@@ -27,7 +28,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "app/provider/settingsProvider.tsx"
+    "components/providers/settingsProvider.tsx"
   ],
   "exclude": ["node_modules"]
 }

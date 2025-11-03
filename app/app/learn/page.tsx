@@ -1,22 +1,27 @@
 "use client";
 import { useContext } from "react";
-import Chords from "./chords/chords";
-import Notes from "./notes/notes";
-import { LearningMode, SettingsContext } from "../provider/settingsProvider";
+import { MusicLearnerContext } from "@/components/providers/learningStateMachineProvider";
+import { useSelector } from "@xstate/react";
+import Settings from "@/components/settings/settings";
+import { MusicLearnerState } from "@/machines/musicLearningProcess";
+import LearnQuestions from "./learn";
 
 export default function Learn() {
-  const { settings } = useContext(SettingsContext);
+  const musicLearnerActorRef = useContext(MusicLearnerContext);
+  if (!musicLearnerActorRef) throw new Error("No Music Learning Context");
 
-  const renderComponent = () => {
-    switch (settings.learningMode) {
-      case LearningMode.Notes:
-        return <Notes />;
-      case LearningMode.Chords:
-        return <Chords />;
-      default:
-        return <Notes />;
-    }
-  };
+  const selectingLearningApproach = useSelector(musicLearnerActorRef, (s) =>
+    s.matches(MusicLearnerState.SELECTING_LEARNING_APPROACH)
+  );
+  const learningMode = useSelector(
+    musicLearnerActorRef,
+    (s) => s.context.settings.learningMode
+  );
 
-  return <>{renderComponent()}</>;
+  return (
+    <>
+      {selectingLearningApproach && <Settings />}{" "}
+      {!selectingLearningApproach && <LearnQuestions />}
+    </>
+  );
 }
