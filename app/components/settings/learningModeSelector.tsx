@@ -9,7 +9,6 @@ export default function LearningModeSelector() {
       <h2>Learning Mode</h2>
       <select
         onChange={(e) => {
-          console.log(e.target.value);
           updateSettings("learningMode", e.target.value as LearningMode);
         }}
         value={settings.learningMode}

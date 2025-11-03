@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { SettingsContext } from "../../components/providers/settingsProvider";
 import CountdownProvider from "@/components/providers/countdownProvider";
 import LearningUserEvent from "@/components/learn/learningUserEvent";
@@ -53,7 +53,7 @@ export default function LearnQuestions() {
             <PlayIcon />
           </LearningUserEvent>
         )}
-        {isGuessing && (
+        {isGuessing && !questionContext.isReplaying && (
           <LearningUserEvent eventType={MusicLearnerEvent.REPLAY}>
             <ReplayIcon />
           </LearningUserEvent>
