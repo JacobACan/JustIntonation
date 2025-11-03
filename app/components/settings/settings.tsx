@@ -12,6 +12,7 @@ import LearningUserEvent from "../learn/learningUserEvent";
 import { MusicLearnerEvent } from "@/machines/musicLearningProcess";
 import PlayIcon from "../icon/playIcon";
 import { LearningMode } from "@/constants/settings";
+import MelodyLengthSelector from "./melodyLengthSelector";
 
 export default function Settings() {
   const { settings } = useContext(SettingsContext);
@@ -29,6 +30,9 @@ export default function Settings() {
           <LearningModeSelector />
           {settings.learningMode === LearningMode.Chords && (
             <ChordSizeSelector />
+          )}
+          {settings.learningMode === LearningMode.Melodies && (
+            <MelodyLengthSelector />
           )}
           <QuestionNoteRangeSelector />
           <QuestionKeySelector />

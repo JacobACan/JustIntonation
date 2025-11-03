@@ -7,7 +7,9 @@ import { useMIDINote, useMIDINotes } from "@react-midi/hooks";
 import { SettingsContext } from "../../components/providers/settingsProvider";
 import Piano from "@/components/learn/piano";
 import { Progress } from "@/components/ui/progress";
-import { CountdownContext } from "@/components/providers/countdownProvider";
+import CountdownProvider, {
+  CountdownContext,
+} from "@/components/providers/countdownProvider";
 import LearningUserEvent from "@/components/learn/learningUserEvent";
 import PlayIcon from "@/components/icon/playIcon";
 import {
@@ -23,10 +25,9 @@ import MonitorNotes from "@/components/learn/midiInputUserEvents/notes";
 import { LearningMode } from "@/constants/settings";
 import MonitorChords from "@/components/learn/midiInputUserEvents/chords";
 import MonitorMelodies from "@/components/learn/midiInputUserEvents/melodies";
+import CountdownVisualization from "@/components/learn/visualizations/countdown";
 
 export default function LearnQuestions() {
-  const { startCountdown, stopCountdown, countdown } =
-    useContext(CountdownContext);
   const { settings } = useContext(SettingsContext);
   const notes = useMIDINotes();
   const note = useMIDINote();
@@ -51,18 +52,6 @@ export default function LearnQuestions() {
     };
   });
 
-  useEffect(() => {
-    if (isGuessing) {
-      startCountdown(settings.timeToAnswerQuestion);
-    }
-  }, [isGuessing]);
-
-  useEffect(() => {
-    if (isReviewing || isViewingResults) {
-      stopCountdown();
-    }
-  }, [isReviewing, isViewingResults]);
-
   const renderUserActions = () => {
     return (
       <section className="w-[50px] h-[50px]">
@@ -83,13 +72,6 @@ export default function LearnQuestions() {
         )}
       </section>
     );
-  };
-
-  const getProgressValue = (): number => {
-    if (isGuessing && countdown.timeLeft != 0) {
-      return (countdown.timeLeft / countdown.totalTime) * 100;
-    }
-    return 100;
   };
 
   const getNotesDown2 = () => {
@@ -122,7 +104,9 @@ export default function LearnQuestions() {
         <BackIcon height={40} width={40} />
       </LearningUserEvent>
       {renderUserActions()}
-      <Progress value={getProgressValue()} className="w-[375px] m-2"></Progress>
+      <CountdownProvider>
+        <CountdownVisualization />
+      </CountdownProvider>
       <Piano
         displayRange={settings.questionRange}
         notesDown2={getNotesDown2()}

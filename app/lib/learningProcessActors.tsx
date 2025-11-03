@@ -12,10 +12,9 @@ export const playMusicContext = async (input: MusicLearnerContext) => {
   switch (input.settings.learningMode) {
     case LearningMode.Notes:
     case LearningMode.Chords:
+    case LearningMode.Melodies:
       playCadence(input.settings.questionKey);
       await new Promise((r) => setTimeout(r, 2000));
-      break;
-    case LearningMode.Melodies:
       break;
   }
   return;
@@ -46,7 +45,7 @@ export const playQuestion = async (input: MusicLearnerContext) => {
       const melody = getNextQuestionMelody(
         input.settings.questionNoteWeights,
         input.settings.questionRange,
-        3
+        input.settings.melodyLength
       );
       await playMelody(melody);
       input.questionContext.currentMelody = melody;

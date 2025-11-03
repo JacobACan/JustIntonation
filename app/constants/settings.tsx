@@ -29,6 +29,7 @@ export interface Settings {
   numberOfQuestions: number;
   skipReviewOn: SkipReview;
   timeToAnswerQuestion: number; // in miliseconds
+  melodyLength: number;
 }
 
 export const defaultSettings: Settings = {
@@ -45,4 +46,5 @@ export const defaultSettings: Settings = {
   numberOfQuestions: 5,
   skipReviewOn: SkipReview.Correct,
   timeToAnswerQuestion: 5000,
+  melodyLength: 4,
 };

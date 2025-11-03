@@ -41,7 +41,7 @@ export default function MonitorMelodies() {
   const numberOfNotesInMelody = reducedQuestionMelody.length;
 
   useEffect(() => {
-    console.log(reducedQuestionMelody);
+    // console.log(reducedQuestionMelody);
     numberOfNotesGuessed.current = 0;
   }, [questionMelody]);
 
@@ -55,7 +55,7 @@ export default function MonitorMelodies() {
       let noteCorrect = false;
 
       if (numberOfNotesGuessed.current == 1) {
-        console.log("resetting time last note was hit");
+        // console.log("resetting time last note was hit");
         secondlastNoteHit.current = audioContext.currentTime;
       }
       const currentTime = audioContext.currentTime;
@@ -65,20 +65,20 @@ export default function MonitorMelodies() {
         ...note,
         secondsSinceLastNote: secondsSinceLastNote,
       };
-      console.log("JIMidiNote created:", JIMidiNote);
+      // console.log("JIMidiNote created:", JIMidiNote);
 
       const expectedTiming = reducedQuestionMelody[i].secondsSinceLastNote;
       const tolerance = secondsOfErrorTolerance.current;
       const upperBound = expectedTiming + tolerance;
       const lowerBound = expectedTiming - tolerance;
 
-      console.log("E");
-      console.log(expectedTiming);
-      console.log(reducedQuestionMelody[i].note);
-      console.log("A");
-      console.log(secondsSinceLastNote);
-      console.log(note.note);
-      console.log();
+      // console.log("E");
+      // console.log(expectedTiming);
+      // console.log(reducedQuestionMelody[i].note);
+      // console.log("A");
+      // console.log(secondsSinceLastNote);
+      // console.log(note.note);
+      // console.log();
 
       if (
         secondsSinceLastNote <= upperBound &&
@@ -90,7 +90,7 @@ export default function MonitorMelodies() {
       if (reducedQuestionMelody[i].note == note.note) noteCorrect = true;
 
       if (noteCorrect && timingCorrect) {
-        console.log("correct");
+        // console.log("correct");
         if (numberOfNotesGuessed.current == numberOfNotesInMelody)
           learningStateActor.send({ type: MusicLearnerEvent.CORRECT_GUESS });
       } else {

@@ -14,9 +14,7 @@ export default function LearnLayout({
     <>
       <MIDIProvider>
         <MusicLearnerProvider>
-          <SettingsProvider>
-            <CountdownProvider>{children}</CountdownProvider>
-          </SettingsProvider>
+          <SettingsProvider>{children}</SettingsProvider>
         </MusicLearnerProvider>
       </MIDIProvider>
     </>
