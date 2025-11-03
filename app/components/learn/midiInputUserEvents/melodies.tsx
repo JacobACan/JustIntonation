@@ -23,6 +23,7 @@ export default function MonitorMelodies() {
     const reducedQuestionMelody: JIMIDINote[] = [];
     let delayBetweenNoteOnEvents = 0;
     questionMelody?.forEach((n) => {
+      delayBetweenNoteOnEvents += n.secondsSinceLastNote;
       if (n.on) {
         reducedQuestionMelody.push({
           channel: n.channel,
@@ -33,7 +34,6 @@ export default function MonitorMelodies() {
         });
         delayBetweenNoteOnEvents = 0;
       }
-      delayBetweenNoteOnEvents += n.secondsSinceLastNote;
     });
     return reducedQuestionMelody;
   };
@@ -72,6 +72,8 @@ export default function MonitorMelodies() {
       const upperBound = expectedTiming + tolerance;
       const lowerBound = expectedTiming - tolerance;
 
+      // console.log(i);
+      // console.log(reducedQuestionMelody);
       // console.log("E");
       // console.log(expectedTiming);
       // console.log(reducedQuestionMelody[i].note);
@@ -94,6 +96,7 @@ export default function MonitorMelodies() {
         if (numberOfNotesGuessed.current == numberOfNotesInMelody)
           learningStateActor.send({ type: MusicLearnerEvent.CORRECT_GUESS });
       } else {
+        // console.log("incorrect");
         learningStateActor.send({ type: MusicLearnerEvent.INCORRECT_GUESS });
       }
 
