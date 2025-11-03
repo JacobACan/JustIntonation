@@ -48,8 +48,8 @@ export const playQuestion = async (input: MusicLearnerContext) => {
         input.settings.questionRange,
         input.settings.melodyLength
       );
-      await playMelody(melody);
       input.questionContext.currentMelody = melody;
+      await playMelody(melody);
 
       break;
   }

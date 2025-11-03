@@ -58,6 +58,7 @@ export interface QuestionContext {
   currentChord: Note[] | undefined;
   currentMelody: JIMIDINote[] | undefined;
   questionNumber: number;
+  numberOfReplays: number;
 }
 
 const defautQuestionContext: QuestionContext = {
@@ -65,6 +66,7 @@ const defautQuestionContext: QuestionContext = {
   currentChord: undefined,
   currentMelody: undefined,
   questionNumber: 0,
+  numberOfReplays: 0,
 };
 
 export interface MusicLearnerContext {
@@ -119,6 +121,7 @@ export const musicLearner = setup({
         currentMelody: undefined,
         currentNote: undefined,
         questionNumber: 0,
+        numberOfReplays: 0,
       };
     },
   },
@@ -197,6 +200,7 @@ export const musicLearner = setup({
           target: MusicLearnerState.REVIEWING,
         },
       },
+      entry: (s) => (s.context.questionContext.numberOfReplays = 0),
       on: {
         [MusicLearnerEvent.CORRECT_GUESS]: [
           {
@@ -247,16 +251,12 @@ export const musicLearner = setup({
       },
       states: {
         [MusicLearnerState.REPLAYING_QUESTION]: {
-          on: {
-            [MusicLearnerEvent.REPLAY]: {
-              target: MusicLearnerState.REPLAYING_QUESTION,
-            },
-          },
           invoke: {
             src: "replayQuestion",
             input: (s) => s.context,
             onDone: { target: MusicLearnerState.WAITING_FOR_GUESS },
           },
+          entry: (s) => s.context.questionContext.numberOfReplays++,
         },
         [MusicLearnerState.WAITING_FOR_GUESS]: {
           on: {

@@ -66,11 +66,16 @@ export const getNextQuestionMelody = (
     .map((nw) => nw.note);
 
   for (let i = 0; i < length; i++) {
-    const randomDuration = [
-      Duration.QuarterNote,
-      Duration.EigthNote,
-      Duration.SixteenthNote,
-    ][Math.floor(Math.random() * 3)];
+    let randomDuration: number = 0;
+    if (i != 0) {
+      // Frist note in melody starts instantly
+      randomDuration = [
+        Duration.QuarterNote,
+        Duration.EigthNote,
+        Duration.SixteenthNote,
+      ][Math.floor(Math.random() * 3)];
+    }
+
     const randomNote =
       questionNotes[Math.floor(questionNotes.length * Math.random())];
     qm.push({

@@ -107,6 +107,8 @@ export const playMelody = async (melody: JIMIDINote[], relGain: number = 1) => {
   for (let j = 0; j < melody.length; j++) {
     const noteOffDecayNode = audioContext.createGain();
 
+    totalSecondsDelay += melody[j].secondsSinceLastNote;
+
     if (melody[j].on) {
       const currentBuffer = audioBuffers[j];
       const source = audioContext.createBufferSource();
@@ -126,8 +128,6 @@ export const playMelody = async (melody: JIMIDINote[], relGain: number = 1) => {
         startTime + totalSecondsDelay
       );
     }
-
-    totalSecondsDelay += melody[j].secondsSinceLastNote;
   }
 
   // Time to let melody play out
