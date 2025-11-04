@@ -14,7 +14,7 @@ import PlayIcon from "../icon/playIcon";
 import { LearningMode } from "@/constants/settings";
 import MelodyLengthSelector from "./melodyLengthSelector";
 
-export default function Settings() {
+export default function LearningApproach() {
   const { settings } = useContext(SettingsContext);
 
   return (
