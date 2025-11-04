@@ -1,45 +1,24 @@
 import React, { useContext } from "react";
-import { MidiSelector } from "./midiSelector";
-import QuestionNoteRangeSelector from "./questionRangeSelector";
-import QuestionKeySelector from "./questionKeySelector";
-import QuestionScaleSelector from "./questionScaleSelector";
-import LearningModeSelector from "./learningModeSelector";
+
 import { SettingsContext } from "@/components/providers/settingsProvider";
-import ChordSizeSelector from "./chordSizeSelector";
-import PlayCadence from "./playCadence";
-import ShowQuestionNotesSelector from "./showQuestionNotesSelector copy";
-import LearningUserEvent from "../learn/learningUserEvent";
-import { MusicLearnerEvent } from "@/machines/musicLearningProcess";
-import PlayIcon from "../icon/playIcon";
-import { LearningMode } from "@/constants/settings";
-import MelodyLengthSelector from "./melodyLengthSelector";
+import Piano from "../learn/piano";
 
 export default function LearningApproach() {
   const { settings } = useContext(SettingsContext);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center ">
-      <div className="relative w-full max-w-md mx-auto bg-[var(--background2)] rounded-md  p-6 overflow-y-auto">
-        <h2 className="text-2xl mb-4 font-bold">Learning Approach</h2>
-        {/* Settings content here */}
-        <div className="flex flex-col gap-4">
-          <LearningUserEvent eventType={MusicLearnerEvent.START}>
-            <PlayIcon />
-          </LearningUserEvent>
-          <MidiSelector />
-          <LearningModeSelector />
-          {settings.learningMode === LearningMode.Chords && (
-            <ChordSizeSelector />
-          )}
-          {settings.learningMode === LearningMode.Melodies && (
-            <MelodyLengthSelector />
-          )}
-          <QuestionNoteRangeSelector />
-          <QuestionKeySelector />
-          <QuestionScaleSelector />
-          <ShowQuestionNotesSelector />
-          <PlayCadence />
-        </div>
+    <div className=" overflow-hidden">
+      <section className="w-[40%] h-[100vh] left-0 absolute">
+        <div className="absolute w-full h-full from-transparent via-background to-background bg-gradient-to-l "></div>
+        <div className="left-0 absolute p-4">General Settings</div>
+      </section>
+      <section className="w-[40%] h-[100vh] right-0 absolute">
+        <div className=" absolute w-full h-full from-transparent via-background to-background bg-gradient-to-r "></div>
+        <div className="right-0 absolute p-4">Mode Settings</div>
+      </section>
+      <div className="align-middle items-center text-center  h-[100vh] content-center ">
+        Learning Mode
+        <Piano></Piano>
       </div>
     </div>
   );
