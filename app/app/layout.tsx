@@ -1,12 +1,8 @@
 import type { Metadata } from "next";
-import { Handlee } from "next/font/google";
+import { Gloria_Hallelujah } from "next/font/google";
 import "./globals.css";
 
-const handlee = Handlee({
-  variable: "--font-reenie-beanie",
-  subsets: ["latin"],
-  weight: "400",
-});
+const handlee = Gloria_Hallelujah({ weight: "400" });
 
 export const metadata: Metadata = {
   title: "JustIntonation",
@@ -20,7 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${handlee.variable} antialiased`}>{children}</body>
+      <body className={`${handlee.className} antialiased`}>{children}</body>
     </html>
   );
 }

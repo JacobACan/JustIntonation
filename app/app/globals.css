@@ -149,7 +149,8 @@ The style of this app is handdrawn vector art this means:
 
 body {
   background: var(--background2);
-  color: var(--foreground2);
+  color: var(--middleground1);
+  font-size: 2em;
 }
 
 /*

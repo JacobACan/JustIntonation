@@ -8,6 +8,7 @@ export enum LearningMode {
   Chords = "Chords",
   Melodies = "Melodies",
 }
+export const LearningModeValues: LearningMode[] = Object.values(LearningMode);
 
 export enum SkipReview {
   None,
