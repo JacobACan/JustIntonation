@@ -47,7 +47,7 @@ export default function LearnQuestions() {
 
   const renderUserActions = () => {
     return (
-      <section className="w-[50px] h-[50px]">
+      <section className="h-[50px] w-[50px]">
         {isIdle && (
           <LearningUserEvent eventType={MusicLearnerEvent.START}>
             <PlayIcon />
@@ -68,9 +68,9 @@ export default function LearnQuestions() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen py-2 ">
+    <div className="flex min-h-screen flex-col items-center justify-center py-2">
       <LearningUserEvent
-        className=" absolute left-5 top-5"
+        className="absolute top-5 left-5"
         eventType={MusicLearnerEvent.CHANGE_LEARNING_APPROACH}
       >
         <BackIcon height={40} width={40} />
@@ -80,9 +80,10 @@ export default function LearnQuestions() {
         <CountdownVisualization />
       </CountdownProvider>
       <GuessingVisualization />
-      <h2 className=" mt-8 font-bold text-[var(--middleground1)]">
-        {questionContext.questionNumber} / {totalQuestions}
-      </h2>
+      <h2 className="mt-8 text-sm font-bold">{totalQuestions} Questions</h2>
+      <h3 className="text-[var(--middleground1)]">
+        {questionContext.questionsCorrect} / {questionContext.questionNumber}
+      </h3>
       {isGuessing &&
         ((settings.learningMode == LearningMode.Notes && <MonitorNotes />) ||
           (settings.learningMode == LearningMode.Chords && <MonitorChords />) ||
