@@ -83,7 +83,7 @@ export const MidiSelector = () => {
       ) : (
         <p className="text-background text-sm">Midi Device</p>
       )}
-      <section className="absolute h-[272.5px] w-[500px] content-center drop-shadow-lg">
+      <section className="absolute h-[305.5px] w-[500px] content-center drop-shadow-lg">
         {midiDeviceVerified && (
           <LearningUserEvent
             className="m-auto"
