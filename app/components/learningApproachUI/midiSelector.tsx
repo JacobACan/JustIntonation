@@ -66,7 +66,7 @@ export const MidiSelector = () => {
         className="w-[150px] text-sm"
       >
         <CarouselContent>
-          <CarouselItem className="content-center">None</CarouselItem>
+          <CarouselItem className="content-center">No Midi Device</CarouselItem>
           {inputs.map((m) => (
             <CarouselItem className="content-center" key={m.id}>
               {m.name}
