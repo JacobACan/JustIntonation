@@ -30,8 +30,12 @@ export const MidiSelector = () => {
     if (!inputs || inputs.length == 0) return;
     if (!setMidiDeviceVerified) return;
 
+    console.log(midiDeviceCarouselApi);
     midiDeviceCarouselApi.on("select", (e) => {
-      if (e.selectedScrollSnap() > 0) {
+      if (
+        e.selectedScrollSnap() > 0 &&
+        e.selectedScrollSnap() - 1 < inputs.length
+      ) {
         selectInput(inputs[e.selectedScrollSnap() - 1].id);
       }
       setMidiDeviceVerified(false);
