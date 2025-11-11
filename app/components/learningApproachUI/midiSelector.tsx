@@ -77,7 +77,7 @@ export const MidiSelector = () => {
         <CarouselNext variant={"justIntonnation"} />
       </Carousel>
       {!midiDeviceVerified ? (
-        <p className="text-destructive text-sm">
+        <p className="text-destructive mt-2 text-sm">
           Test your midi device before starting!
         </p>
       ) : (

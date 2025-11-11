@@ -32,7 +32,7 @@ export default function LearningApproach() {
           className={clsx(
             "hover:stroke-primary h-[35px] w-[35px] hover:cursor-pointer",
             {
-              "stroke-primary fill-primary drop-shadow-primary drop-shadow-md":
+              "stroke-primary fill-primary drop-shadow-primary drop-shadow-xs":
                 showExtraSettings,
               "fill-primary": !showExtraSettings,
             },

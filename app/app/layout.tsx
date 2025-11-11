@@ -6,7 +6,7 @@ import {
 } from "next/font/google";
 import "./globals.css";
 
-const handlee = Gloria_Hallelujah({ weight: "400" });
+const handlee = M_PLUS_1_Code({ weight: "400" });
 
 export const metadata: Metadata = {
   title: "JustIntonation",
