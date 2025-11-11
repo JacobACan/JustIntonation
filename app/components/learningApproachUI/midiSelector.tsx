@@ -81,7 +81,7 @@ export const MidiSelector = () => {
           Test your midi device before starting!
         </p>
       ) : (
-        <p className="text-background text-sm">Midi Device</p>
+        <p className="text-background mt-2 text-sm">Midi Device</p>
       )}
       <section className="absolute h-[305.5px] w-[500px] content-center drop-shadow-lg">
         {midiDeviceVerified && (

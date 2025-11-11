@@ -3,13 +3,26 @@ import { SettingsContext } from "../providers/settingsProvider";
 import { midiToNote, Note, WHITE_NOTES } from "../../constants/notes";
 import Piano from "../learn/piano";
 import { useMIDINotes } from "@react-midi/hooks";
+import { noteToMidi } from "@/constants/midi";
 
 export default function QuestionNoteRangeSelector() {
+  const pxForWhiteNote = (n: Note): number => {
+    if (WHITE_NOTES.includes(n)) {
+      let i = 0;
+      while (WHITE_NOTES[i] != n) {
+        i++;
+      }
+      return i * WHITE_KEY_WIDTH;
+    }
+    return MIDDLE_C_PX;
+  };
+
   const SELECTION_RANGE_WIDTH = 400;
   const NUM_WHITE_KEYS_ON_FULL_PIANO = 52;
   const WHITE_KEY_WIDTH = SELECTION_RANGE_WIDTH / NUM_WHITE_KEYS_ON_FULL_PIANO;
   const SELECTION_RANGE_HEIGHT = WHITE_KEY_WIDTH * 5.45 + 2;
   const MIDDLE_C_PX = WHITE_KEY_WIDTH * 7 * 3 + 2 * WHITE_KEY_WIDTH;
+  const selectionWidth = WHITE_KEY_WIDTH * 8;
 
   const { settings, updateSettings } = useContext(SettingsContext);
   const notes = useMIDINotes();
@@ -17,7 +30,7 @@ export default function QuestionNoteRangeSelector() {
   const selectionRef = useRef<HTMLDivElement | null>(null);
   const dragStart = useRef(0);
   const selectionDragStart = useRef(0);
-  const slctnCenterLeft = useRef(MIDDLE_C_PX);
+  const slctnCenterLeft = useRef(pxForWhiteNote(settings.questionRange[0]));
 
   const leftBlurBoxRef = useRef<HTMLDivElement | null>(null);
   const rightBlurBoxRef = useRef<HTMLDivElement | null>(null);
@@ -29,7 +42,12 @@ export default function QuestionNoteRangeSelector() {
 
   const lRangeOffsetPx = useRef(0);
   const lRangeOffsetStartPx = useRef(0);
-  const rRangeOffsetPx = useRef(0);
+  const rRangeOffsetPx = useRef(
+    pxForWhiteNote(settings.questionRange[1]) -
+      (pxForWhiteNote(settings.questionRange[0]) +
+        selectionWidth -
+        WHITE_KEY_WIDTH),
+  );
   const rRangeOffsetStartPx = useRef(0);
 
   const moveToMousePosition = (e: React.DragEvent<HTMLDivElement>) => {
@@ -49,8 +67,6 @@ export default function QuestionNoteRangeSelector() {
     if (!leftBlurBoxRef.current) return;
     if (!leftRangeSelectorRef.current) return;
     if (!leftRangeSelectorRef.current || !rightRangeSelectorRef.current) return;
-
-    const selectionWidth = WHITE_KEY_WIDTH * 8;
 
     let selectionCenterLeft = amountToMove + offset;
     if (selectionCenterLeft + lRangeOffsetPx.current < 0) {
@@ -147,7 +163,14 @@ export default function QuestionNoteRangeSelector() {
           if (!selectionRef.current) return;
           const newOffset =
             lRangeOffsetStartPx.current + e.clientX - dragStart.current;
-          lRangeOffsetPx.current = newOffset > 0 ? 0 : newOffset;
+          const distanceFromLeft = -slctnCenterLeft.current + WHITE_KEY_WIDTH;
+          if (newOffset > 0) {
+            lRangeOffsetPx.current = 0;
+          } else if (newOffset <= distanceFromLeft) {
+            lRangeOffsetPx.current = distanceFromLeft;
+          } else {
+            lRangeOffsetPx.current = newOffset;
+          }
           setSelecitonRange(slctnCenterLeft.current, 0);
         }}
       ></div>
@@ -164,7 +187,17 @@ export default function QuestionNoteRangeSelector() {
           if (!selectionRef.current) return;
           const newOffset =
             rRangeOffsetStartPx.current + e.clientX - dragStart.current;
-          rRangeOffsetPx.current = newOffset < 0 ? 0 : newOffset;
+          const distanceFromRight =
+            SELECTION_RANGE_WIDTH -
+            WHITE_KEY_WIDTH -
+            (slctnCenterLeft.current + selectionWidth);
+          if (newOffset < 0) {
+            rRangeOffsetPx.current = 0;
+          } else if (newOffset >= distanceFromRight) {
+            rRangeOffsetPx.current = distanceFromRight;
+          } else {
+            rRangeOffsetPx.current = newOffset;
+          }
           setSelecitonRange(slctnCenterLeft.current, 0);
         }}
       ></div>
