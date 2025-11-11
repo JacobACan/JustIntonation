@@ -5,6 +5,9 @@ import { MidiSelector } from "./midiSelector";
 import { SettingsContext } from "../providers/settingsProvider";
 import { SettingsIcon } from "../icon/settingsIcon";
 import clsx from "clsx";
+import QuestionKeySelector from "./questionKeySelector";
+import QuestionScaleSelector from "./questionScaleSelector";
+import PlayCadence from "./playCadence";
 
 export default function LearningApproach() {
   const { settings } = useContext(SettingsContext);
@@ -12,11 +15,28 @@ export default function LearningApproach() {
 
   const renderMainSettings = () => {
     return (
-      <div className="h-lvh content-center justify-items-center text-center">
+      <div className="h-lvh content-center justify-items-center text-center text-sm">
         <LearningModeSelector />
         <MidiSelector />
         <QuestionNoteRangeSelector />
       </div>
+    );
+  };
+
+  const renderModeSettings = () => {
+    return <>{settings.learningMode} Settings</>;
+  };
+
+  const renderGeneralSettings = () => {
+    return (
+      <>
+        <h1>General Settings</h1>
+        <section className="pointer-events-auto">
+          <QuestionKeySelector />
+          <QuestionScaleSelector />
+          <PlayCadence />
+        </section>
+      </>
     );
   };
 
@@ -46,7 +66,7 @@ export default function LearningApproach() {
         )}
       >
         <div className="via-background to-background pointer-events-none absolute z-10 h-full w-full bg-gradient-to-l from-transparent via-10%"></div>
-        <div className="absolute z-10 p-4">General Settings</div>
+        <div className="absolute z-10 p-4">{renderGeneralSettings()}</div>
       </section>
       <section
         className={clsx(
@@ -55,9 +75,7 @@ export default function LearningApproach() {
         )}
       >
         <div className="via-background to-background pointer-events-none absolute z-10 h-full w-full bg-gradient-to-r from-transparent via-10%"></div>
-        <div className="absolute z-10 p-4">
-          {settings.learningMode} Settings
-        </div>
+        <div className="absolute z-10 p-4">{renderModeSettings()}</div>
       </section>
       {renderMainSettings()}
     </div>
