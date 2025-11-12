@@ -8,7 +8,7 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "../ui/carousel";
+} from "../../ui/carousel";
 
 export default function LearningModeSelector() {
   const { settings, updateSettings } = useContext(SettingsContext);

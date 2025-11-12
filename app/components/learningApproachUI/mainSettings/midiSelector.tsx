@@ -8,13 +8,13 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "../ui/carousel";
-import LearningUserEvent from "../learn/learningUserEvent";
+} from "../../ui/carousel";
+import LearningUserEvent from "../../learn/learningUserEvent";
 import { MusicLearnerEvent } from "@/machines/musicLearningProcess";
-import PlayIcon from "../icon/playIcon";
-import Piano from "../learn/piano";
+import PlayIcon from "../../icon/playIcon";
+import Piano from "../../learn/piano";
 import { midiToNote } from "@/constants/notes";
-import { SettingsContext } from "../providers/settingsProvider";
+import { SettingsContext } from "../../providers/settingsProvider";
 
 export const MidiSelector = () => {
   const { inputs, selectInput, input } = useMIDIInputs();

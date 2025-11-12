@@ -1,20 +1,19 @@
 import { SettingsContext } from "@/components/providers/settingsProvider";
+import { Slider } from "@/components/ui/slider";
 import { useContext } from "react";
 
 export default function ChordSizeSelector() {
   const { settings, updateSettings } = useContext(SettingsContext);
   return (
-    <div>
+    <div className="grid">
       <h2>Chord Size : {settings.chordSize}</h2>
-      <input
-        onChange={(e) => {
-          updateSettings("chordSize", e.target.value as unknown as number);
+      <Slider
+        onValueChange={([val]) => {
+          updateSettings("chordSize", val);
         }}
-        type="range"
-        name="bottom note"
         min={2}
         max={5}
-        value={settings.chordSize}
+        defaultValue={[settings.chordSize]}
       />
     </div>
   );

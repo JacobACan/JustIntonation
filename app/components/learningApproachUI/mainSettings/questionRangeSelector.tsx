@@ -1,9 +1,8 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import { SettingsContext } from "../providers/settingsProvider";
-import { midiToNote, Note, WHITE_NOTES } from "../../constants/notes";
-import Piano from "../learn/piano";
 import { useMIDINotes } from "@react-midi/hooks";
-import { noteToMidi } from "@/constants/midi";
+import { midiToNote, Note, WHITE_NOTES } from "@/constants/notes";
+import { SettingsContext } from "@/components/providers/settingsProvider";
+import Piano from "@/components/learn/piano";
 
 export default function QuestionNoteRangeSelector() {
   const pxForWhiteNote = (n: Note): number => {
