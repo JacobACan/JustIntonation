@@ -239,6 +239,21 @@ export const midiToNote: { [midi: number]: Note } = {
 };
 
 export enum NoteFile {
+  A0 = "A0.ogg",
+  Bb0 = "Bb0.ogg",
+  B0 = "B0.ogg",
+  C1 = "C1.ogg",
+  Db1 = "Db1.ogg",
+  D1 = "D1.ogg",
+  Eb1 = "Eb1.ogg",
+  E1 = "E1.ogg",
+  F1 = "F1.ogg",
+  Gb1 = "Gb1.ogg",
+  G1 = "G1.ogg",
+  Ab1 = "Ab1.ogg",
+  A1 = "A1.ogg",
+  Bb1 = "Bb1.ogg",
+  B1 = "B1.ogg",
   A2 = "A2.ogg",
   A3 = "A3.ogg",
   A4 = "A4.ogg",
@@ -300,6 +315,18 @@ export enum NoteFile {
   Gb4 = "Gb4.ogg",
   Gb5 = "Gb5.ogg",
   Gb6 = "Gb6.ogg",
+  Db8 = "Db8.ogg",
+  D8 = "D8.ogg",
+  Eb8 = "Eb8.ogg",
+  E8 = "E8.ogg",
+  F8 = "F8.ogg",
+  Gb8 = "Gb8.ogg",
+  G8 = "G8.ogg",
+  Ab8 = "Ab8.ogg",
+  A8 = "A8.ogg",
+  Bb8 = "Bb8.ogg",
+  B8 = "B8.ogg",
+  C8 = "C8.ogg",
 }
 
 export interface JIMIDINote extends MIDINote {
