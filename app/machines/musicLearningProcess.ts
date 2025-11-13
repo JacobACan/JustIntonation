@@ -1,4 +1,6 @@
+import { Key } from "@/constants/keys";
 import { JIMIDINote, Note } from "@/constants/notes";
+import { Scale } from "@/constants/scale";
 import {
   defaultSettings,
   LearningMode,
@@ -60,6 +62,9 @@ export interface QuestionContext {
   questionNumber: number;
   numberOfReplays: number;
   isReplaying: boolean;
+  questionsCorrect: number;
+  currentKey: Key;
+  currentScale: Scale;
 }
 
 const defautQuestionContext: QuestionContext = {
@@ -69,6 +74,9 @@ const defautQuestionContext: QuestionContext = {
   questionNumber: 0,
   numberOfReplays: 0,
   isReplaying: false,
+  questionsCorrect: 0,
+  currentKey: Key.C,
+  currentScale: Scale.major,
 };
 
 export interface MusicLearnerContext {
@@ -85,12 +93,12 @@ export const musicLearner = setup({
     playMusicContext: fromPromise(
       async ({ input }: { input: MusicLearnerContext }) => {
         return await playMusicContext(input);
-      }
+      },
     ),
     playQuestion: fromPromise(
       async ({ input }: { input: MusicLearnerContext }) => {
         return await playQuestion(input);
-      }
+      },
     ),
     replayQuestion: fromPromise(
       async ({ input }: { input: MusicLearnerContext }) => {
@@ -109,7 +117,7 @@ export const musicLearner = setup({
             break;
         }
         return;
-      }
+      },
     ),
   },
   actions: {
@@ -125,7 +133,19 @@ export const musicLearner = setup({
         questionNumber: 0,
         numberOfReplays: 0,
         isReplaying: false,
+        questionsCorrect: 0,
+        currentKey:
+          c.context.settings.questionKeys[
+            Math.floor(Math.random() * c.context.settings.questionKeys.length)
+          ],
+        currentScale:
+          c.context.settings.questionScales[
+            Math.floor(Math.random() * c.context.settings.questionScales.length)
+          ],
       };
+    },
+    correctGuess: (c) => {
+      c.context.questionContext.questionsCorrect++;
     },
   },
   delays: {
@@ -213,6 +233,7 @@ export const musicLearner = setup({
                 stmch.context.settings.skipReviewOn == SkipReview.Correct) &&
               stmch.context.questionContext.questionNumber <
                 stmch.context.settings.numberOfQuestions - 1,
+            actions: "correctGuess",
           },
           {
             target: MusicLearnerState.VIEWING_RESULTS,
@@ -221,6 +242,7 @@ export const musicLearner = setup({
                 stmch.context.settings.skipReviewOn == SkipReview.Correct) &&
               stmch.context.questionContext.questionNumber >=
                 stmch.context.settings.numberOfQuestions - 1,
+            actions: "correctGuess",
           },
           {
             target: MusicLearnerState.REVIEWING,

@@ -2,9 +2,9 @@
 import { useContext } from "react";
 import { MusicLearnerContext } from "@/components/providers/learningStateMachineProvider";
 import { useSelector } from "@xstate/react";
-import Settings from "@/components/settings/settings";
 import { MusicLearnerState } from "@/machines/musicLearningProcess";
 import LearnQuestions from "./learn";
+import LearningApproach from "@/components/learningApproachUI/learningApproach";
 
 export default function Learn() {
   const musicLearnerActorRef = useContext(MusicLearnerContext);
@@ -20,7 +20,7 @@ export default function Learn() {
 
   return (
     <>
-      {selectingLearningApproach && <Settings />}{" "}
+      {selectingLearningApproach && <LearningApproach />}{" "}
       {!selectingLearningApproach && <LearnQuestions />}
     </>
   );

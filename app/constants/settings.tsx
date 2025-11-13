@@ -8,6 +8,7 @@ export enum LearningMode {
   Chords = "Chords",
   Melodies = "Melodies",
 }
+export const LearningModeValues: LearningMode[] = Object.values(LearningMode);
 
 export enum SkipReview {
   None,
@@ -17,9 +18,8 @@ export enum SkipReview {
 
 export interface Settings {
   questionRange: [Note, Note]; // The Range of notes that a musician is questioned on
-  questionKey: Key; // The key that the questions are centered around
-  questionScale: Scale; // The scale that the questions are centered around
-  questionNoteWeights: NoteWeight[]; // The notes that the musician is questioned on.  If the weight is higher, the note is more likely to be chosen.
+  questionKeys: Key[]; // The keys that the questions are centered around
+  questionScales: Scale[]; // The scales that the questions are centered around
   questionsInARow: number; // The number of questions answered correctly in a row to move on
   learningMode: LearningMode;
   chordSize: number; // If in chord mode, the size of the chords to be played
@@ -34,9 +34,8 @@ export interface Settings {
 
 export const defaultSettings: Settings = {
   questionRange: [Note.C4, Note.C5],
-  questionKey: Key.C,
-  questionScale: Scale.major,
-  questionNoteWeights: noteWeightsForScale(Key.C, Scale.major),
+  questionKeys: [Key.C],
+  questionScales: [Scale.major],
   questionsInARow: 30,
   learningMode: LearningMode.Notes,
   chordSize: 2,

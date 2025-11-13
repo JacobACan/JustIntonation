@@ -4,39 +4,18 @@ import { noteToMidi } from "@/constants/midi";
 import { Note } from "@/constants/notes";
 
 // Helper for random wavy effect
-function wavyRectPath(
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  waviness = 3
-) {
+function rectPath(x: number, y: number, w: number, h: number) {
   // Generates a path for a rectangle with wavy sides
   // waviness: max px offset for waviness
   // Top
-  const top = [
-    `M ${x + rand(-waviness, waviness)} ${y + rand(-waviness, waviness)}`,
-    `L ${x + w + rand(-waviness, waviness)} ${y + rand(-waviness, waviness)}`,
-  ];
+  const top = [`M ${x} ${y}`, `L ${x + w} ${y}`];
   // Right
-  const right = [
-    `L ${x + w + rand(-waviness, waviness)} ${
-      y + h + rand(-waviness, waviness)
-    }`,
-  ];
+  const right = [`L ${x + w} ${y + h}`];
   // Bottom
-  const bottom = [
-    `L ${x + rand(-waviness, waviness)} ${y + h + rand(-waviness, waviness)}`,
-  ];
+  const bottom = [`L ${x} ${y + h}`];
   // Left
-  const left = [
-    `L ${x + rand(-waviness, waviness)} ${y + rand(-waviness, waviness)}`,
-  ];
+  const left = [`L ${x} ${y}`];
   return [...top, ...right, ...bottom, ...left, "Z"].join(" ");
-}
-function rand(min: number, max: number) {
-  const n = 0.5 * (max - min) + min;
-  return n;
 }
 
 const WHITE_KEYS = ["A", "B", "C", "D", "E", "F", "G"];
@@ -82,6 +61,7 @@ interface PianoProps {
   notesDown2?: Note[];
   getFill?: (note: Note, isDown1: boolean, isDown2: boolean) => string;
   width?: number;
+  className?: string;
 }
 
 export default function Piano({
@@ -90,6 +70,7 @@ export default function Piano({
   notesDown2 = [],
   getFill,
   width,
+  className,
 }: PianoProps) {
   // Calculate range
   const firstMidi = noteToMidi[displayRange[0]];
@@ -106,12 +87,15 @@ export default function Piano({
   // Calculate dynamic key sizes
   const svgWidth = width || numWhiteKeys * 50; // fallback to 22px per key if no width
   const WHITE_KEY_WIDTH = svgWidth / numWhiteKeys;
-  // Height is 5.45 times the width (120/22 from original ratio)
+
   const WHITE_KEY_HEIGHT = WHITE_KEY_WIDTH * 5.45;
   const BLACK_KEY_WIDTH = WHITE_KEY_WIDTH * 0.65;
   const BLACK_KEY_HEIGHT = WHITE_KEY_HEIGHT * 0.67;
 
-  // Build keys with dynamic positions
+  const STROKE_WIDTH = 2.2;
+  const STROKE_OFFSET = STROKE_WIDTH;
+  const WHITE_BLACK_KEY_OFFSET = 2;
+
   for (let midi = firstMidi; midi <= lastMidi; midi++) {
     const note = midiNoteName(midi);
     const black = isBlackKey(midi);
@@ -126,25 +110,26 @@ export default function Piano({
     });
     if (!black) whiteIndex++;
   }
-  const svgHeight = WHITE_KEY_HEIGHT;
+
+  const svgHeight = WHITE_KEY_HEIGHT + WHITE_BLACK_KEY_OFFSET;
 
   return (
     <svg
       width={svgWidth}
       height={svgHeight}
-      viewBox={`0 0 ${svgWidth + 10} ${svgHeight + 10}`}
+      viewBox={`0 0 ${svgWidth + STROKE_WIDTH * 2} ${svgHeight}`}
+      className={`${className}`}
     >
-      {/* White keys - cartoony */}
       {keys
+        // Draw White keys
         .filter((k) => !k.black)
         .map((key, i) => {
           const isDown1 = notesDown1.includes(key.note as Note);
           const isDown2 = notesDown2.includes(key.note as Note);
-          // Add slight random offset to each key for cartoon effect
-          const x = i * WHITE_KEY_WIDTH + rand(-2, 2);
-          const y = rand(-1, 1);
-          const w = WHITE_KEY_WIDTH + rand(-1, 1);
-          const h = WHITE_KEY_HEIGHT + rand(-2, 2);
+          const x = i * WHITE_KEY_WIDTH + STROKE_OFFSET;
+          const y = 0;
+          const w = WHITE_KEY_WIDTH;
+          const h = WHITE_KEY_HEIGHT;
           let fill = "var(--piano-white)";
           if (getFill) {
             fill = getFill(key.note as Note, isDown1, isDown2);
@@ -156,24 +141,23 @@ export default function Piano({
           return (
             <path
               key={key.midi}
-              d={wavyRectPath(x, y + 5, w, h, 3)}
+              // define the svg path for each key
+              d={rectPath(x, y + WHITE_BLACK_KEY_OFFSET, w, h)}
               fill={fill}
               stroke="#222"
-              strokeWidth={2.2}
+              strokeWidth={STROKE_WIDTH}
             />
           );
         })}
-      {/* Black keys - cartoony */}
       {keys
         .filter((k) => k.black)
         .map((key) => {
           const isDown1 = notesDown1.includes(key.note as Note);
           const isDown2 = notesDown2.includes(key.note as Note);
-          // Add slight random offset to each key for cartoon effect
-          const x = key.x + rand(-1.5, 1.5);
-          const y = rand(-1, 1);
-          const w = BLACK_KEY_WIDTH + rand(-1, 1);
-          const h = BLACK_KEY_HEIGHT + rand(-2, 2);
+          const x = key.x + STROKE_OFFSET;
+          const y = 0;
+          const w = BLACK_KEY_WIDTH;
+          const h = BLACK_KEY_HEIGHT;
           let fill = "var(--piano-black)";
           if (getFill) {
             fill = getFill(key.note as Note, isDown1, isDown2);
@@ -185,7 +169,7 @@ export default function Piano({
           return (
             <path
               key={key.midi}
-              d={wavyRectPath(x, y, w, h, 2.5)}
+              d={rectPath(x, y, w, h)}
               fill={fill}
               stroke="#111"
               strokeWidth={2.2}

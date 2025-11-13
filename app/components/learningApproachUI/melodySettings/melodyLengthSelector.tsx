@@ -1,5 +1,6 @@
+import { SettingsContext } from "@/components/providers/settingsProvider";
+import { Slider } from "@/components/ui/slider";
 import { useContext } from "react";
-import { SettingsContext } from "../providers/settingsProvider";
 
 export default function MelodyLengthSelector() {
   const { settings, updateSettings } = useContext(SettingsContext);
@@ -7,13 +8,12 @@ export default function MelodyLengthSelector() {
   return (
     <>
       Melody Length {settings.melodyLength}
-      <input
-        type="range"
+      <Slider
         min={2}
         max={10}
-        value={settings.melodyLength}
-        onChange={(e) => updateSettings("melodyLength", e.target.valueAsNumber)}
-      ></input>
+        defaultValue={[settings.melodyLength]}
+        onValueChange={([val]) => updateSettings("melodyLength", val)}
+      />
     </>
   );
 }
