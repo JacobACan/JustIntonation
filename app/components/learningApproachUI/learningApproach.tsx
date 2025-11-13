@@ -6,6 +6,7 @@ import clsx from "clsx";
 import QuestionKeySelector from "./generalSettings/questionKeySelector";
 import QuestionScaleSelector from "./generalSettings/questionScaleSelector";
 import PlayCadence from "./generalSettings/playCadence";
+import NumberOfQuestions from "./generalSettings/numberOfQuestions";
 import LearningModeSelector from "./mainSettings/learningModeSelector";
 import QuestionNoteRangeSelector from "./mainSettings/questionRangeSelector";
 import Settings from "./settings";
@@ -49,6 +50,7 @@ export default function LearningApproach() {
           <QuestionKeySelector />
           <QuestionScaleSelector />
           <PlayCadence />
+          <NumberOfQuestions />
         </Settings>
       </>
     );

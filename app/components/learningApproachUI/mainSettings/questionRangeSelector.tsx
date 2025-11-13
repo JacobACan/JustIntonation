@@ -11,7 +11,7 @@ export default function QuestionNoteRangeSelector() {
       while (WHITE_NOTES[i] != n) {
         i++;
       }
-      return i * WHITE_KEY_WIDTH;
+      return Math.floor(i * WHITE_KEY_WIDTH);
     }
     return MIDDLE_C_PX;
   };
@@ -47,9 +47,10 @@ export default function QuestionNoteRangeSelector() {
         selectionWidth -
         WHITE_KEY_WIDTH),
   );
-  const rRangeOffsetStartPx = useRef(0);
+  const rRangeOffsetStartPx = useRef(rRangeOffsetPx.current);
 
   const moveToMousePosition = (e: React.DragEvent<HTMLDivElement>) => {
+    if (e.clientX === 0) return; // Drag end event
     const amountToMove = e.clientX - dragStart.current;
 
     const mouseOffset =
@@ -107,6 +108,12 @@ export default function QuestionNoteRangeSelector() {
       noteForRange(rangeStart),
       noteForRange(rangeEnd),
     ]);
+
+    console.log(
+      slctnCenterLeft.current,
+      lRangeOffsetPx.current,
+      rRangeOffsetPx.current,
+    );
   };
 
   const noteForRange = (pxFromSelectionStart: number): Note => {
@@ -160,6 +167,8 @@ export default function QuestionNoteRangeSelector() {
         }}
         onDrag={(e) => {
           if (!selectionRef.current) return;
+          if (e.clientX === 0) return; // Drag end event
+
           const newOffset =
             lRangeOffsetStartPx.current + e.clientX - dragStart.current;
           const distanceFromLeft = -slctnCenterLeft.current + WHITE_KEY_WIDTH;
@@ -184,6 +193,8 @@ export default function QuestionNoteRangeSelector() {
         }}
         onDrag={(e) => {
           if (!selectionRef.current) return;
+          if (e.clientX === 0) return; // Drag end event
+
           const newOffset =
             rRangeOffsetStartPx.current + e.clientX - dragStart.current;
           const distanceFromRight =
