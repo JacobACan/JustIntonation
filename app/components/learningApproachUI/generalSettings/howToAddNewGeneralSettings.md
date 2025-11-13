@@ -78,7 +78,11 @@ Notes and gotchas
 
 - The `SettingsContext.updateSettings` function takes a single key (as `keyof Settings`) and the new value. Do not pass an object; call it like `updateSettings("numberOfQuestions", 7)`.
 - File naming: most components in this repo use PascalCase component names, but the existing file you add may follow the repository convention. If you prefer consistent casing, use `MyNewSetting.tsx` and `MyNewSetting` as the component name.
-- Styling: the repo uses shadcn components in some places — the native input above is fine as a starting point; replace it with the shadcn input when you want to match UI styles.
+- Styling: the repo uses shadcn components in some places — the native input above is fine as a starting point; replace it with the shadcn input when you want to match UI styles. For consistent styling with the app theme, use CSS variables from `app/globals.css`:
+  - Use `backgroundColor: "var(--primary)"` with `color: "var(--primary-foreground)"` for high-contrast badges/tags
+  - Use `backgroundColor: "var(--background2)"` for secondary backgrounds
+  - Use `color: "var(--foreground)"` for text
+  - These variables automatically adapt to the app's color scheme (`#deb887` primary, `#000000` background, etc.)
 - Mode-specific settings: some settings are rendered in the mode panel (see `renderModeSettings()` in `learningApproach.tsx`). If your setting applies only when a LearningMode is active (e.g., chord size or melody length), add it to the appropriate mode-specific folder and follow the chord/melody docs instead of this general guide.
 
 Testing

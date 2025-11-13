@@ -7,6 +7,7 @@ import {
 } from "./questions";
 import { noteToNoteFile } from "./notes";
 import { MusicLearnerContext } from "@/machines/musicLearningProcess";
+import { noteWeightsForScale } from "./key";
 
 export const playMusicContext = async (input: MusicLearnerContext) => {
   if (input.settings.playCadence)
@@ -14,7 +15,7 @@ export const playMusicContext = async (input: MusicLearnerContext) => {
       case LearningMode.Notes:
       case LearningMode.Chords:
       case LearningMode.Melodies:
-        playCadence(input.settings.questionKey);
+        playCadence(input.questionContext.currentKey);
         await new Promise((r) => setTimeout(r, 2000));
         break;
     }
@@ -25,8 +26,11 @@ export const playQuestion = async (input: MusicLearnerContext) => {
   switch (input.settings.learningMode) {
     case LearningMode.Notes:
       const note = getNextQuestionNote(
-        input.settings.questionNoteWeights,
-        input.settings.questionRange
+        noteWeightsForScale(
+          input.questionContext.currentKey,
+          input.questionContext.currentScale,
+        ),
+        input.settings.questionRange,
       );
       playNote(noteToNoteFile(note));
       input.questionContext.currentNote = note;
@@ -34,9 +38,12 @@ export const playQuestion = async (input: MusicLearnerContext) => {
       break;
     case LearningMode.Chords:
       const chord = getNextQuestionChord(
-        input.settings.questionNoteWeights,
+        noteWeightsForScale(
+          input.questionContext.currentKey,
+          input.questionContext.currentScale,
+        ),
         input.settings.questionRange,
-        input.settings.chordSize
+        input.settings.chordSize,
       );
       playChord(chord);
       input.questionContext.currentChord = chord;
@@ -44,9 +51,12 @@ export const playQuestion = async (input: MusicLearnerContext) => {
       break;
     case LearningMode.Melodies:
       const melody = getNextQuestionMelody(
-        input.settings.questionNoteWeights,
+        noteWeightsForScale(
+          input.questionContext.currentKey,
+          input.questionContext.currentScale,
+        ),
         input.settings.questionRange,
-        input.settings.melodyLength
+        input.settings.melodyLength,
       );
       input.questionContext.currentMelody = melody;
       await playMelody(melody);

@@ -7,9 +7,11 @@ export default function NumberOfQuestions() {
   const value = settings.numberOfQuestions ?? 5;
 
   return (
-    <div>
-      <h2>Number of Questions</h2>
+    <div className="w-full">
+      <h2>Number of Questions / Session</h2>
       <input
+        className="border-primary rounded-sm border-2 p-1"
+        name="Number of Questions Per Session"
         type="number"
         min={1}
         step={1}

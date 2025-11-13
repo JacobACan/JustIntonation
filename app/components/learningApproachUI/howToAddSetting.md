@@ -28,5 +28,6 @@ Checklist before you code
 2. Create the component in the appropriate folder and use `SettingsContext`.
 3. Add import & render where the folder expects it (main, general, or mode settings).
 4. Test in dev server and verify other consumers pick up the change.
+5. Use CSS variables from `app/globals.css` for consistent styling (see individual folder guides for details).
 
 Examples and links are present in each folder's how-to file.

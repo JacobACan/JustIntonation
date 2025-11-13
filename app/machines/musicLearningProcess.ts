@@ -1,4 +1,6 @@
+import { Key } from "@/constants/keys";
 import { JIMIDINote, Note } from "@/constants/notes";
+import { Scale } from "@/constants/scale";
 import {
   defaultSettings,
   LearningMode,
@@ -61,6 +63,8 @@ export interface QuestionContext {
   numberOfReplays: number;
   isReplaying: boolean;
   questionsCorrect: number;
+  currentKey: Key;
+  currentScale: Scale;
 }
 
 const defautQuestionContext: QuestionContext = {
@@ -71,6 +75,8 @@ const defautQuestionContext: QuestionContext = {
   numberOfReplays: 0,
   isReplaying: false,
   questionsCorrect: 0,
+  currentKey: Key.C,
+  currentScale: Scale.major,
 };
 
 export interface MusicLearnerContext {
@@ -128,6 +134,14 @@ export const musicLearner = setup({
         numberOfReplays: 0,
         isReplaying: false,
         questionsCorrect: 0,
+        currentKey:
+          c.context.settings.questionKeys[
+            Math.floor(Math.random() * c.context.settings.questionKeys.length)
+          ],
+        currentScale:
+          c.context.settings.questionScales[
+            Math.floor(Math.random() * c.context.settings.questionScales.length)
+          ],
       };
     },
     correctGuess: (c) => {

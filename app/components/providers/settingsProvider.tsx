@@ -26,7 +26,7 @@ export default function SettingsProvider({
 
   const updateSettings = <K extends keyof Settings = keyof Settings>(
     key: K,
-    value: Settings[K]
+    value: Settings[K],
   ) => {
     musicLearner.send({
       type: MusicLearnerEvent.UPDATE_SETTING,
@@ -45,8 +45,8 @@ export default function SettingsProvider({
       ];
     const newNoteWeights = noteWeightsForScale(randomKey, randomScale);
     console.log("New key: ", randomKey, " New scale: ", randomScale);
-    updateSettings("questionKey", randomKey);
-    updateSettings("questionScale", randomScale);
+    updateSettings("questionKeys", [randomKey]);
+    updateSettings("questionScales", [randomScale]);
     updateSettings("questionNoteWeights", newNoteWeights);
   };
   const value = { settings, updateSettings };

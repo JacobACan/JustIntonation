@@ -38,3 +38,8 @@ Notes
 
 - Mode-specific settings should not be added to the general settings panel — they are only relevant when the mode is active.
 - Keep component naming PascalCase and consistent with existing files.
+- For styling, use CSS variables from `app/globals.css` for consistency:
+  - `backgroundColor: "var(--primary)"` with `color: "var(--primary-foreground)"` for high-contrast elements
+  - `backgroundColor: "var(--background2)"` for secondary backgrounds
+  - `color: "var(--foreground)"` for text
+  - These variables adapt to the app's color scheme automatically

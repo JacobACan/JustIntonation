@@ -8,7 +8,10 @@ export default function Settings({
   return (
     <div className="pointer-events-auto text-sm">
       {children.map((child, i) => (
-        <div key={i} className="border-primary/50 m-2 rounded-sm border-2 p-2">
+        <div
+          key={i}
+          className="border-primary/50 bg-chart-4/20 hover:bg-chart-5/50 m-2 rounded-sm border-2 p-2"
+        >
           {child}
         </div>
       ))}

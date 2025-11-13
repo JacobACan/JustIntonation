@@ -44,6 +44,12 @@ Design & styling
 - Make the main-settings UI look polished and consistent with the rest of the app. Use the global color palette and variables defined in `app/globals.css` so your controls match the app theme and remain easy to update.
 - Prefer existing project primitives (shadcn components or the `ui/` components in `app/components/ui/`) rather than low-level styling when possible — they already follow spacing and accessibility patterns used across the app.
 - Use Tailwind utility classes that reference your design tokens or CSS variables from `globals.css` (for example, classes for spacing and colors) so the look adapts when the global palette changes.
+- For inline styles, use CSS variables:
+  - `backgroundColor: "var(--primary)"` with `color: "var(--primary-foreground)"` for high-contrast badges/tags
+  - `backgroundColor: "var(--background2)"` for secondary backgrounds
+  - `color: "var(--foreground)"` for text
+  - `borderColor: "var(--border)"` for borders
+  - These variables automatically adapt to the app's color scheme
 - Keep contrast and accessibility in mind: ensure text and controls meet contrast guidelines against the background color from `globals.css`.
 - Layout tips: keep main settings responsive (use flex/grid + gap utilities), align labels and controls, and give controls adequate touch/keyboard targets.
 
