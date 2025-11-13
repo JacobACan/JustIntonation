@@ -47,7 +47,6 @@ export default function SettingsProvider({
     console.log("New key: ", randomKey, " New scale: ", randomScale);
     updateSettings("questionKeys", [randomKey]);
     updateSettings("questionScales", [randomScale]);
-    updateSettings("questionNoteWeights", newNoteWeights);
   };
   const value = { settings, updateSettings };
 
