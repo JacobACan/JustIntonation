@@ -22,9 +22,16 @@ const { settings, updateSettings } = useContext(SettingsContext);
 return (
   <div>
     <h2>Melody Length</h2>
-    <input type="number" min={1} value={settings.melodyLength} onChange={(e)=>updateSettings("melodyLength", Number(e.target.value)||1)} />
+    <input
+      type="number"
+      min={1}
+      value={settings.melodyLength}
+      onChange={(e) =>
+        updateSettings("melodyLength", Number(e.target.value) || 1)
+      }
+    />
   </div>
-)
+);
 ```
 
 Notes

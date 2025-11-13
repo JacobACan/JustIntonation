@@ -21,14 +21,17 @@ Example
 import { useContext } from "react";
 import { SettingsContext } from "@/components/providers/settingsProvider";
 
-export default function MyMainSetting(){
+export default function MyMainSetting() {
   const { settings, updateSettings } = useContext(SettingsContext);
   return (
     <div>
       <h2>My Main Setting</h2>
-      <input value={settings.someMainSetting} onChange={(e)=>updateSettings("someMainSetting", e.target.value)} />
+      <input
+        value={settings.someMainSetting}
+        onChange={(e) => updateSettings("someMainSetting", e.target.value)}
+      />
     </div>
-  )
+  );
 }
 ```
 
@@ -51,7 +54,7 @@ import { useContext } from "react";
 import { SettingsContext } from "@/components/providers/settingsProvider";
 import { Input } from "@/components/ui/input"; // example project primitive
 
-export default function MyMainSetting(){
+export default function MyMainSetting() {
   const { settings, updateSettings } = useContext(SettingsContext);
   return (
     <div className="flex flex-col gap-2 p-2">
@@ -59,12 +62,11 @@ export default function MyMainSetting(){
       <Input
         className="w-full max-w-sm"
         value={settings.someMainSetting}
-        onChange={(e)=>updateSettings("someMainSetting", e.target.value)}
+        onChange={(e) => updateSettings("someMainSetting", e.target.value)}
       />
     </div>
-  )
+  );
 }
 ```
 
 Where `text-primary` and other color utilities are mapped to variables in `app/globals.css` or your tailwind theme so the control colors follow the global palette.
-

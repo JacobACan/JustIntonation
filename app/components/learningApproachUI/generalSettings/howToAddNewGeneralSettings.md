@@ -21,7 +21,7 @@ Component contract (2–3 bullets)
 
 Example (pattern)
 
-1) Ensure the setting exists in `app/constants/settings.tsx`:
+1. Ensure the setting exists in `app/constants/settings.tsx`:
 
 ```ts
 // add to Settings interface
@@ -31,42 +31,47 @@ Example (pattern)
 	myNewSetting: 10,
 ```
 
-2) Create `app/components/learningApproachUI/generalSettings/MyNewSetting.tsx` (simple numeric example):
+2. Create `app/components/learningApproachUI/generalSettings/MyNewSetting.tsx` (simple numeric example):
 
 ```tsx
 import { useContext } from "react";
 import { SettingsContext } from "@/components/providers/settingsProvider";
 
 export default function MyNewSetting() {
-	const { settings, updateSettings } = useContext(SettingsContext);
-	const value = settings.myNewSetting;
+  const { settings, updateSettings } = useContext(SettingsContext);
+  const value = settings.myNewSetting;
 
-	return (
-		<div>
-			<h2>My New Setting</h2>
-			<input
-				type="number"
-				min={1}
-				value={value}
-				onChange={(e) => updateSettings("myNewSetting", Math.max(1, Number(e.target.value) || 1))}
-			/>
-		</div>
-	);
+  return (
+    <div>
+      <h2>My New Setting</h2>
+      <input
+        type="number"
+        min={1}
+        value={value}
+        onChange={(e) =>
+          updateSettings(
+            "myNewSetting",
+            Math.max(1, Number(e.target.value) || 1),
+          )
+        }
+      />
+    </div>
+  );
 }
 ```
 
-3) Import and add it to the general settings panel (`learningApproach.tsx`):
+3. Import and add it to the general settings panel (`learningApproach.tsx`):
 
 ```tsx
 import MyNewSetting from "./generalSettings/MyNewSetting";
 
 // inside renderGeneralSettings()
 <Settings>
-	<QuestionKeySelector />
-	<QuestionScaleSelector />
-	<PlayCadence />
-	<MyNewSetting />
-</Settings>
+  <QuestionKeySelector />
+  <QuestionScaleSelector />
+  <PlayCadence />
+  <MyNewSetting />
+</Settings>;
 ```
 
 Notes and gotchas
@@ -82,7 +87,7 @@ Testing
 - Search the codebase for the setting key to ensure other consumers (machines/pages) use the same name.
 
 If you'd like, I can:
+
 - Rename your component to PascalCase for consistency.
 - Convert the example to use your project's shadcn controls.
 - Add a small test that verifies `updateSettings` is called when the input changes.
-

@@ -22,9 +22,14 @@ const { settings, updateSettings } = useContext(SettingsContext);
 return (
   <div>
     <h2>Chord Size</h2>
-    <input type="number" min={1} value={settings.chordSize} onChange={(e)=>updateSettings("chordSize", Number(e.target.value)||1)} />
+    <input
+      type="number"
+      min={1}
+      value={settings.chordSize}
+      onChange={(e) => updateSettings("chordSize", Number(e.target.value) || 1)}
+    />
   </div>
-)
+);
 ```
 
 Notes
