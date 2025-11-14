@@ -33,9 +33,20 @@ try {
 }
 
 // Helper to play a note by filename
-export const playNote = (noteFile: NoteFile) => {
-  const audio = new Audio(`/notes/${noteFile}`);
-  audio.play();
+export const playNote = async (noteFile: NoteFile) => {
+  const res = await fetch(`/notes/${noteFile}`);
+  const resBuffer = await res.arrayBuffer();
+  const note = audioContext.createBufferSource();
+  note.buffer = await audioContext.decodeAudioData(resBuffer);
+
+  const noteGainNode = audioContext.createGain();
+  noteGainNode.gain.exponentialRampToValueAtTime(
+    0.5,
+    audioContext.currentTime + 0.2,
+  );
+
+  note.connect(noteGainNode).connect(masterGainNode);
+  note.start();
 };
 
 // Play chord at a precise time all notes together no matter what
@@ -125,7 +136,7 @@ export const playMelody = async (melody: JIMIDINote[], relGain: number = 1) => {
     } else {
       noteOffDecayNode.gain.exponentialRampToValueAtTime(
         0.1,
-        startTime + totalSecondsDelay
+        startTime + totalSecondsDelay,
       );
     }
   }
@@ -139,7 +150,7 @@ export const stopLearningPhaseAudio = async () => {
   const secondsToFadeOutAudio = 1;
   learningStateGainNode.gain.exponentialRampToValueAtTime(
     0.001,
-    audioContext.currentTime + secondsToFadeOutAudio
+    audioContext.currentTime + secondsToFadeOutAudio,
   );
   await new Promise((c) => setTimeout(c, secondsToFadeOutAudio * 1000));
   stopActiveNodes();
@@ -148,7 +159,7 @@ export const stopLearningPhaseAudio = async () => {
 export const beginLearningPhaseAudio = async () => {
   learningStateGainNode.gain.exponentialRampToValueAtTime(
     1,
-    audioContext.currentTime + 1.01
+    audioContext.currentTime + 1.01,
   );
 };
 
@@ -165,6 +176,6 @@ const loadAudioBuffers = async (noteFiles: NoteFile[]) => {
       const response = await fetch(`/notes/${noteFile}`);
       const arrayBuffer = await response.arrayBuffer();
       return audioContext.decodeAudioData(arrayBuffer);
-    })
+    }),
   );
 };

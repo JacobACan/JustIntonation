@@ -4,6 +4,7 @@ import { MIDIProvider } from "@react-midi/hooks";
 import SettingsProvider from "../../components/providers/settingsProvider";
 import CountdownProvider from "@/components/providers/countdownProvider";
 import MusicLearnerProvider from "@/components/providers/learningStateMachineProvider";
+import PianoSound from "@/components/learn/pianoSound";
 
 export default function LearnLayout({
   children,
@@ -14,7 +15,11 @@ export default function LearnLayout({
     <>
       <MIDIProvider>
         <MusicLearnerProvider>
-          <SettingsProvider>{children}</SettingsProvider>
+          <SettingsProvider>
+            <PianoSound />
+
+            {children}
+          </SettingsProvider>
         </MusicLearnerProvider>
       </MIDIProvider>
     </>
