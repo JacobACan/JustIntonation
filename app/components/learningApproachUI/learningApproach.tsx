@@ -9,7 +9,7 @@ import PlayCadence from "./generalSettings/playCadence";
 import NumberOfQuestions from "./generalSettings/numberOfQuestions";
 import LearningModeSelector from "./mainSettings/learningModeSelector";
 import QuestionNoteRangeSelector from "./mainSettings/questionRangeSelector";
-import PianoSoundMuteSelector from "./mainSettings/pianoSoundMuteSelector";
+import PianoSoundMuteSelector from "./generalSettings/pianoSoundMuteSelector";
 import Settings from "./settings";
 import { LearningMode } from "@/constants/settings";
 import ChordSizeSelector from "./chordSettings/chordSizeSelector";
