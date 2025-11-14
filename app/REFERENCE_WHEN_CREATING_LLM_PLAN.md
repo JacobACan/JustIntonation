@@ -1,4 +1,4 @@
-# LLM Guidelines for Just Intonation App
+# LLM Guidelines for JustIntonation App
 
 ## General Principles
 

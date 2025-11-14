@@ -88,8 +88,8 @@ export const MidiSelector = () => {
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious variant={"justIntonnation"} />
-          <CarouselNext variant={"justIntonnation"} />
+          <CarouselPrevious variant={"justIntonation"} />
+          <CarouselNext variant={"justIntonation"} />
         </Carousel>
         {!midiDeviceVerified ? (
           <p className="text-destructive mt-2 text-sm">

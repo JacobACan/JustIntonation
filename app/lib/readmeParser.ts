@@ -19,7 +19,7 @@ export function getContent(): ContentChunk[] {
   chunks.push({
     title: "Overview",
     content:
-      "Just Intonation is a piano based ear training application that helps musicians develop relative pitch on piano.",
+      "JustIntonation is a piano based ear training application that helps musicians develop relative pitch on piano.",
   });
 
   chunks.push({
@@ -34,9 +34,9 @@ export function getContent(): ContentChunk[] {
       "With dedication, and the combination of interval, quality and scale degree recognition you can learn how to directly translate these aspects to the piano in real time.",
   });
 
-  // Why Just Intonation
+  // Why JustIntonation
   chunks.push({
-    title: "Why Just Intonation?",
+    title: "Why JustIntonation?",
     content:
       "Scale Degree, Melodic and Chord recognition form the foundation of creative, expressive musicianship.",
   });

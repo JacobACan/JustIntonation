@@ -1,12 +1,12 @@
-# Just Intonation
+# JustIntonation
 
 Train your ear to recognize and play what you hear on the piano.
 
 ## Overview
 
-Just Intonation is a piano based ear training application that helps musicians develop relative pitch on piano. By practicing in the context of a musical center (tonal reference), you'll develop the ability to identify scale degrees.  With dedication, and the combination of interval, quality and scale degree recognition you can learn how to directly translate these aspects to the piano in real time.
+JustIntonation is a piano based ear training application that helps musicians develop relative pitch on piano. By practicing in the context of a musical center (tonal reference), you'll develop the ability to identify scale degrees.  With dedication, and the combination of interval, quality and scale degree recognition you can learn how to directly translate these aspects to the piano in real time.
 
-## Why Just Intonation?
+## Why JustIntonation?
 
 Scale Degree, Melodic and Chord recognition form the foundation of creative, expressive musicianship. This app focuses on:
 

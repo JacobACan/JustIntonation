@@ -1,10 +1,10 @@
-# Just Intonation - App Documentation
+# JustIntonation - App Documentation
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Project Overview
 
-Just Intonation is an ear training app designed to help musicians develop accurate pitch recognition and interval matching skills. The app uses a state machine-based learning system, MIDI input handling, and contextual settings to provide customized practice experiences.
+JustIntonation is an ear training app designed to help musicians develop accurate pitch recognition and interval matching skills. The app uses a state machine-based learning system, MIDI input handling, and contextual settings to provide customized practice experiences.
 
 ## Getting Started
 

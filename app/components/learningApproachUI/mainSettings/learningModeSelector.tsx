@@ -56,8 +56,8 @@ export default function LearningModeSelector() {
               <CarouselItem key={m}>{m}</CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious variant={"justIntonnation"} />
-          <CarouselNext variant={"justIntonnation"} />
+          <CarouselPrevious variant={"justIntonation"} />
+          <CarouselNext variant={"justIntonation"} />
         </Carousel>
       </div>
     </SettingDescriptionWrapper>
