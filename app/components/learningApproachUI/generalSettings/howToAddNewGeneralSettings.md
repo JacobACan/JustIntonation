@@ -3,9 +3,11 @@ This document explains how to add a new "General" setting to the Learning Approa
 Overview — quick steps
 
 1. Add the new setting key and type to `app/constants/settings.tsx` (if it doesn't already exist) and add a sensible default to `defaultSettings`.
-2. Create a small UI component in `app/components/learningApproachUI/generalSettings/` that reads from `SettingsContext` and calls `updateSettings(key, value)` when the value changes.
-3. Import and add your component to `renderGeneralSettings()` inside `app/components/learningApproachUI/learningApproach.tsx` so it appears in the General Settings panel.
-4. Test in the app; other parts of the app that read from `settings` (machines, pages) will automatically get the updated value.
+2. **Add a description** to `app/constants/settingDescriptions.tsx` with a key, title, and description. This will be displayed as contextual help in the UI.
+3. Create a small UI component in `app/components/learningApproachUI/generalSettings/` that reads from `SettingsContext` and calls `updateSettings(key, value)` when the value changes.
+4. **Wrap your component with `SettingDescriptionWrapper`** to integrate the info icon and description display.
+5. Import and add your component to `renderGeneralSettings()` inside `app/components/learningApproachUI/learningApproach.tsx` so it appears in the General Settings panel.
+6. Test in the app; other parts of the app that read from `settings` (machines, pages) will automatically get the updated value.
 
 Key locations
 
@@ -36,26 +38,33 @@ Example (pattern)
 ```tsx
 import { useContext } from "react";
 import { SettingsContext } from "@/components/providers/settingsProvider";
+import { SettingDescriptionWrapper } from "@/components/learningApproachUI/settingDescriptionWrapper";
+import { getSettingDescription } from "@/constants/settingDescriptions";
 
 export default function MyNewSetting() {
   const { settings, updateSettings } = useContext(SettingsContext);
   const value = settings.myNewSetting;
 
   return (
-    <div>
-      <h2>My New Setting</h2>
-      <input
-        type="number"
-        min={1}
-        value={value}
-        onChange={(e) =>
-          updateSettings(
-            "myNewSetting",
-            Math.max(1, Number(e.target.value) || 1),
-          )
-        }
-      />
-    </div>
+    <SettingDescriptionWrapper
+      settingKey="MY_NEW_SETTING"
+      description={getSettingDescription("MY_NEW_SETTING")}
+    >
+      <div>
+        <h2>My New Setting</h2>
+        <input
+          type="number"
+          min={1}
+          value={value}
+          onChange={(e) =>
+            updateSettings(
+              "myNewSetting",
+              Math.max(1, Number(e.target.value) || 1),
+            )
+          }
+        />
+      </div>
+    </SettingDescriptionWrapper>
   );
 }
 ```

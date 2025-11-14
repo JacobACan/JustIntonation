@@ -9,6 +9,8 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "../../ui/carousel";
+import { SettingDescriptionWrapper } from "../settingDescriptionWrapper";
+import { settingDescriptions } from "@/constants/settingDescriptions";
 
 export default function LearningModeSelector() {
   const { settings, updateSettings } = useContext(SettingsContext);
@@ -34,22 +36,30 @@ export default function LearningModeSelector() {
     });
   }, [learningModeCarouselApi]);
 
+  const description = settingDescriptions.LEARNING_MODE_SELECTOR;
+
   return (
-    <>
-      <h1 className="text-sm">Learning Mode</h1>
-      <Carousel
-        setApi={setLearningModeCarouselApi}
-        opts={{ loop: true, startIndex: learningModeStartIndex }}
-        className="w-[150px]"
-      >
-        <CarouselContent>
-          {LearningModeValues.map((m) => (
-            <CarouselItem key={m}>{m}</CarouselItem>
-          ))}
-        </CarouselContent>
-        <CarouselPrevious variant={"justIntonnation"} />
-        <CarouselNext variant={"justIntonnation"} />
-      </Carousel>
-    </>
+    <SettingDescriptionWrapper
+      title={description.title}
+      description={description.description}
+      className="pl-[28px]"
+    >
+      <div>
+        <h1 className="text-sm">Learning Mode</h1>
+        <Carousel
+          setApi={setLearningModeCarouselApi}
+          opts={{ loop: true, startIndex: learningModeStartIndex }}
+          className="w-[150px]"
+        >
+          <CarouselContent>
+            {LearningModeValues.map((m) => (
+              <CarouselItem key={m}>{m}</CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious variant={"justIntonation"} />
+          <CarouselNext variant={"justIntonation"} />
+        </Carousel>
+      </div>
+    </SettingDescriptionWrapper>
   );
 }

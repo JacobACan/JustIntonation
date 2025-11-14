@@ -3,6 +3,8 @@ import { useMIDINotes } from "@react-midi/hooks";
 import { midiToNote, Note, WHITE_NOTES } from "@/constants/notes";
 import { SettingsContext } from "@/components/providers/settingsProvider";
 import Piano from "@/components/learn/piano";
+import { SettingDescriptionWrapper } from "../settingDescriptionWrapper";
+import { settingDescriptions } from "@/constants/settingDescriptions";
 
 export default function QuestionNoteRangeSelector() {
   const pxForWhiteNote = (n: Note): number => {
@@ -149,7 +151,11 @@ export default function QuestionNoteRangeSelector() {
   }, []);
 
   return (
-    <div className="grid w-fit pr-[30%] pl-[30%]">
+    <SettingDescriptionWrapper
+      title={settingDescriptions.QUESTION_RANGE_SELECTOR.title}
+      description={settingDescriptions.QUESTION_RANGE_SELECTOR.description}
+      className="grid w-fit pl-[28px]"
+    >
       <Piano
         width={SELECTION_RANGE_WIDTH}
         displayRange={[Note.A0, Note.C8]}
@@ -232,6 +238,6 @@ export default function QuestionNoteRangeSelector() {
         </p>
         <div ref={rightRangeSelectorRef}></div>
       </div>
-    </div>
+    </SettingDescriptionWrapper>
   );
 }

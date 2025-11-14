@@ -19,7 +19,7 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
-        justIntonnation:
+        justIntonation:
           " bg-background  hover:bg-accent/10 hover:cursor-pointer dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
       },
       size: {
@@ -35,7 +35,7 @@ const buttonVariants = cva(
       variant: "default",
       size: "default",
     },
-  }
+  },
 );
 
 function Button({
