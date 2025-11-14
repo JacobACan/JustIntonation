@@ -8,7 +8,7 @@ export const noteToNoteFile = (note: ValueOf<Note>): NoteFile => {
   if (NoteFile[noteFileKey]) {
     return NoteFile[noteFileKey];
   }
-  throw new Error(`No NoteFile found for note: ${note}`);
+  return NoteFile.null;
 };
 
 export const noteFileToNote = (noteFile: ValueOf<NoteFile>): ValueOf<Note> => {
@@ -21,7 +21,7 @@ export const noteFileToNote = (noteFile: ValueOf<NoteFile>): ValueOf<Note> => {
 
 export const isNoteToBeAddedPlayableBy1Hand = (
   randomNote: Note,
-  selectedNotes: Note[]
+  selectedNotes: Note[],
 ) => {
   return selectedNotes.every((n) => {
     const curSelectedNoteMidi = noteToMidi[n];

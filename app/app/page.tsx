@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { TypewriterText } from "@/components/ui/typewriterText";
 import { getContent, type ContentChunk } from "@/lib/readmeParser";
+import PianoSound from "@/components/learn/pianoSound";
 
 export default function Home() {
   const [currentChunkIndex, setCurrentChunkIndex] = useState(0);

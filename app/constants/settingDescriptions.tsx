@@ -30,6 +30,11 @@ export const settingDescriptions = {
     description:
       "This is required and the app is built around establishing this connection from sound to piano.",
   },
+  PIANO_SOUND_MUTED: {
+    title: "Mute Piano Sound",
+    description:
+      "Disable audio feedback from your piano playing. Useful when practicing in silent environments or when you prefer not to hear the sounds because your midi device has sound.",
+  },
 
   // General Settings
   PLAY_CADENCE: {

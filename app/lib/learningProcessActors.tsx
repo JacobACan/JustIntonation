@@ -23,6 +23,8 @@ export const playMusicContext = async (input: MusicLearnerContext) => {
 };
 
 export const playQuestion = async (input: MusicLearnerContext) => {
+  if (!input.settings.pianoSoundMuted)
+    await new Promise((r) => setTimeout(r, 500));
   switch (input.settings.learningMode) {
     case LearningMode.Notes:
       const note = getNextQuestionNote(

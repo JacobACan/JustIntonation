@@ -30,6 +30,7 @@ export interface Settings {
   skipReviewOn: SkipReview;
   timeToAnswerQuestion: number; // in miliseconds
   melodyLength: number;
+  pianoSoundMuted: boolean; // Whether to mute the sound from playing notes on the piano
 }
 
 export const defaultSettings: Settings = {
@@ -46,4 +47,5 @@ export const defaultSettings: Settings = {
   skipReviewOn: SkipReview.Correct,
   timeToAnswerQuestion: 5000,
   melodyLength: 4,
+  pianoSoundMuted: false,
 };

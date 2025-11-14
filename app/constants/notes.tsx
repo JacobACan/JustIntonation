@@ -239,6 +239,7 @@ export const midiToNote: { [midi: number]: Note } = {
 };
 
 export enum NoteFile {
+  null = "null.ogg",
   A0 = "A0.ogg",
   Bb0 = "Bb0.ogg",
   B0 = "B0.ogg",
@@ -315,17 +316,17 @@ export enum NoteFile {
   Gb4 = "Gb4.ogg",
   Gb5 = "Gb5.ogg",
   Gb6 = "Gb6.ogg",
-  Db8 = "Db8.ogg",
-  D8 = "D8.ogg",
-  Eb8 = "Eb8.ogg",
-  E8 = "E8.ogg",
-  F8 = "F8.ogg",
-  Gb8 = "Gb8.ogg",
-  G8 = "G8.ogg",
-  Ab8 = "Ab8.ogg",
-  A8 = "A8.ogg",
-  Bb8 = "Bb8.ogg",
-  B8 = "B8.ogg",
+  Db7 = "Db8.ogg",
+  D7 = "D8.ogg",
+  Eb7 = "Eb8.ogg",
+  E7 = "E8.ogg",
+  F7 = "F8.ogg",
+  Gb7 = "Gb8.ogg",
+  G7 = "G8.ogg",
+  Ab7 = "Ab8.ogg",
+  A7 = "A8.ogg",
+  Bb7 = "Bb8.ogg",
+  B7 = "B8.ogg",
   C8 = "C8.ogg",
 }
 
