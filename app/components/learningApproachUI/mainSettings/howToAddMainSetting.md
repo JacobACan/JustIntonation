@@ -12,25 +12,34 @@ Common examples
 Steps
 
 1. Add the type and default to `app/constants/settings.tsx` if the setting is new.
-2. Create a component in `mainSettings/`. Use `SettingsContext` and `updateSettings(key, value)`.
-3. Import your component into `learningApproach.tsx` and add it to the `renderMainSettings()` return so it appears in the main area.
+2. **Add a description** to `app/constants/settingDescriptions.tsx` with a key, title, and description. This description will appear as contextual help in the UI.
+3. Create a component in `mainSettings/`. Use `SettingsContext` and `updateSettings(key, value)`.
+4. **Wrap your component with `SettingDescriptionWrapper`** to add the info icon and description display.
+5. Import your component into `learningApproach.tsx` and add it to the `renderMainSettings()` return so it appears in the main area.
 
 Example
 
 ```tsx
 import { useContext } from "react";
 import { SettingsContext } from "@/components/providers/settingsProvider";
+import { SettingDescriptionWrapper } from "@/components/learningApproachUI/settingDescriptionWrapper";
+import { getSettingDescription } from "@/constants/settingDescriptions";
 
 export default function MyMainSetting() {
   const { settings, updateSettings } = useContext(SettingsContext);
   return (
-    <div>
-      <h2>My Main Setting</h2>
-      <input
-        value={settings.someMainSetting}
-        onChange={(e) => updateSettings("someMainSetting", e.target.value)}
-      />
-    </div>
+    <SettingDescriptionWrapper
+      settingKey="MY_NEW_SETTING"
+      description={getSettingDescription("MY_NEW_SETTING")}
+    >
+      <div>
+        <h2>My Main Setting</h2>
+        <input
+          value={settings.someMainSetting}
+          onChange={(e) => updateSettings("someMainSetting", e.target.value)}
+        />
+      </div>
+    </SettingDescriptionWrapper>
   );
 }
 ```

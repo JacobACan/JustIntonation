@@ -8,28 +8,43 @@ Where chord settings live
 Steps
 
 1. If needed, add the setting type & default to `app/constants/settings.tsx`.
-2. Create a component in this folder, e.g. `ChordSizeSelector.tsx`.
+2. **Add a description** to `app/constants/settingDescriptions.tsx` with a key, title, and description.
+3. Create a component in this folder, e.g. `ChordSizeSelector.tsx`.
    - Use `const { settings, updateSettings } = useContext(SettingsContext)`.
+   - **Wrap the component with `SettingDescriptionWrapper`** to display the description and info icon.
    - Call `updateSettings("chordSize", newValue)` to update.
-3. The mode renderer in `learningApproach.tsx` already imports and renders `ChordSizeSelector` — if you add a new file, import it at the top of `learningApproach.tsx` and include it in the Chords branch inside `renderModeSettings()`.
+4. The mode renderer in `learningApproach.tsx` already imports and renders `ChordSizeSelector` — if you add a new file, import it at the top of `learningApproach.tsx` and include it in the Chords branch inside `renderModeSettings()`.
 
 Example pattern
 
 ```tsx
-// inside your new Chord setting component
-const { settings, updateSettings } = useContext(SettingsContext);
+import { useContext } from "react";
+import { SettingsContext } from "@/components/providers/settingsProvider";
+import { SettingDescriptionWrapper } from "@/components/learningApproachUI/settingDescriptionWrapper";
+import { getSettingDescription } from "@/constants/settingDescriptions";
 
-return (
-  <div>
-    <h2>Chord Size</h2>
-    <input
-      type="number"
-      min={1}
-      value={settings.chordSize}
-      onChange={(e) => updateSettings("chordSize", Number(e.target.value) || 1)}
-    />
-  </div>
-);
+export default function MyChordSetting() {
+  const { settings, updateSettings } = useContext(SettingsContext);
+
+  return (
+    <SettingDescriptionWrapper
+      settingKey="CHORD_SIZE_SELECTOR"
+      description={getSettingDescription("CHORD_SIZE_SELECTOR")}
+    >
+      <div>
+        <h2>Chord Size</h2>
+        <input
+          type="number"
+          min={1}
+          value={settings.chordSize}
+          onChange={(e) =>
+            updateSettings("chordSize", Number(e.target.value) || 1)
+          }
+        />
+      </div>
+    </SettingDescriptionWrapper>
+  );
+}
 ```
 
 Notes

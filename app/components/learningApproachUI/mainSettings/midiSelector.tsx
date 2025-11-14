@@ -15,6 +15,8 @@ import PlayIcon from "../../icon/playIcon";
 import Piano from "../../learn/piano";
 import { midiToNote } from "@/constants/notes";
 import { SettingsContext } from "../../providers/settingsProvider";
+import { SettingDescriptionWrapper } from "../settingDescriptionWrapper";
+import { settingDescriptions } from "@/constants/settingDescriptions";
 
 export const MidiSelector = () => {
   const { inputs, selectInput, input } = useMIDIInputs();
@@ -59,44 +61,54 @@ export const MidiSelector = () => {
     setMidiDeviceVerified(true);
   }, []);
 
+  const description = settingDescriptions.MIDI_DEVICE_SELECTOR;
+
   return (
     <>
-      <Carousel
-        setApi={setMidiDeviceCarouselApi}
-        opts={{
-          loop: true,
-          startIndex: midiDeviceStartIndex,
-        }}
-        className="w-[150px] text-sm"
+      <SettingDescriptionWrapper
+        title={description.title}
+        description={description.description}
+        className="w-80 justify-items-center pl-[28px]"
       >
-        <CarouselContent>
-          <CarouselItem className="content-center">No Midi Device</CarouselItem>
-          {inputs.map((m) => (
-            <CarouselItem className="content-center" key={m.id}>
-              {m.name}
+        <Carousel
+          setApi={setMidiDeviceCarouselApi}
+          opts={{
+            loop: true,
+            startIndex: midiDeviceStartIndex,
+          }}
+          className="w-[150px] text-sm"
+        >
+          <CarouselContent>
+            <CarouselItem className="content-center">
+              No Midi Device
             </CarouselItem>
-          ))}
-        </CarouselContent>
-        <CarouselPrevious variant={"justIntonnation"} />
-        <CarouselNext variant={"justIntonnation"} />
-      </Carousel>
-      {!midiDeviceVerified ? (
-        <p className="text-destructive mt-2 text-sm">
-          Test your midi device before starting!
-        </p>
-      ) : (
-        <p className="text-background mt-2 text-sm">Midi Device</p>
-      )}
-      <section className="absolute h-[305.5px] w-[500px] content-center drop-shadow-lg">
-        {midiDeviceVerified && (
-          <LearningUserEvent
-            className="m-auto"
-            eventType={MusicLearnerEvent.START}
-          >
-            <PlayIcon width={150} height={150} />
-          </LearningUserEvent>
+            {inputs.map((m) => (
+              <CarouselItem className="content-center" key={m.id}>
+                {m.name}
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious variant={"justIntonnation"} />
+          <CarouselNext variant={"justIntonnation"} />
+        </Carousel>
+        {!midiDeviceVerified ? (
+          <p className="text-destructive mt-2 text-sm">
+            Test your midi device before starting!
+          </p>
+        ) : (
+          <p className="text-background mt-2 text-sm">Midi Device</p>
         )}
-      </section>
+        <section className="absolute content-center drop-shadow-lg">
+          {midiDeviceVerified && (
+            <LearningUserEvent
+              className="m-auto mt-[73px] hover:scale-110 hover:cursor-pointer active:scale-95"
+              eventType={MusicLearnerEvent.START}
+            >
+              <PlayIcon width={150} height={150} />
+            </LearningUserEvent>
+          )}
+        </section>
+      </SettingDescriptionWrapper>
       <Piano
         notesDown1={notes.map((n) => midiToNote[n.note])}
         displayRange={[settings.questionRange[0], settings.questionRange[1]]}

@@ -5,8 +5,8 @@ import { Scale } from "./scale";
 
 export enum LearningMode {
   Notes = "Notes",
-  Chords = "Chords",
   Melodies = "Melodies",
+  Chords = "Chords",
 }
 export const LearningModeValues: LearningMode[] = Object.values(LearningMode);
 

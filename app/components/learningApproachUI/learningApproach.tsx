@@ -30,7 +30,7 @@ export default function LearningApproach() {
 
   const renderModeSettings = () => {
     return (
-      <>
+      <div className="pt-10">
         <h1>{settings.learningMode} Settings</h1>
         {(settings.learningMode == LearningMode.Chords && (
           <Settings>{[<ChordSizeSelector />]}</Settings>
@@ -38,13 +38,13 @@ export default function LearningApproach() {
           (settings.learningMode == LearningMode.Melodies && (
             <Settings>{[<MelodyLengthSelector />]}</Settings>
           ))}
-      </>
+      </div>
     );
   };
 
   const renderGeneralSettings = () => {
     return (
-      <>
+      <div className="pt-10">
         <h1>General Settings</h1>
         <Settings>
           <QuestionKeySelector />
@@ -52,7 +52,7 @@ export default function LearningApproach() {
           <PlayCadence />
           <NumberOfQuestions />
         </Settings>
-      </>
+      </div>
     );
   };
 
