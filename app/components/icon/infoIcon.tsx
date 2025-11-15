@@ -28,6 +28,14 @@ export const InfoIcon = ({
   const iconRef = useRef<SVGSVGElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
+  const setShowTooltipDelayed = (show: boolean) => {
+    if (show == true) {
+      setTimeout(() => setShowTooltip(show), 100);
+    } else {
+      setShowTooltip(show);
+    }
+  };
+
   useEffect(() => {
     if (!showTooltip || !iconRef.current || !tooltipRef.current) return;
 
@@ -75,12 +83,12 @@ export const InfoIcon = ({
         strokeLinecap="round"
         strokeLinejoin="round"
         className={`inline-block hover:cursor-help ${className || "transition-opacity hover:opacity-70"}`}
-        onClick={() => setShowTooltip(!showTooltip)}
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
+        onClick={() => setShowTooltipDelayed(!showTooltip)}
+        onMouseEnter={() => setShowTooltipDelayed(true)}
+        onMouseLeave={() => setShowTooltipDelayed(false)}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
-            setShowTooltip(!showTooltip);
+            setShowTooltipDelayed(!showTooltip);
           }
         }}
         role="button"
