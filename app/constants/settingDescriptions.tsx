@@ -52,6 +52,11 @@ export const settingDescriptions = {
     description:
       "The scale establishes the musical context and vibe of the questions being asked.",
   },
+  SKIP_REVIEW_ON: {
+    title: "Skip Review On",
+    description:
+      "Control when you want to skip the review phase. Select 'None' to always review, 'Correct' to skip when you answer correctly, or 'Both' to skip on both correct and incorrect answers.",
+  },
 
   // Chord Settings
   CHORD_SIZE_SELECTOR: {

@@ -1,3 +1,7 @@
+---
+applyTo: 'app/components/learningApproachUI/generalSettings/'
+---
+
 This document explains how to add a new "General" setting to the Learning Approach UI.
 
 Overview — quick steps

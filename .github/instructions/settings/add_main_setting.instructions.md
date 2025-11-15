@@ -1,3 +1,7 @@
+---
+applyTo: 'app/components/learningApproachUI/mainSettings/'
+---
+
 This document explains how to add a main setting — settings that affect the overall learning flow (not mode-specific).
 
 Where main settings live

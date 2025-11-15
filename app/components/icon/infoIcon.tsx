@@ -29,11 +29,7 @@ export const InfoIcon = ({
   const tooltipRef = useRef<HTMLDivElement>(null);
 
   const setShowTooltipDelayed = (show: boolean) => {
-    if (show == true) {
-      setTimeout(() => setShowTooltip(show), 100);
-    } else {
-      setShowTooltip(show);
-    }
+    setTimeout(() => setShowTooltip(show), 100);
   };
 
   useEffect(() => {

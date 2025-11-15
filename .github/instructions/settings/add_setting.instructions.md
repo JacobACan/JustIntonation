@@ -1,3 +1,7 @@
+---
+applyTo: 'app/components/learningApproachUI/'
+---
+
 This top-level guide explains how settings are organized inside `app/components/learningApproachUI` and where to add a new setting depending on its scope.
 
 Quick overview

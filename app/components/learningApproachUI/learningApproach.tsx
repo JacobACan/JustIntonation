@@ -14,6 +14,7 @@ import Settings from "./settings";
 import { LearningMode } from "@/constants/settings";
 import ChordSizeSelector from "./chordSettings/chordSizeSelector";
 import MelodyLengthSelector from "./melodySettings/melodyLengthSelector";
+import SkipReviewOnSelector from "./generalSettings/skipReviewOnSelector";
 
 export default function LearningApproach() {
   const { settings } = useContext(SettingsContext);
@@ -53,6 +54,7 @@ export default function LearningApproach() {
           <PlayCadence />
           <NumberOfQuestions />
           <PianoSoundMuteSelector />
+          <SkipReviewOnSelector />
         </Settings>
       </div>
     );

@@ -1,3 +1,7 @@
+---
+applyTo: 'app/'
+---
+
 # LLM Guidelines for JustIntonation App
 
 ## General Principles
