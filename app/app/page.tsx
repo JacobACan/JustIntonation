@@ -3,36 +3,32 @@
 import { useEffect, useState } from "react";
 import { TypewriterText } from "@/components/ui/typewriterText";
 import { getContent, type ContentChunk } from "@/lib/readmeParser";
-import PianoSound from "@/components/learn/pianoSound";
 
 export default function Home() {
   const [currentChunkIndex, setCurrentChunkIndex] = useState(0);
   const [chunks, setChunks] = useState<ContentChunk[]>([]);
-  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(true);
     const parsedChunks = getContent();
-    setChunks(parsedChunks);
+    setChunks(() => parsedChunks);
   }, []);
 
   useEffect(() => {
-    if (!isClient || chunks.length === 0) return;
-
+    if (chunks.length === 0) return;
     // Calculate total time for current chunk to display
     const currentChunk = chunks[currentChunkIndex];
     const textLength = currentChunk.title.length + currentChunk.content.length;
     const speed = 30; // milliseconds per character
     const totalDisplayTime = textLength * speed + 3000; // Add 3 second pause before advancing
 
-    const timer = setTimeout(() => {
+    setTimeout(() => {
       setCurrentChunkIndex((prev) => (prev + 1) % chunks.length);
     }, totalDisplayTime);
 
-    return () => clearTimeout(timer);
-  }, [currentChunkIndex, chunks, isClient]);
+    return;
+  }, [currentChunkIndex, chunks]);
 
-  if (!isClient || chunks.length === 0) {
+  if (chunks.length === 0) {
     return (
       <div className="bg-background1 relative flex min-h-screen flex-col items-center px-4 py-8">
         <button
@@ -103,7 +99,7 @@ export default function Home() {
               <TypewriterText
                 key={`title-${currentChunkIndex}`}
                 text={currentChunk.title}
-                speed={60}
+                speed={40}
                 delay={titleDelay}
               />
             </h1>

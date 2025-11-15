@@ -16,16 +16,9 @@ export function TypewriterText({
   className = "",
 }: TypewriterTextProps) {
   const [displayedText, setDisplayedText] = useState("");
-  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  useEffect(() => {
-    if (!isClient) return;
-
-    const startTimer = setTimeout(() => {
+    setTimeout(() => {
       let currentIndex = 0;
 
       const typeInterval = setInterval(() => {
@@ -37,16 +30,11 @@ export function TypewriterText({
         }
       }, speed);
 
-      return () => clearInterval(typeInterval);
+      return;
     }, delay);
 
-    return () => clearTimeout(startTimer);
-  }, [text, speed, delay, isClient]);
-
-  // Return plain text if JavaScript is disabled
-  if (!isClient) {
-    return <span className={className}>{text}</span>;
-  }
+    return;
+  }, []);
 
   return <span className={className}>{displayedText}</span>;
 }
