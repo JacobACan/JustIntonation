@@ -42,7 +42,7 @@ export enum MusicLearnerState {
 
 type UpdateSettingEvent = {
   type: MusicLearnerEvent.UPDATE_SETTING;
-  settings: Partial<Settings>;
+  settings?: Partial<Settings>;
 };
 
 export type MusicLearnerEvents =
