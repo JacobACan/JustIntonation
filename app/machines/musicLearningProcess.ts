@@ -16,7 +16,8 @@ import {
   playNote,
   stopLearningPhaseAudio,
 } from "@/lib/webAudio";
-import { assign, fromPromise, setup } from "xstate";
+import { useActorRef } from "@xstate/react";
+import { assign, fromPromise, sendTo, setup } from "xstate";
 
 export enum MusicLearnerEvent {
   START = "start",
@@ -64,6 +65,7 @@ export interface QuestionContext {
   questionsCorrect: number;
   currentKey: Key;
   currentScale: Scale;
+  questionTime: number;
 }
 
 const defautQuestionContext: QuestionContext = {
@@ -76,6 +78,7 @@ const defautQuestionContext: QuestionContext = {
   questionsCorrect: 0,
   currentKey: Key.C,
   currentScale: Scale.major,
+  questionTime: 0,
 };
 
 export interface MusicLearnerContext {
@@ -96,7 +99,7 @@ export const musicLearner = setup({
     ),
     playQuestion: fromPromise(
       async ({ input }: { input: MusicLearnerContext }) => {
-        return await playQuestion(input);
+        return playQuestion(input);
       },
     ),
     replayQuestion: fromPromise(
@@ -112,7 +115,7 @@ export const musicLearner = setup({
             break;
           case LearningMode.Melodies:
             if (input.questionContext.currentMelody)
-              await playMelody(input.questionContext.currentMelody);
+              playMelody(input.questionContext.currentMelody);
             break;
         }
         return;
@@ -141,14 +144,36 @@ export const musicLearner = setup({
           c.context.settings.questionScales[
             Math.floor(Math.random() * c.context.settings.questionScales.length)
           ],
+        questionTime: 0,
       };
+    },
+    replayQuestion: (c) => {
+      switch (c.context.settings.learningMode) {
+        case LearningMode.Notes:
+          if (c.context.questionContext.currentNote)
+            playNote(noteToNoteFile(c.context.questionContext.currentNote));
+          break;
+        case LearningMode.Chords:
+          if (c.context.questionContext.currentChord)
+            playChord(c.context.questionContext.currentChord);
+          break;
+        case LearningMode.Melodies:
+          if (c.context.questionContext.currentMelody)
+            playMelody(c.context.questionContext.currentMelody);
+          break;
+      }
+      c.context.questionContext.numberOfReplays =
+        c.context.questionContext.numberOfReplays + 1;
+      return;
     },
     correctGuess: (c) => {
       c.context.questionContext.questionsCorrect++;
     },
   },
   delays: {
-    answerTime: (ctx) => ctx.context.settings.timeToAnswerQuestion,
+    answerTime: (ctx) =>
+      ctx.context.settings.timeToAnswerQuestion +
+      ctx.context.questionContext.questionTime * 2,
   },
 }).createMachine({
   id: "musicLearningMachine",
@@ -206,6 +231,9 @@ export const musicLearner = setup({
       on: {
         [MusicLearnerEvent.CHANGE_LEARNING_APPROACH]: {
           target: MusicLearnerState.SELECTING_LEARNING_APPROACH,
+        },
+        [MusicLearnerEvent.CONTINUE]: {
+          target: MusicLearnerState.GUESSING,
         },
       },
       invoke: {
@@ -313,8 +341,34 @@ export const musicLearner = setup({
               c.context.settings.numberOfQuestions,
           },
         ],
+        [MusicLearnerEvent.CORRECT_GUESS]: [
+          {
+            target: MusicLearnerState.VIEWING_RESULTS,
+            guard: (c) =>
+              c.context.settings.numberOfQuestions ==
+              c.context.questionContext.questionNumber,
+          },
+          {
+            target: MusicLearnerState.PLAYING_NEW_QUESTION,
+            guard: (c) =>
+              c.context.questionContext.questionNumber <=
+              c.context.settings.numberOfQuestions,
+          },
+        ],
         [MusicLearnerEvent.CHANGE_LEARNING_APPROACH]: {
           target: MusicLearnerState.SELECTING_LEARNING_APPROACH,
+        },
+        [MusicLearnerEvent.REPLAY]: {
+          actions: [
+            "replayQuestion",
+            assign({
+              questionContext: ({ context }) => ({
+                ...context.questionContext,
+                numberOfReplays: context.questionContext.numberOfReplays + 1,
+              }),
+            }),
+          ],
+          reenter: true,
         },
       },
     },

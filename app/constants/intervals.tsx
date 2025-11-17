@@ -1,12 +1,33 @@
-export const HALF_STEP = 1;
-export const WHOLE_STEP = 2;
-export const MINOR_THIRD = 3;
-export const MAJOR_THIRD = 4;
-export const PERFECT_FOURTH = 5;
-export const TRITONE = 6;
-export const PERFECT_FIFTH = 7;
-export const MINOR_SIXTH = 8;
-export const MAJOR_SIXTH = 9;
-export const MINOR_SEVENTH = 10;
-export const MAJOR_SEVENTH = 11;
-export const OCTAVE = 12;
+export enum Interval {
+  UNISON = 0,
+  HALF_STEP = 1,
+  MINOR_SECOND = 1,
+  MAJOR_SECOND = 2,
+  WHOLE_STEP = 2,
+  MINOR_THIRD = 3,
+  MAJOR_THIRD = 4,
+  PERFECT_FOURTH = 5,
+  TRITONE = 6,
+  PERFECT_FIFTH = 7,
+  MINOR_SIXTH = 8,
+  MAJOR_SIXTH = 9,
+  MINOR_SEVENTH = 10,
+  MAJOR_SEVENTH = 11,
+  OCTAVE = 12,
+}
+
+export const textForInterval = {
+  [Interval.UNISON]: "Unison",
+  [Interval.HALF_STEP]: "Half Step",
+  [Interval.WHOLE_STEP]: "Whole Step",
+  [Interval.MINOR_THIRD]: "Minor Third",
+  [Interval.MAJOR_THIRD]: "Major Third",
+  [Interval.PERFECT_FOURTH]: "Perfect Fourth",
+  [Interval.TRITONE]: "Tritone",
+  [Interval.PERFECT_FIFTH]: "Perfect Fifth",
+  [Interval.MINOR_SIXTH]: "Minor Sixth",
+  [Interval.MAJOR_SIXTH]: "Major Sixth",
+  [Interval.MINOR_SEVENTH]: "Minor Seventh",
+  [Interval.MAJOR_SEVENTH]: "Major Seventh",
+  [Interval.OCTAVE]: "Octave",
+};

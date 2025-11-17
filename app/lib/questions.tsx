@@ -1,3 +1,4 @@
+import { Interval } from "@/constants/intervals";
 import { NoteWeight } from "../constants/keys";
 import { noteToMidi } from "../constants/midi";
 import { Duration, JIMIDINote, Note } from "../constants/notes";
@@ -5,7 +6,7 @@ import { isNoteToBeAddedPlayableBy1Hand } from "./notes";
 
 export const getNextQuestionNote = (
   questionNoteWeights: NoteWeight[],
-  questionRange: [Note, Note]
+  questionRange: [Note, Note],
 ): Note => {
   // Get all notes in the question range with weight > 0
   // Possible to add randomness to choose notes with lower weights(notes outside the scale)
@@ -14,7 +15,7 @@ export const getNextQuestionNote = (
       (nw) =>
         nw.weight > 0 &&
         noteToMidi[nw.note] >= noteToMidi[questionRange[0]] &&
-        noteToMidi[nw.note] <= noteToMidi[questionRange[1]]
+        noteToMidi[nw.note] <= noteToMidi[questionRange[1]],
     )
     .map((nw) => nw.note);
 
@@ -26,14 +27,14 @@ export const getNextQuestionNote = (
 export const getNextQuestionChord = (
   questionNoteWeights: NoteWeight[],
   questionRange: [Note, Note],
-  numNotes: number
+  numNotes: number,
 ): Note[] => {
   const questionNotes = questionNoteWeights
     .filter(
       (nw) =>
         nw.weight > 0 &&
         noteToMidi[nw.note] >= noteToMidi[questionRange[0]] &&
-        noteToMidi[nw.note] <= noteToMidi[questionRange[1]]
+        noteToMidi[nw.note] <= noteToMidi[questionRange[1]],
     )
     .map((nw) => nw.note);
   if (questionNotes.length >= numNotes) {
@@ -52,7 +53,9 @@ export const getNextQuestionChord = (
 export const getNextQuestionMelody = (
   questionNoteWeights: NoteWeight[],
   questionRange: [Note, Note],
-  length: number
+  length: number,
+  minInterval: Interval,
+  maxInterval: Interval,
 ): JIMIDINote[] => {
   const qm: JIMIDINote[] = [];
 
@@ -61,7 +64,7 @@ export const getNextQuestionMelody = (
       (nw) =>
         nw.weight > 0 &&
         noteToMidi[nw.note] >= noteToMidi[questionRange[0]] &&
-        noteToMidi[nw.note] <= noteToMidi[questionRange[1]]
+        noteToMidi[nw.note] <= noteToMidi[questionRange[1]],
     )
     .map((nw) => nw.note);
 
@@ -76,8 +79,16 @@ export const getNextQuestionMelody = (
       ][Math.floor(Math.random() * 3)];
     }
 
+    const nextQuestionNotes = questionNotes.filter(
+      (n) =>
+        qm.length == 0 ||
+        (Math.abs(noteToMidi[n] - qm[qm.length - 1].note) >= minInterval &&
+          Math.abs(noteToMidi[n] - qm[qm.length - 1].note) <= maxInterval),
+    );
+
     const randomNote =
-      questionNotes[Math.floor(questionNotes.length * Math.random())];
+      nextQuestionNotes[Math.floor(nextQuestionNotes.length * Math.random())];
+
     qm.push({
       secondsSinceLastNote: randomDuration,
       note: noteToMidi[randomNote],
