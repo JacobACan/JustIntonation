@@ -25,22 +25,36 @@ export const MidiSelector = () => {
   const notes = useMIDINotes();
   const [midiDeviceVerified, setMidiDeviceVerified] = useState(false);
   const [midiDeviceStartIndex, setMidiDeviceStartIndex] = useState(0);
-  const { settings } = useContext(SettingsContext);
+  const [inputsInitialized, setInputsInitialized] = useState(false);
+  const { settings, updateSettings } = useContext(SettingsContext);
 
   useEffect(() => {
     if (!midiDeviceCarouselApi) return;
     if (!inputs || inputs.length == 0) return;
     if (!setMidiDeviceVerified) return;
 
-    console.log(midiDeviceCarouselApi);
     midiDeviceCarouselApi.on("select", (e) => {
       if (
         e.selectedScrollSnap() > 0 &&
         e.selectedScrollSnap() - 1 < inputs.length
       ) {
         selectInput(inputs[e.selectedScrollSnap() - 1].id);
+        const deviceVerified = settings.midiDevices[
+          inputs[e.selectedScrollSnap() - 1].id
+        ]
+          ? settings.midiDevices[inputs[e.selectedScrollSnap() - 1].id].verified
+          : false;
+        updateSettings("midiDevices", {
+          ...settings.midiDevices,
+          [inputs[e.selectedScrollSnap() - 1].id]: {
+            verified: deviceVerified,
+            id: inputs[e.selectedScrollSnap() - 1].id,
+          },
+        });
+        setMidiDeviceVerified(deviceVerified);
+      } else {
+        setMidiDeviceVerified(false);
       }
-      setMidiDeviceVerified(false);
     });
   }, [midiDeviceCarouselApi, inputs, setMidiDeviceVerified]);
 
@@ -51,15 +65,49 @@ export const MidiSelector = () => {
   }, [inputs]);
 
   useEffect(() => {
-    if (notes.length > 0) setMidiDeviceVerified(true);
+    if (notes.length > 0) {
+      setMidiDeviceVerified(true);
+      updateSettings("midiDevices", {
+        ...settings.midiDevices,
+        [input?.id || ""]: {
+          verified: true,
+          id: input?.id || "",
+        },
+      });
+    }
   }, [notes]);
 
   useEffect(() => {
     if (inputs.length == 0 || !input) return;
 
     setMidiDeviceStartIndex(inputs.indexOf(input) + 1);
-    setMidiDeviceVerified(true);
   }, []);
+
+  useEffect(() => {
+    if (!settings) return;
+    if (inputs.length == 0) return;
+    if (inputsInitialized) return;
+
+    const deviceIndexFirstVerifiedDevice =
+      inputs.findIndex((i) =>
+        settings.midiDevices[i.id]
+          ? settings.midiDevices[i.id].verified
+          : false,
+      ) + 1;
+    midiDeviceCarouselApi?.scrollTo(deviceIndexFirstVerifiedDevice);
+
+    const idOfIndexScrolledTo =
+      deviceIndexFirstVerifiedDevice > 0
+        ? inputs[deviceIndexFirstVerifiedDevice - 1].id
+        : "";
+
+    setMidiDeviceVerified(
+      settings.midiDevices[idOfIndexScrolledTo]
+        ? settings.midiDevices[idOfIndexScrolledTo].verified
+        : false,
+    );
+    setInputsInitialized(true);
+  }, [inputs, settings]);
 
   const description = settingDescriptions.MIDI_DEVICE_SELECTOR;
 

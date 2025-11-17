@@ -40,10 +40,9 @@ export enum MusicLearnerState {
   REPLAYING_QUESTION = "replaying question",
 }
 
-type UpdateSettingEvent<K extends keyof Settings = keyof Settings> = {
+type UpdateSettingEvent = {
   type: MusicLearnerEvent.UPDATE_SETTING;
-  key?: K;
-  value?: Settings[K];
+  settings?: Partial<Settings>;
 };
 
 export type MusicLearnerEvents =
@@ -171,7 +170,7 @@ export const musicLearner = setup({
             settings: (c) => {
               return {
                 ...c.context.settings,
-                [c.event.key as keyof Settings]: c.event.value,
+                ...c.event.settings,
               };
             },
           }),

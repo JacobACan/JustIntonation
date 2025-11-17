@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { ValueOf } from "next/dist/shared/lib/constants";
 import { Key } from "../../constants/keys";
 import { Scale } from "../../constants/scale";
@@ -20,20 +20,36 @@ export const SettingsContext = createContext({
 export default function SettingsProvider({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const [settings, setSettings] = useState(defaultSettings as Settings);
+  const [settings, setSettings] = useState(defaultSettings);
   const musicLearner = useContext(MusicLearnerContext);
   if (!musicLearner) return;
+
+  const getLocalSettings = (): Settings => {
+    if (typeof window !== "undefined") {
+      const savedSettings = localStorage.getItem("musicLearnerSettings");
+      if (savedSettings) {
+        return { ...settings, ...JSON.parse(savedSettings) };
+      }
+    }
+    return settings;
+  };
 
   const updateSettings = <K extends keyof Settings = keyof Settings>(
     key: K,
     value: Settings[K],
   ) => {
+    const newSettings = getLocalSettings();
+    const updatedSettings = { ...newSettings, [key]: value };
+
     musicLearner.send({
       type: MusicLearnerEvent.UPDATE_SETTING,
-      key: key,
-      value: value,
+      settings: updatedSettings,
     });
-    setSettings((prevSettings) => ({ ...prevSettings, [key]: value }));
+    setSettings(updatedSettings);
+    localStorage.setItem(
+      "musicLearnerSettings",
+      JSON.stringify(updatedSettings),
+    );
   };
 
   const chooseRandomKeyAndScale = () => {
@@ -48,6 +64,12 @@ export default function SettingsProvider({
     updateSettings("questionKeys", [randomKey]);
     updateSettings("questionScales", [randomScale]);
   };
+
+  useEffect(() => {
+    const initialSettings = getLocalSettings();
+    setSettings(initialSettings);
+  }, []);
+
   const value = { settings, updateSettings };
 
   return <SettingsContext value={value}>{children}</SettingsContext>;

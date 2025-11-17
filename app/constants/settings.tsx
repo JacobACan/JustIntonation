@@ -33,6 +33,7 @@ export interface Settings {
   pianoSoundMuted: boolean; // Whether to mute the sound from playing notes on the piano
   melodyIntervalMax: Interval; // Maximum interval between notes in melody mode
   melodyIntervalMin: Interval; // Minimum interval between notes in melody mode
+  midiDevices: { [id: string]: { verified: boolean; id: string } };
 }
 
 export const defaultSettings: Settings = {
@@ -52,4 +53,5 @@ export const defaultSettings: Settings = {
   pianoSoundMuted: false,
   melodyIntervalMax: Interval.PERFECT_FIFTH,
   melodyIntervalMin: Interval.HALF_STEP,
+  midiDevices: {},
 };
