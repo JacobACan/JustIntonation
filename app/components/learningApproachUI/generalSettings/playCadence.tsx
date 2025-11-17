@@ -1,6 +1,6 @@
 import { audioContext, cadenceGainNode } from "@/lib/webAudio";
 import { SettingsContext } from "@/components/providers/settingsProvider";
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Slider } from "@/components/ui/slider";
 import { SettingDescriptionWrapper } from "../settingDescriptionWrapper";
 import { settingDescriptions } from "@/constants/settingDescriptions";
@@ -8,6 +8,12 @@ import { settingDescriptions } from "@/constants/settingDescriptions";
 export default function PlayCadence() {
   const { settings, updateSettings } = useContext(SettingsContext);
   const description = settingDescriptions.PLAY_CADENCE;
+  const [defaultValue, setDefaultValue] = useState(settings.cadenceVolume);
+
+  useEffect(() => {
+    if (!settings) return;
+    setDefaultValue(settings.cadenceVolume);
+  }, [settings]);
 
   return (
     <SettingDescriptionWrapper
@@ -19,7 +25,7 @@ export default function PlayCadence() {
         <Slider
           min={0}
           max={1}
-          defaultValue={[settings.cadenceVolume]}
+          value={[defaultValue]}
           step={0.01}
           onValueChange={([val]) => {
             if (val == 0) {

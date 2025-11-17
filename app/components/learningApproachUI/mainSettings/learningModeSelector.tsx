@@ -17,13 +17,20 @@ export default function LearningModeSelector() {
   const [learningModeStartIndex, setLearningModeStartIndex] = useState(0);
   const [learningModeCarouselApi, setLearningModeCarouselApi] =
     useState<CarouselApi>();
+  const [setStartIndex, setSetStartIndex] = useState(false);
 
   useEffect(() => {
     if (!settings) return;
-    setLearningModeStartIndex(
+    learningModeCarouselApi?.scrollTo(
       LearningModeValues.indexOf(settings.learningMode),
     );
-  }, []);
+    if (!setStartIndex) {
+      setLearningModeStartIndex(
+        LearningModeValues.indexOf(settings.learningMode),
+      );
+      setSetStartIndex(true);
+    }
+  }, [settings]);
 
   useEffect(() => {
     if (!learningModeCarouselApi) return;

@@ -5,6 +5,7 @@ import { SettingsContext } from "@/components/providers/settingsProvider";
 import Piano from "@/components/learn/piano";
 import { SettingDescriptionWrapper } from "../settingDescriptionWrapper";
 import { settingDescriptions } from "@/constants/settingDescriptions";
+import { defaultSettings } from "@/constants/settings";
 
 export default function QuestionNoteRangeSelector() {
   const pxForWhiteNote = (n: Note): number => {
@@ -51,6 +52,8 @@ export default function QuestionNoteRangeSelector() {
   );
   const rRangeOffsetStartPx = useRef(rRangeOffsetPx.current);
 
+  const initialized = useRef(false);
+
   const moveToMousePosition = (e: React.DragEvent<HTMLDivElement>) => {
     if (e.clientX === 0) return; // Drag end event
     const amountToMove = e.clientX - dragStart.current;
@@ -60,6 +63,7 @@ export default function QuestionNoteRangeSelector() {
       selectionRangeLeft.current -
       lRangeOffsetPx.current;
     setSelecitonRange(amountToMove, mouseOffset);
+    updateSettingsForRange();
   };
 
   const setSelecitonRange = (amountToMove: number, offset: number) => {
@@ -96,7 +100,9 @@ export default function QuestionNoteRangeSelector() {
 
     leftRangeSelectorRef.current.style.width = `${selectionCenterLeft}px`;
     rightRangeSelectorRef.current.style.width = `${SELECTION_RANGE_WIDTH - rightBlurBoxStart}px`;
-
+  };
+  const updateSettingsForRange = () => {
+    if (!selectionRef.current) return;
     // Update Settings
     const selectionRangeBoundingBox =
       selectionRef.current.getBoundingClientRect();
@@ -110,12 +116,6 @@ export default function QuestionNoteRangeSelector() {
       noteForRange(rangeStart),
       noteForRange(rangeEnd),
     ]);
-
-    console.log(
-      slctnCenterLeft.current,
-      lRangeOffsetPx.current,
-      rRangeOffsetPx.current,
-    );
   };
 
   const noteForRange = (pxFromSelectionStart: number): Note => {
@@ -143,12 +143,33 @@ export default function QuestionNoteRangeSelector() {
     leftBlurBoxRef.current.style.height = h;
     rightBlurBoxRef.current.style.height = h;
 
-    selectionRef.current.style.width = `${WHITE_KEY_WIDTH * 8}px`;
+    selectionRef.current.style.width = `${selectionWidth}px`;
     selectionRangeLeft.current =
       leftBlurBoxRef.current.getBoundingClientRect().left;
 
     setSelecitonRange(slctnCenterLeft.current, 0);
   }, []);
+
+  useEffect(() => {
+    //Initialize Settings updated from local storage only once
+    if (initialized.current) return;
+    if (
+      JSON.stringify(settings.questionRange) ==
+      JSON.stringify(defaultSettings.questionRange)
+    )
+      return;
+
+    rRangeOffsetPx.current =
+      pxForWhiteNote(settings.questionRange[1]) -
+      (pxForWhiteNote(settings.questionRange[0]) +
+        selectionWidth -
+        WHITE_KEY_WIDTH);
+    slctnCenterLeft.current = pxForWhiteNote(settings.questionRange[0]);
+    setSelecitonRange(slctnCenterLeft.current, 0);
+    updateSettingsForRange();
+
+    initialized.current = true;
+  }, [settings]);
 
   return (
     <SettingDescriptionWrapper
@@ -186,6 +207,7 @@ export default function QuestionNoteRangeSelector() {
             lRangeOffsetPx.current = newOffset;
           }
           setSelecitonRange(slctnCenterLeft.current, 0);
+          updateSettingsForRange();
         }}
       ></div>
       <div
@@ -215,6 +237,7 @@ export default function QuestionNoteRangeSelector() {
             rRangeOffsetPx.current = newOffset;
           }
           setSelecitonRange(slctnCenterLeft.current, 0);
+          updateSettingsForRange();
         }}
       ></div>
       <div

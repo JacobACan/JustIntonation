@@ -31,6 +31,7 @@ export interface Settings {
   timeToAnswerQuestion: number; // in miliseconds
   melodyLength: number;
   pianoSoundMuted: boolean; // Whether to mute the sound from playing notes on the piano
+  midiDevices: { [id: string]: { verified: boolean; id: string } };
 }
 
 export const defaultSettings: Settings = {
@@ -48,4 +49,5 @@ export const defaultSettings: Settings = {
   timeToAnswerQuestion: 5000,
   melodyLength: 4,
   pianoSoundMuted: false,
+  midiDevices: {},
 };
