@@ -1,7 +1,7 @@
-import { noteWeightsForScale } from "@/lib/key";
-import { Key, NoteWeight } from "./keys";
+import { Key } from "./keys";
 import { Note } from "./notes";
 import { Scale } from "./scale";
+import { Interval } from "./intervals";
 
 export enum LearningMode {
   Notes = "Notes",
@@ -31,6 +31,8 @@ export interface Settings {
   timeToAnswerQuestion: number; // in miliseconds
   melodyLength: number;
   pianoSoundMuted: boolean; // Whether to mute the sound from playing notes on the piano
+  melodyIntervalMax: Interval; // Maximum interval between notes in melody mode
+  melodyIntervalMin: Interval; // Minimum interval between notes in melody mode
 }
 
 export const defaultSettings: Settings = {
@@ -48,4 +50,6 @@ export const defaultSettings: Settings = {
   timeToAnswerQuestion: 5000,
   melodyLength: 4,
   pianoSoundMuted: false,
+  melodyIntervalMax: Interval.PERFECT_FIFTH,
+  melodyIntervalMin: Interval.HALF_STEP,
 };

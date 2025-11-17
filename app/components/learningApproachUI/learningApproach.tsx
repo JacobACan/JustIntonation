@@ -14,6 +14,7 @@ import Settings from "./settings";
 import { LearningMode } from "@/constants/settings";
 import ChordSizeSelector from "./chordSettings/chordSizeSelector";
 import MelodyLengthSelector from "./melodySettings/melodyLengthSelector";
+import MelodyIntervalsSelector from "./melodySettings/melodyIntervalsSelector";
 
 export default function LearningApproach() {
   const { settings } = useContext(SettingsContext);
@@ -37,7 +38,9 @@ export default function LearningApproach() {
           <Settings>{[<ChordSizeSelector />]}</Settings>
         )) ||
           (settings.learningMode == LearningMode.Melodies && (
-            <Settings>{[<MelodyLengthSelector />]}</Settings>
+            <Settings>
+              {[<MelodyLengthSelector />, <MelodyIntervalsSelector />]}
+            </Settings>
           ))}
       </div>
     );
