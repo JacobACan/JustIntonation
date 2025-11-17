@@ -13,16 +13,15 @@ export default function CountdownVisualization() {
   const musicActor = useContext(MusicLearnerContext);
   if (!musicActor) return <></>;
 
-  const { isGuessing, isReviewing, isViewingResults } = useSelector(
-    musicActor,
-    (m) => {
+  const { isGuessing, isReviewing, isViewingResults, questionContext } =
+    useSelector(musicActor, (m) => {
       return {
         isGuessing: m.matches(MusicLearnerState.GUESSING),
         isReviewing: m.matches(MusicLearnerState.REVIEWING),
         isViewingResults: m.matches(MusicLearnerState.VIEWING_RESULTS),
+        questionContext: m.context.questionContext,
       };
-    }
-  );
+    });
 
   const getProgressValue = (): number => {
     if (isGuessing && countdown.timeLeft != 0) {
@@ -33,7 +32,14 @@ export default function CountdownVisualization() {
 
   useEffect(() => {
     if (isGuessing) {
-      startCountdown(settings.timeToAnswerQuestion);
+      // This is hacky because the state machine goes to the next state after timeToAnswerQuestion + questionTime * 2
+      // but we only want the countdown to run for timeToAnswerQuestion + questionTime so it looks better to the user
+      stopCountdown();
+      setTimeout(() => {
+        startCountdown(
+          settings.timeToAnswerQuestion + questionContext.questionTime,
+        );
+      }, questionContext.questionTime);
     }
   }, [isGuessing]);
 
@@ -43,7 +49,7 @@ export default function CountdownVisualization() {
     }
   }, [isReviewing, isViewingResults]);
   return (
-    <Progress value={getProgressValue()} className="w-[375px] m-2">
+    <Progress value={getProgressValue()} className="m-2 w-[375px]">
       {getProgressValue()}
     </Progress>
   );

@@ -59,12 +59,13 @@ export const playQuestion = async (input: MusicLearnerContext) => {
         ),
         input.settings.questionRange,
         input.settings.melodyLength,
+        input.settings.melodyIntervalMin,
+        input.settings.melodyIntervalMax,
       );
       input.questionContext.currentMelody = melody;
-      await playMelody(melody);
+      input.questionContext.questionTime = (await playMelody(melody)) * 1000;
 
       break;
   }
-
   return;
 };

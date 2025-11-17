@@ -92,12 +92,14 @@ export default function MonitorMelodies() {
       if (reducedQuestionMelody[i].note == note.note) noteCorrect = true;
 
       if (noteCorrect && timingCorrect) {
-        // console.log("correct");
+        console.log("correct");
         if (numberOfNotesGuessed.current == numberOfNotesInMelody)
           learningStateActor.send({ type: MusicLearnerEvent.CORRECT_GUESS });
       } else {
-        // console.log("incorrect");
+        console.log("incorrect");
         learningStateActor.send({ type: MusicLearnerEvent.INCORRECT_GUESS });
+        // reset all
+        numberOfNotesGuessed.current = 0;
       }
 
       secondlastNoteHit.current = currentTime;

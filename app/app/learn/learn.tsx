@@ -58,7 +58,17 @@ export default function LearnQuestions() {
             <ReplayIcon />
           </LearningUserEvent>
         )}
-        {(isReviewing || isViewingResults) && (
+        {isReviewing && (
+          <div className="flex gap-2">
+            <LearningUserEvent eventType={MusicLearnerEvent.REPLAY}>
+              <ReplayIcon />
+            </LearningUserEvent>
+            <LearningUserEvent eventType={MusicLearnerEvent.CONTINUE}>
+              <ContinueIcon />
+            </LearningUserEvent>
+          </div>
+        )}
+        {isViewingResults && (
           <LearningUserEvent eventType={MusicLearnerEvent.CONTINUE}>
             <ContinueIcon />
           </LearningUserEvent>
@@ -84,7 +94,7 @@ export default function LearnQuestions() {
       <h3 className="text-[var(--middleground1)]">
         {questionContext.questionsCorrect} / {questionContext.questionNumber}
       </h3>
-      {isGuessing &&
+      {(isGuessing || isReviewing) &&
         ((settings.learningMode == LearningMode.Notes && <MonitorNotes />) ||
           (settings.learningMode == LearningMode.Chords && <MonitorChords />) ||
           (settings.learningMode == LearningMode.Melodies && (

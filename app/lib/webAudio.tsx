@@ -107,7 +107,10 @@ export const playCadence = async (key: Key) => {
   cadence.start();
 };
 
-export const playMelody = async (melody: JIMIDINote[], relGain: number = 1) => {
+export const playMelody = async (
+  melody: JIMIDINote[],
+  relGain: number = 1,
+): Promise<number> => {
   let totalSecondsDelay = 0;
 
   const noteFiles = melody.map((n) => noteToNoteFile(midiToNote[n.note]));
@@ -142,8 +145,7 @@ export const playMelody = async (melody: JIMIDINote[], relGain: number = 1) => {
   }
 
   // Time to let melody play out
-  await new Promise((r) => setTimeout(r, totalSecondsDelay * 1000));
-  return;
+  return totalSecondsDelay + 1;
 };
 
 export const stopLearningPhaseAudio = async () => {
