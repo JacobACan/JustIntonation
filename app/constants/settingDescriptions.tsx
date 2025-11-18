@@ -50,7 +50,7 @@ export const settingDescriptions = {
   QUESTION_SCALE_SELECTOR: {
     title: "Question Scale",
     description:
-      "The scale establishes the musical context and vibe of the questions being asked.",
+      "This is the scale that the FIRST or ROOT NOTE of a question is generated on.  This means your questions could always be in any scale based on your mode specific settings.",
   },
 
   // Chord Settings
