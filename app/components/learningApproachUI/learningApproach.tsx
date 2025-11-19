@@ -16,6 +16,7 @@ import ChordSizeSelector from "./chordSettings/chordSizeSelector";
 import MelodyLengthSelector from "./melodySettings/melodyLengthSelector";
 import MelodyIntervalsSelector from "./melodySettings/melodyIntervalsSelector";
 import TimeToAnswerQuestions from "./generalSettings/timeToAnswerQuestions";
+import SkipReviewOn from "./generalSettings/skipReviewOn";
 
 export default function LearningApproach() {
   const { settings } = useContext(SettingsContext);
@@ -35,6 +36,9 @@ export default function LearningApproach() {
     return (
       <div className="pt-10">
         <h1>{settings.learningMode} Settings</h1>
+        <Settings>
+          {[<QuestionKeySelector />, <QuestionScaleSelector />]}
+        </Settings>
         {(settings.learningMode == LearningMode.Chords && (
           <Settings>{[<ChordSizeSelector />]}</Settings>
         )) ||
@@ -53,10 +57,11 @@ export default function LearningApproach() {
         <h1>General Settings</h1>
         <Settings>
           <TimeToAnswerQuestions />
-          <QuestionKeySelector />
-          <QuestionScaleSelector />
+          <SkipReviewOn />
+
           <PlayCadence />
           <NumberOfQuestions />
+
           <PianoSoundMuteSelector />
         </Settings>
       </div>

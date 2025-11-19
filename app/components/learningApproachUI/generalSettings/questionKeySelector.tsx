@@ -29,9 +29,9 @@ export default function QuestionKeySelector() {
       description={description.description}
     >
       <div>
-        <h2>Keys</h2>
+        <h2>Key Centers</h2>
         <div style={{ marginBottom: "10px" }}>
-          <strong>Selected Keys:</strong>
+          <strong>Selected Key Centers:</strong>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "5px" }}>
             {settings.questionKeys.map((key) => (
               <span

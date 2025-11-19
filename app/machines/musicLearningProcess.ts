@@ -278,7 +278,12 @@ export const musicLearner = setup({
           },
         ],
         [MusicLearnerEvent.INCORRECT_GUESS]: [
-          { target: MusicLearnerState.REVIEWING },
+          {
+            target: MusicLearnerState.REVIEWING,
+            guard: (stmch) =>
+              stmch.context.settings.skipReviewOn == SkipReview.None ||
+              stmch.context.settings.skipReviewOn == SkipReview.Correct,
+          },
           {
             target: MusicLearnerState.PLAYING_NEW_QUESTION,
             guard: (stmch) =>
