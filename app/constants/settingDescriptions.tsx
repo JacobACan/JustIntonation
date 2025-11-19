@@ -49,8 +49,7 @@ export const settingDescriptions = {
   },
   QUESTION_SCALE_SELECTOR: {
     title: "Question Scale",
-    description:
-      "This is the scale that the FIRST or ROOT NOTE of a question is generated on.  This means your questions could always be in any scale based on your mode specific settings.",
+    description: "This is the scale that the question is generated on.",
   },
 
   // Chord Settings
