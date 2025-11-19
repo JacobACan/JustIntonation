@@ -59,7 +59,7 @@ export const getNextQuestionMelody = (
 ): JIMIDINote[] => {
   const qm: JIMIDINote[] = [];
 
-  const firstQuestionNotes = questionNoteWeights
+  const questionNotes = questionNoteWeights
     .filter(
       (nw) =>
         nw.weight > 0 &&
@@ -67,13 +67,6 @@ export const getNextQuestionMelody = (
         noteToMidi[nw.note] <= noteToMidi[questionRange[1]],
     )
     .map((nw) => nw.note);
-
-  //All notes between range w/ in interval limits
-  const subsequesntQuestionNotes = Object.values(Note).filter(
-    (n) =>
-      noteToMidi[n] >= noteToMidi[questionRange[0]] &&
-      noteToMidi[n] <= noteToMidi[questionRange[1]],
-  );
 
   for (let i = 0; i < length; i++) {
     let randomDuration: number = 0;
@@ -86,15 +79,26 @@ export const getNextQuestionMelody = (
       ][Math.floor(Math.random() * 3)];
     }
 
-    let nextQuestionNotes: Note[] = firstQuestionNotes;
+    let nextQuestionNotes: Note[] = [];
 
     if (i > 0) {
-      nextQuestionNotes = subsequesntQuestionNotes.filter(
+      nextQuestionNotes = questionNotes.filter(
         (n) =>
           qm.length == 0 ||
           (Math.abs(noteToMidi[n] - qm[qm.length - 1].note) >= minInterval &&
-            Math.abs(noteToMidi[n] - qm[qm.length - 1].note) <= maxInterval),
+            Math.abs(noteToMidi[n] - qm[qm.length - 1].note) <= maxInterval &&
+            questionNotes.some((otherN) => {
+              const interval = Math.abs(noteToMidi[n] - noteToMidi[otherN]);
+              return interval >= minInterval && interval <= maxInterval;
+            })),
       );
+    } else {
+      nextQuestionNotes = questionNotes.filter((n) => {
+        return questionNotes.some((otherN) => {
+          const interval = Math.abs(noteToMidi[n] - noteToMidi[otherN]);
+          return interval >= minInterval && interval <= maxInterval;
+        });
+      });
     }
 
     const randomNote =
