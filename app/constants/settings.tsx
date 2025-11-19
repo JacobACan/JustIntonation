@@ -11,9 +11,9 @@ export enum LearningMode {
 export const LearningModeValues: LearningMode[] = Object.values(LearningMode);
 
 export enum SkipReview {
-  None,
-  Correct,
-  Both,
+  None = "never",
+  Correct = "correct",
+  Both = "always",
 }
 
 export interface Settings {
