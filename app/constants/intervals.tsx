@@ -1,4 +1,5 @@
 export enum Interval {
+  //Midi Based Intervals
   UNISON = 0,
   HALF_STEP = 1,
   MINOR_SECOND = 1,
@@ -8,8 +9,10 @@ export enum Interval {
   MAJOR_THIRD = 4,
   PERFECT_FOURTH = 5,
   TRITONE = 6,
+  DIMINISHED_FIFTH = 6,
   PERFECT_FIFTH = 7,
   MINOR_SIXTH = 8,
+  AUGMENTED_FIFTH = 8,
   MAJOR_SIXTH = 9,
   MINOR_SEVENTH = 10,
   MAJOR_SEVENTH = 11,
