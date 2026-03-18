@@ -55,11 +55,13 @@ interface PianoProps {
    * notesDown2: array of Note enums that are currently pressed (secondary)
    * getFill: function to determine fill color based on note and which notesDown array contains it
    * width: width of the entire piano in pixels (optional)
+   * onKeyClick: callback when a piano key is clicked
    */
   displayRange?: [Note, Note];
   notesDown1?: Note[];
   notesDown2?: Note[];
   getFill?: (note: Note, isDown1: boolean, isDown2: boolean) => string;
+  onKeyClick?: (note: Note) => void;
   width?: number;
   className?: string;
 }
@@ -69,6 +71,7 @@ export default function Piano({
   notesDown1 = [],
   notesDown2 = [],
   getFill,
+  onKeyClick,
   width,
   className,
 }: PianoProps) {
@@ -141,11 +144,12 @@ export default function Piano({
           return (
             <path
               key={key.midi}
-              // define the svg path for each key
               d={rectPath(x, y + WHITE_BLACK_KEY_OFFSET, w, h)}
               fill={fill}
               stroke="#222"
               strokeWidth={STROKE_WIDTH}
+              onClick={onKeyClick ? () => onKeyClick(key.note as Note) : undefined}
+              style={onKeyClick ? { cursor: "pointer" } : undefined}
             />
           );
         })}
@@ -173,6 +177,8 @@ export default function Piano({
               fill={fill}
               stroke="#111"
               strokeWidth={2.2}
+              onClick={onKeyClick ? () => onKeyClick(key.note as Note) : undefined}
+              style={onKeyClick ? { cursor: "pointer" } : undefined}
             />
           );
         })}
