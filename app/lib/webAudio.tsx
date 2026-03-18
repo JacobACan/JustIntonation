@@ -129,6 +129,7 @@ export const playMelody = async (
       source.buffer = currentBuffer;
 
       source.start(startTime + totalSecondsDelay);
+      activeSourceNodes.push(source);
 
       const velocity = audioContext.createGain();
       velocity.gain.setValueAtTime(relGain, audioContext.currentTime);
