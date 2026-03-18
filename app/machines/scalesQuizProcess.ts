@@ -9,8 +9,10 @@ import { playScalesQuizQuestion } from "@/lib/scalesQuizActors";
 import {
   beginLearningPhaseAudio,
   playMelody,
+  playNote,
   stopLearningPhaseAudio,
 } from "@/lib/webAudio";
+import { noteToNoteFile } from "@/lib/notes";
 import { assign, fromPromise, setup } from "xstate";
 
 export enum ScalesQuizEvent {
@@ -20,6 +22,7 @@ export enum ScalesQuizEvent {
   CHANGE_SETTINGS = "change settings",
   CORRECT_GUESS = "correct guess",
   INCORRECT_GUESS = "incorrect guess",
+  MELODY_NOTE_CORRECT = "melody note correct",
   UPDATE_SETTING = "update setting",
 }
 
@@ -39,20 +42,30 @@ type UpdateSettingEvent = {
   settings?: Partial<ScalesQuizSettings>;
 };
 
+type IncorrectGuessEvent = {
+  type: ScalesQuizEvent.INCORRECT_GUESS;
+  wrongIndex?: number;
+  wrongNote?: Note;
+};
+
 export type ScalesQuizEvents =
   | { type: ScalesQuizEvent.START }
   | { type: ScalesQuizEvent.CONTINUE }
   | { type: ScalesQuizEvent.REPLAY }
   | { type: ScalesQuizEvent.CHANGE_SETTINGS }
   | { type: ScalesQuizEvent.CORRECT_GUESS }
-  | { type: ScalesQuizEvent.INCORRECT_GUESS }
+  | IncorrectGuessEvent
+  | { type: ScalesQuizEvent.MELODY_NOTE_CORRECT }
   | UpdateSettingEvent;
 
 export interface ScalesQuestionContext {
   currentMelody: JIMIDINote[] | undefined;
   expectedAnswer: Note | undefined;
-  expectedDegree: number | undefined; // 0-6, scale degree being asked in degree mode
+  expectedDegree: number | undefined; // semitone offset for degree mode
   userAnswer: Note | undefined;
+  melodyProgress: number; // how many melody notes the user has played correctly so far
+  melodyWrongIndex: number | undefined; // index in melody where the user played wrong
+  melodyWrongNote: Note | undefined; // the wrong note the user played
   questionNumber: number;
   questionsCorrect: number;
   currentKey: Key;
@@ -67,6 +80,9 @@ const defaultQuestionContext: ScalesQuestionContext = {
   expectedAnswer: undefined,
   expectedDegree: undefined,
   userAnswer: undefined,
+  melodyProgress: 0,
+  melodyWrongIndex: undefined,
+  melodyWrongNote: undefined,
   questionNumber: 0,
   questionsCorrect: 0,
   currentKey: Key.C,
@@ -111,6 +127,9 @@ export const scalesQuizMachine = setup({
         expectedAnswer: undefined,
         expectedDegree: undefined,
         userAnswer: undefined,
+        melodyProgress: 0,
+        melodyWrongIndex: undefined,
+        melodyWrongNote: undefined,
         questionNumber: 0,
         numberOfReplays: 0,
         isReplaying: false,
@@ -128,6 +147,8 @@ export const scalesQuizMachine = setup({
     replayQuestion: (c) => {
       if (c.context.questionContext.currentMelody) {
         playMelody(c.context.questionContext.currentMelody);
+      } else if (c.context.questionContext.expectedAnswer) {
+        playNote(noteToNoteFile(c.context.questionContext.expectedAnswer));
       }
       c.context.questionContext.numberOfReplays++;
     },
@@ -199,8 +220,21 @@ export const scalesQuizMachine = setup({
           target: ScalesQuizState.REVIEWING,
         },
       },
-      entry: (s) => (s.context.questionContext.numberOfReplays = 0),
+      entry: (s) => {
+        s.context.questionContext.numberOfReplays = 0;
+        s.context.questionContext.melodyProgress = 0;
+        s.context.questionContext.melodyWrongIndex = undefined;
+        s.context.questionContext.melodyWrongNote = undefined;
+      },
       on: {
+        [ScalesQuizEvent.MELODY_NOTE_CORRECT]: {
+          actions: assign({
+            questionContext: ({ context }) => ({
+              ...context.questionContext,
+              melodyProgress: context.questionContext.melodyProgress + 1,
+            }),
+          }),
+        },
         [ScalesQuizEvent.CORRECT_GUESS]: [
           {
             target: ScalesQuizState.PLAYING_QUESTION,
@@ -232,6 +266,13 @@ export const scalesQuizMachine = setup({
             guard: (stmch) =>
               stmch.context.settings.skipReviewOn === SkipReview.None ||
               stmch.context.settings.skipReviewOn === SkipReview.Correct,
+            actions: assign({
+              questionContext: ({ context, event }) => ({
+                ...context.questionContext,
+                melodyWrongIndex: (event as IncorrectGuessEvent).wrongIndex,
+                melodyWrongNote: (event as IncorrectGuessEvent).wrongNote,
+              }),
+            }),
           },
           {
             target: ScalesQuizState.PLAYING_QUESTION,
@@ -280,7 +321,19 @@ export const scalesQuizMachine = setup({
       },
     },
     [ScalesQuizState.REVIEWING]: {
+      entry: (s) => {
+        // Reset melody progress so user can replay the full melody in review
+        s.context.questionContext.melodyProgress = 0;
+      },
       on: {
+        [ScalesQuizEvent.MELODY_NOTE_CORRECT]: {
+          actions: assign({
+            questionContext: ({ context }) => ({
+              ...context.questionContext,
+              melodyProgress: context.questionContext.melodyProgress + 1,
+            }),
+          }),
+        },
         [ScalesQuizEvent.CONTINUE]: [
           {
             target: ScalesQuizState.VIEWING_RESULTS,

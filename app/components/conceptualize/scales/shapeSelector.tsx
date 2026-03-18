@@ -38,8 +38,9 @@ const ALL_KEYS: Key[] = [
   Key.Gb, Key.G, Key.Ab, Key.A, Key.Bb, Key.B,
 ];
 
-function ShapePiano({ keyName, selected, onToggle }: {
+function ShapePiano({ keyName, shapeNumber, selected, onToggle }: {
   keyName: Key;
+  shapeNumber: number;
   selected: boolean;
   onToggle: () => void;
 }) {
@@ -77,7 +78,7 @@ function ShapePiano({ keyName, selected, onToggle }: {
         getFill={(note) => getFill(note)}
         width={120}
       />
-      <span className="text-xs font-bold">{keyName} Major</span>
+      <span className="text-xs font-bold">Shape {shapeNumber}</span>
     </button>
   );
 }
@@ -97,12 +98,13 @@ export default function ShapeSelector() {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <h3 className="text-sm font-bold">Selected Shapes</h3>
+      <h3 className="text-sm font-bold">Diatonic Shapes</h3>
       <div className="grid grid-cols-4 gap-2">
-        {ALL_KEYS.map((key) => (
+        {ALL_KEYS.map((key, i) => (
           <ShapePiano
             key={key}
             keyName={key}
+            shapeNumber={i + 1}
             selected={settings.questionKeys.includes(key)}
             onToggle={() => toggleKey(key)}
           />

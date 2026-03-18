@@ -11,10 +11,12 @@ import {
   learningStateGainNode,
   playCadence,
   playMelody,
+  playNote,
   stopActiveNodes,
 } from "./webAudio";
-import { midiToNote } from "@/constants/notes";
-import { noteToMidi } from "@/constants/midi";
+import { noteToNoteFile } from "./notes";
+import { midiToNote, Note } from "@/constants/notes";
+import { noteToMidi, keyToMidi, midiNotesValues } from "@/constants/midi";
 import { Key } from "@/constants/keys";
 import { ScalesQuizMode } from "@/constants/scalesQuizSettings";
 
@@ -69,32 +71,53 @@ export const playScalesQuizQuestion = async (input: ScalesQuizContext) => {
   input.questionContext.previousKey = input.questionContext.currentKey;
   input.questionContext.currentKey = newKey;
 
-  // On key change (or first question), stop old audio and start cadence for the mode root
+  // Only restart cadence if the key/shape actually changed
   if (isFirstQuestion || keyChanged) {
     stopActiveNodes();
     const cadenceKey = getModeRootKey(newKey, Scale.major, input.settings.startingDegree);
     playCadence(cadenceKey);
+    // Let the cadence establish before playing the question
+    await new Promise((r) => setTimeout(r, 500));
   }
 
   if (input.settings.quizMode === ScalesQuizMode.Degree) {
-    const scaleNotes = getScaleNotesInRange(
+    // Pick a random semitone offset from included degrees
+    const included = input.settings.includedDegrees;
+    const randomSemitone = included[Math.floor(Math.random() * included.length)];
+
+    // Compute the pitch class of the target note
+    const rootPitchClass = keyToMidi[newKey] % 12;
+    const targetPitchClass = (rootPitchClass + randomSemitone) % 12;
+
+    // Find a note with that pitch class in the display range
+    const [rangeStart, rangeEnd] = getScaleDisplayRange(
       newKey,
+      Scale.major,
       input.settings.startingDegree,
       input.settings.octaves,
     );
-    const scaleLength = 7;
-    const randomDegree = Math.floor(Math.random() * scaleLength);
+    const rangeMin = noteToMidi[rangeStart];
+    const rangeMax = noteToMidi[rangeEnd];
 
-    const degreeNotes = scaleNotes.filter(
-      (_note, i) => i % scaleLength === randomDegree,
-    );
-    const targetNote =
-      degreeNotes[Math.floor(Math.random() * degreeNotes.length)];
+    const candidates: Note[] = [];
+    for (let midi = rangeMin; midi <= rangeMax; midi++) {
+      if (midi % 12 === targetPitchClass && midiToNote[midi]) {
+        candidates.push(midiToNote[midi]);
+      }
+    }
+
+    const targetNote = candidates.length > 0
+      ? candidates[Math.floor(Math.random() * candidates.length)]
+      : midiToNote[rangeMin + randomSemitone];
 
     input.questionContext.currentMelody = undefined;
-    input.questionContext.expectedDegree = randomDegree;
+    input.questionContext.expectedDegree = randomSemitone;
     input.questionContext.expectedAnswer = targetNote;
     input.questionContext.questionTime = 0;
+
+    if (input.settings.playDegreeAudio && targetNote) {
+      playNote(noteToNoteFile(targetNote));
+    }
   } else {
     const questionRange = getScaleDisplayRange(
       newKey,
@@ -102,7 +125,16 @@ export const playScalesQuizQuestion = async (input: ScalesQuizContext) => {
       input.settings.startingDegree,
       input.settings.octaves,
     );
-    const noteWeights = noteWeightsForScale(newKey, Scale.major);
+
+    // Build note weights from includedDegrees (semitone offsets from root)
+    const rootPitchClass = keyToMidi[newKey] % 12;
+    const includedPitchClasses = new Set(
+      input.settings.includedDegrees.map((s) => (rootPitchClass + s) % 12),
+    );
+    const noteWeights = midiNotesValues.map((midi) => ({
+      note: midiToNote[midi],
+      weight: (includedPitchClasses.has(midi % 12) ? 1 : 0) as 0 | 1,
+    }));
 
     const melody = getNextQuestionMelody(
       noteWeights,

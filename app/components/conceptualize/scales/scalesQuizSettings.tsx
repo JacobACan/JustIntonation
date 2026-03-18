@@ -5,7 +5,7 @@ import { ScalesQuizSettingsContext } from "@/components/providers/scalesQuizSett
 import { ScalesQuizMachineContext } from "@/components/providers/scalesQuizProvider";
 import { ScalesQuizEvent } from "@/machines/scalesQuizProcess";
 import { Slider } from "@/components/ui/slider";
-import { ScalesQuizMode } from "@/constants/scalesQuizSettings";
+import { ScalesQuizMode, DEGREE_OPTIONS } from "@/constants/scalesQuizSettings";
 import ShapeSelector from "./shapeSelector";
 import ScalesMidiSelector from "./scalesMidiSelector";
 import PlayIcon from "@/components/icon/playIcon";
@@ -70,36 +70,39 @@ export default function ScalesQuizSettings() {
               </div>
 
               <div>
-                <h3 className="text-sm font-bold">Starting Degree (Mode)</h3>
-                <div className="mt-1 flex gap-1">
-                  {MODE_LABELS.map((label, i) => (
-                    <button
-                      key={i}
-                      onClick={() => updateSettings("startingDegree", i)}
-                      className={`rounded px-2 py-1 text-xs font-bold transition-colors ${
-                        settings.startingDegree === i
-                          ? "bg-[var(--foreground)] text-[var(--background)]"
-                          : "bg-[var(--middleground2)] text-[var(--middleground1)]"
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
+                <h3 className="text-sm font-bold">Included Degrees</h3>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {DEGREE_OPTIONS.map(({ semitone, label }) => {
+                    const isActive = settings.includedDegrees.includes(semitone);
+                    return (
+                      <button
+                        key={semitone}
+                        onClick={() => {
+                          const current = settings.includedDegrees;
+                          if (isActive) {
+                            if (current.length <= 1) return;
+                            updateSettings(
+                              "includedDegrees",
+                              current.filter((d) => d !== semitone),
+                            );
+                          } else {
+                            updateSettings(
+                              "includedDegrees",
+                              [...current, semitone].sort((a, b) => a - b),
+                            );
+                          }
+                        }}
+                        className={`rounded px-2 py-1 text-xs font-bold transition-colors ${
+                          isActive
+                            ? "bg-[var(--foreground)] text-[var(--background)]"
+                            : "bg-[var(--middleground2)] text-[var(--middleground1)]"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
                 </div>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-bold">
-                  Context Phrase Speed: {Math.round(settings.contextPhraseSpeed * 1000)}ms
-                </h3>
-                <Slider
-                  value={[settings.contextPhraseSpeed * 1000]}
-                  min={50}
-                  max={500}
-                  onValueChange={([val]) =>
-                    updateSettings("contextPhraseSpeed", val / 1000)
-                  }
-                />
               </div>
 
               {settings.quizMode === ScalesQuizMode.Melody && (
@@ -159,6 +162,20 @@ export default function ScalesQuizSettings() {
                 >
                   MIDI Sound: {settings.pianoSoundEnabled ? "On" : "Off"}
                 </button>
+                {settings.quizMode === ScalesQuizMode.Degree && (
+                  <button
+                    onClick={() =>
+                      updateSettings("playDegreeAudio", !settings.playDegreeAudio)
+                    }
+                    className={`ml-1 rounded px-3 py-1 text-xs font-bold transition-colors ${
+                      settings.playDegreeAudio
+                        ? "bg-[var(--foreground)] text-[var(--background)]"
+                        : "bg-[var(--middleground2)] text-[var(--middleground1)]"
+                    }`}
+                  >
+                    Degree Audio: {settings.playDegreeAudio ? "On" : "Off"}
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -167,7 +184,7 @@ export default function ScalesQuizSettings() {
 
       {/* Main area — Shape selector */}
       <div className="flex h-lvh flex-col items-center justify-center gap-6 text-center">
-        <h2 className="text-lg font-bold">Scales Quiz</h2>
+        <h2 className="text-lg font-bold">Conceptualize Diatonic Shapes</h2>
         <div className="flex gap-1">
           {Object.values(ScalesQuizMode).map((mode) => (
             <button
@@ -183,15 +200,9 @@ export default function ScalesQuizSettings() {
             </button>
           ))}
         </div>
-        <p className="text-sm text-[var(--middleground1)]">
-          {settings.quizMode === ScalesQuizMode.Melody
-            ? "Identify the first note of a melody"
-            : "Play the scale degree shown on screen"}
-        </p>
         <ScalesMidiSelector />
-        <ShapeSelector />
         <button
-          className="flex items-center justify-center"
+          className="flex items-center justify-center hover:scale-110 active:scale-95 transition-transform"
           style={{
             background: "none",
             border: "none",
@@ -204,6 +215,7 @@ export default function ScalesQuizSettings() {
         >
           <PlayIcon />
         </button>
+        <ShapeSelector />
       </div>
     </div>
   );

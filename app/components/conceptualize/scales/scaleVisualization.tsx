@@ -8,7 +8,8 @@ import { ScalesQuizEvent, ScalesQuizState } from "@/machines/scalesQuizProcess";
 import { useSelector } from "@xstate/react";
 import { noteWeightsForScale, getScaleDisplayRange } from "@/lib/key";
 import { Scale } from "@/constants/scale";
-import { Note } from "@/constants/notes";
+import { ScalesQuizMode } from "@/constants/scalesQuizSettings";
+import { Note, midiToNote } from "@/constants/notes";
 import { noteToMidi } from "@/constants/midi";
 
 export default function ScaleVisualization() {
@@ -16,15 +17,27 @@ export default function ScaleVisualization() {
   const scalesQuizActor = useContext(ScalesQuizMachineContext);
   if (!scalesQuizActor) return <></>;
 
-  const { currentKey, expectedAnswer, isGuessing, isReviewing } = useSelector(
-    scalesQuizActor,
-    (s) => ({
-      currentKey: s.context.questionContext.currentKey,
-      expectedAnswer: s.context.questionContext.expectedAnswer,
-      isGuessing: s.matches(ScalesQuizState.GUESSING),
-      isReviewing: s.matches(ScalesQuizState.REVIEWING),
-    }),
-  );
+  const {
+    currentKey,
+    expectedAnswer,
+    isGuessing,
+    isReviewing,
+    currentMelody,
+    melodyProgress,
+    melodyWrongIndex,
+    melodyWrongNote,
+    quizMode,
+  } = useSelector(scalesQuizActor, (s) => ({
+    currentKey: s.context.questionContext.currentKey,
+    expectedAnswer: s.context.questionContext.expectedAnswer,
+    isGuessing: s.matches(ScalesQuizState.GUESSING),
+    isReviewing: s.matches(ScalesQuizState.REVIEWING),
+    currentMelody: s.context.questionContext.currentMelody,
+    melodyProgress: s.context.questionContext.melodyProgress,
+    melodyWrongIndex: s.context.questionContext.melodyWrongIndex,
+    melodyWrongNote: s.context.questionContext.melodyWrongNote,
+    quizMode: s.context.settings.quizMode,
+  }));
 
   const displayRange = getScaleDisplayRange(
     currentKey,
@@ -63,13 +76,51 @@ export default function ScaleVisualization() {
   };
 
   const handleKeyClick = (note: Note) => {
-    if (!isGuessing || !expectedAnswer) return;
+    if (!isGuessing) return;
 
-    if (noteToMidi[note] % 12 === noteToMidi[expectedAnswer] % 12) {
-      scalesQuizActor.send({ type: ScalesQuizEvent.CORRECT_GUESS });
-    } else {
-      scalesQuizActor.send({ type: ScalesQuizEvent.INCORRECT_GUESS });
+    if (quizMode === ScalesQuizMode.Melody && currentMelody) {
+      const expectedMelodyNote = currentMelody[melodyProgress];
+      if (!expectedMelodyNote) return;
+
+      if (noteToMidi[note] % 12 === expectedMelodyNote.note % 12) {
+        if (melodyProgress + 1 >= currentMelody.length) {
+          scalesQuizActor.send({ type: ScalesQuizEvent.CORRECT_GUESS });
+        } else {
+          scalesQuizActor.send({ type: ScalesQuizEvent.MELODY_NOTE_CORRECT });
+        }
+      } else {
+        scalesQuizActor.send({
+          type: ScalesQuizEvent.INCORRECT_GUESS,
+          wrongIndex: melodyProgress,
+          wrongNote: note,
+        });
+      }
+    } else if (expectedAnswer) {
+      if (noteToMidi[note] % 12 === noteToMidi[expectedAnswer] % 12) {
+        scalesQuizActor.send({ type: ScalesQuizEvent.CORRECT_GUESS });
+      } else {
+        scalesQuizActor.send({ type: ScalesQuizEvent.INCORRECT_GUESS });
+      }
     }
+  };
+
+  // In review, show the correct note and the wrong note on the piano
+  const getReviewNotes = (): Note[] | undefined => {
+    if (!isReviewing) return undefined;
+
+    if (quizMode === ScalesQuizMode.Melody && currentMelody && melodyWrongIndex !== undefined) {
+      // Show the correct note at the wrong index
+      const correctNote = midiToNote[currentMelody[melodyWrongIndex].note];
+      return correctNote ? [correctNote] : undefined;
+    }
+
+    return expectedAnswer ? [expectedAnswer] : undefined;
+  };
+
+  const getReviewWrongNotes = (): Note[] | undefined => {
+    if (!isReviewing) return undefined;
+    if (melodyWrongNote) return [melodyWrongNote];
+    return undefined;
   };
 
   return (
@@ -77,9 +128,8 @@ export default function ScaleVisualization() {
       displayRange={displayRange}
       getFill={getFill}
       onKeyClick={isGuessing ? handleKeyClick : undefined}
-      notesDown2={
-        isReviewing && expectedAnswer ? [expectedAnswer] : undefined
-      }
+      notesDown1={getReviewWrongNotes()}
+      notesDown2={getReviewNotes()}
     />
   );
 }
