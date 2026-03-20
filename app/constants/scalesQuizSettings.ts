@@ -3,8 +3,8 @@ import { Interval } from "./intervals";
 import { SkipReview } from "./settings";
 
 export enum ScalesQuizMode {
-  Melody = "Melody",
   Degree = "Degree",
+  Melody = "Melody",
 }
 
 export interface ScalesQuizSettings {
@@ -22,6 +22,8 @@ export interface ScalesQuizSettings {
   pianoSoundEnabled: boolean;
   includedDegrees: number[]; // semitone offsets from root (0-11) to include in degree mode
   playDegreeAudio: boolean; // in degree mode, play the target note as audio
+  masteryMode: boolean; // progressive mastery tracking for melody and degree modes
+  masteryReviewFrequency: number; // every Nth question reviews a mastered item (0 = never)
 }
 
 // All 12 chromatic degrees with labels
@@ -41,18 +43,20 @@ export const DEGREE_OPTIONS: { semitone: number; label: string }[] = [
 ];
 
 export const defaultScalesQuizSettings: ScalesQuizSettings = {
-  quizMode: ScalesQuizMode.Melody,
-  questionKeys: [Key.C],
+  quizMode: ScalesQuizMode.Degree,
+  questionKeys: [Key.F], // Shape 6
   startingDegree: 0,
-  octaves: 1,
+  octaves: 2,
   contextPhraseSpeed: 0.15,
   melodyLength: 4,
   numberOfQuestions: 10,
-  timeToAnswerQuestion: 8000,
+  timeToAnswerQuestion: 4000,
   skipReviewOn: SkipReview.Correct,
   melodyIntervalMin: Interval.HALF_STEP,
   melodyIntervalMax: Interval.PERFECT_FIFTH,
   pianoSoundEnabled: true,
   includedDegrees: [0, 2, 4, 5, 7, 9, 11], // major scale degrees by default
-  playDegreeAudio: false,
+  playDegreeAudio: true,
+  masteryMode: false,
+  masteryReviewFrequency: 3, // review a mastered item every 3rd question
 };

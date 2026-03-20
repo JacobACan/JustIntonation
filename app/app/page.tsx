@@ -55,7 +55,7 @@ export default function Home() {
           />
         </svg>
         <span className="text-sm font-bold text-[var(--middleground1)]">
-          Conceptualize Diatonic Shapes
+          Master Diatonic Shapes
         </span>
       </button>
       {/* <button

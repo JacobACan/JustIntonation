@@ -5,14 +5,57 @@ import { ScalesQuizSettingsContext } from "@/components/providers/scalesQuizSett
 import { ScalesQuizMachineContext } from "@/components/providers/scalesQuizProvider";
 import { ScalesQuizEvent } from "@/machines/scalesQuizProcess";
 import { Slider } from "@/components/ui/slider";
-import { ScalesQuizMode, DEGREE_OPTIONS } from "@/constants/scalesQuizSettings";
+import {
+  ScalesQuizMode,
+  ScalesQuizSettings as ScalesQuizSettingsType,
+  DEGREE_OPTIONS,
+} from "@/constants/scalesQuizSettings";
+import {
+  SCALES_MASTERY_STORAGE_KEY,
+  DEGREE_MASTERY_STORAGE_KEY,
+} from "@/constants/masteryConfig";
+import {
+  loadMasteryStore,
+  saveMasteryStore,
+  getUnlockedMelodyLength,
+  loadDegreeMasteryStore,
+  saveDegreeMasteryStore,
+} from "@/lib/mastery";
+import { Key } from "@/constants/keys";
+
+const ALL_KEYS: Key[] = [
+  Key.C,
+  Key.Db,
+  Key.D,
+  Key.Eb,
+  Key.E,
+  Key.F,
+  Key.Gb,
+  Key.G,
+  Key.Ab,
+  Key.A,
+  Key.Bb,
+  Key.B,
+];
+
+const shapeLabel = (key: Key): string => `Shape ${ALL_KEYS.indexOf(key) + 1}`;
+import MasteryProgressPanel from "./masteryProgressPanel";
+import DegreeMasteryProgressPanel from "./degreeMasteryProgressPanel";
 import ShapeSelector from "./shapeSelector";
 import ScalesMidiSelector from "./scalesMidiSelector";
 import PlayIcon from "@/components/icon/playIcon";
 import { SettingsIcon } from "@/components/icon/settingsIcon";
 import clsx from "clsx";
 
-const MODE_LABELS = ["1 Ion", "2 Dor", "3 Phr", "4 Lyd", "5 Mix", "6 Aeo", "7 Loc"];
+const MODE_LABELS = [
+  "1 Ion",
+  "2 Dor",
+  "3 Phr",
+  "4 Lyd",
+  "5 Mix",
+  "6 Aeo",
+  "7 Loc",
+];
 
 export default function ScalesQuizSettings() {
   const { settings, updateSettings } = useContext(ScalesQuizSettingsContext);
@@ -73,7 +116,8 @@ export default function ScalesQuizSettings() {
                 <h3 className="text-sm font-bold">Included Degrees</h3>
                 <div className="mt-1 flex flex-wrap gap-1">
                   {DEGREE_OPTIONS.map(({ semitone, label }) => {
-                    const isActive = settings.includedDegrees.includes(semitone);
+                    const isActive =
+                      settings.includedDegrees.includes(semitone);
                     return (
                       <button
                         key={semitone}
@@ -105,21 +149,89 @@ export default function ScalesQuizSettings() {
                 </div>
               </div>
 
-              {settings.quizMode === ScalesQuizMode.Melody && (
+              {/* Mastery toggle — both modes */}
+              <div>
+                <button
+                  onClick={() =>
+                    updateSettings("masteryMode", !settings.masteryMode)
+                  }
+                  className={`rounded px-3 py-1 text-xs font-bold transition-colors ${
+                    settings.masteryMode
+                      ? "bg-[var(--foreground)] text-[var(--background)]"
+                      : "bg-[var(--middleground2)] text-[var(--middleground1)]"
+                  }`}
+                >
+                  Mastery Mode: {settings.masteryMode ? "On" : "Off"}
+                </button>
+              </div>
+
+              {/* Review frequency — only when mastery is on */}
+              {settings.masteryMode && (
                 <div>
                   <h3 className="text-sm font-bold">
-                    Melody Length: {settings.melodyLength}
+                    Review Mastered: every{" "}
+                    {settings.masteryReviewFrequency === 0
+                      ? "never"
+                      : `${settings.masteryReviewFrequency} questions`}
                   </h3>
                   <Slider
-                    min={2}
-                    max={8}
-                    defaultValue={[settings.melodyLength]}
+                    value={[settings.masteryReviewFrequency]}
+                    min={0}
+                    max={10}
                     onValueChange={([val]) =>
-                      updateSettings("melodyLength", val)
+                      updateSettings("masteryReviewFrequency", val)
                     }
                   />
                 </div>
               )}
+
+              {/* Melody-specific: length display or slider */}
+              {settings.quizMode === ScalesQuizMode.Melody && (
+                <>
+                  {settings.masteryMode ? (
+                    <div>
+                      <h3 className="text-sm font-bold">
+                        Melody Length:{" "}
+                        {(() => {
+                          const store = loadMasteryStore(
+                            SCALES_MASTERY_STORAGE_KEY,
+                          );
+                          const key = settings.questionKeys[0];
+                          const keyData = key ? store.keys[key] : undefined;
+                          return keyData
+                            ? getUnlockedMelodyLength(
+                                keyData,
+                                settings.includedDegrees,
+                              )
+                            : 2;
+                        })()}{" "}
+                        notes (mastery)
+                      </h3>
+                      <ExpandableMasteryProgress settings={settings} />
+                    </div>
+                  ) : (
+                    <div>
+                      <h3 className="text-sm font-bold">
+                        Melody Length: {settings.melodyLength}
+                      </h3>
+                      <Slider
+                        min={2}
+                        max={8}
+                        defaultValue={[settings.melodyLength]}
+                        onValueChange={([val]) =>
+                          updateSettings("melodyLength", val)
+                        }
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Degree-specific: mastery progress */}
+              {settings.quizMode === ScalesQuizMode.Degree &&
+                settings.masteryMode && (
+                  <ExpandableDegreeMasteryProgress settings={settings} />
+                )}
 
               <div>
                 <h3 className="text-sm font-bold">
@@ -152,7 +264,10 @@ export default function ScalesQuizSettings() {
               <div>
                 <button
                   onClick={() =>
-                    updateSettings("pianoSoundEnabled", !settings.pianoSoundEnabled)
+                    updateSettings(
+                      "pianoSoundEnabled",
+                      !settings.pianoSoundEnabled,
+                    )
                   }
                   className={`rounded px-3 py-1 text-xs font-bold transition-colors ${
                     settings.pianoSoundEnabled
@@ -165,7 +280,10 @@ export default function ScalesQuizSettings() {
                 {settings.quizMode === ScalesQuizMode.Degree && (
                   <button
                     onClick={() =>
-                      updateSettings("playDegreeAudio", !settings.playDegreeAudio)
+                      updateSettings(
+                        "playDegreeAudio",
+                        !settings.playDegreeAudio,
+                      )
                     }
                     className={`ml-1 rounded px-3 py-1 text-xs font-bold transition-colors ${
                       settings.playDegreeAudio
@@ -202,21 +320,165 @@ export default function ScalesQuizSettings() {
         </div>
         <ScalesMidiSelector />
         <button
-          className="flex items-center justify-center hover:scale-110 active:scale-95 transition-transform"
+          className="flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
           style={{
             background: "none",
             border: "none",
             outline: "none",
             cursor: "pointer",
           }}
-          onClick={() =>
-            scalesQuizActor.send({ type: ScalesQuizEvent.START })
-          }
+          onClick={() => scalesQuizActor.send({ type: ScalesQuizEvent.START })}
         >
           <PlayIcon />
         </button>
         <ShapeSelector />
       </div>
+    </div>
+  );
+}
+
+function ExpandableMasteryProgress({
+  settings,
+}: {
+  settings: ScalesQuizSettingsType;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const key = settings.questionKeys[0];
+  if (!key) return null;
+
+  return (
+    <div className="mt-2">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="text-xs font-bold opacity-60 transition-opacity hover:opacity-100"
+      >
+        {expanded ? "Hide" : "View"} Learning Progress{" "}
+        {expanded ? "\u25B2" : "\u25BC"}
+      </button>
+      {expanded && (
+        <>
+          <div className="mt-2 rounded border border-[var(--middleground2)] p-3">
+            <MasteryProgressPanel
+              currentKey={key}
+              questionKeys={settings.questionKeys}
+              includedDegrees={settings.includedDegrees}
+              refreshKey={refreshKey}
+              onResetShape={(k) => {
+                const store = loadMasteryStore(SCALES_MASTERY_STORAGE_KEY);
+                delete store.keys[k];
+                saveMasteryStore(SCALES_MASTERY_STORAGE_KEY, store);
+                setRefreshKey((r) => r + 1);
+              }}
+            />
+          </div>
+          <div className="mt-2">
+            <ResetAllShapesButton
+              quizMode={settings.quizMode}
+              onReset={() => setRefreshKey((r) => r + 1)}
+            />
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+const resetBtnClass =
+  "rounded px-2 py-1 text-xs font-bold transition-colors bg-[#f4a0a0] text-[#5c1a1a] hover:bg-[#e88080]";
+const resetConfirmClass =
+  "rounded px-2 py-1 text-xs font-bold transition-colors bg-[#e06060] text-white hover:bg-[#d04040]";
+
+function ResetAllShapesButton({
+  quizMode,
+  onReset,
+}: {
+  quizMode: ScalesQuizMode;
+  onReset?: () => void;
+}) {
+  const [confirming, setConfirming] = useState(false);
+
+  const reset = () => {
+    if (quizMode === ScalesQuizMode.Melody) {
+      saveMasteryStore(SCALES_MASTERY_STORAGE_KEY, { version: 1, keys: {} });
+    } else {
+      saveDegreeMasteryStore(DEGREE_MASTERY_STORAGE_KEY, {
+        version: 1,
+        keys: {},
+      });
+    }
+    setConfirming(false);
+    onReset?.();
+  };
+
+  if (confirming) {
+    return (
+      <div className="flex gap-1">
+        <button onClick={reset} className={resetConfirmClass}>
+          Confirm reset all shapes?
+        </button>
+        <button
+          onClick={() => setConfirming(false)}
+          className="rounded px-2 py-1 text-xs font-bold opacity-60"
+        >
+          Cancel
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button onClick={() => setConfirming(true)} className={resetBtnClass}>
+      Reset Learning Progress for All Shapes
+    </button>
+  );
+}
+
+function ExpandableDegreeMasteryProgress({
+  settings,
+}: {
+  settings: ScalesQuizSettingsType;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const key = settings.questionKeys[0];
+  if (!key) return null;
+
+  return (
+    <div className="mt-2">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="text-xs font-bold opacity-60 transition-opacity hover:opacity-100"
+      >
+        {expanded ? "Hide" : "View"} Learning Progress{" "}
+        {expanded ? "\u25B2" : "\u25BC"}
+      </button>
+      {expanded && (
+        <>
+          <div className="mt-2 rounded border border-[var(--middleground2)] p-3">
+            <DegreeMasteryProgressPanel
+              currentKey={key}
+              questionKeys={settings.questionKeys}
+              includedDegrees={settings.includedDegrees}
+              refreshKey={refreshKey}
+              onResetShape={(k) => {
+                const store = loadDegreeMasteryStore(
+                  DEGREE_MASTERY_STORAGE_KEY,
+                );
+                delete store.keys[k];
+                saveDegreeMasteryStore(DEGREE_MASTERY_STORAGE_KEY, store);
+                setRefreshKey((r) => r + 1);
+              }}
+            />
+          </div>
+          <div className="mt-2">
+            <ResetAllShapesButton
+              quizMode={settings.quizMode}
+              onReset={() => setRefreshKey((r) => r + 1)}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 }
