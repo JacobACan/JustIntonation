@@ -55,10 +55,10 @@ export default function Home() {
           />
         </svg>
         <span className="text-sm font-bold text-[var(--middleground1)]">
-          Conceptualize Diatonic Shapes
+          Master Diatonic Shapes
         </span>
       </button>
-      <button
+      {/* <button
         className="flex flex-col items-center gap-3 transition-transform hover:scale-110 hover:cursor-pointer active:scale-95"
         onClick={() => (window.location.href = "/learn")}
         aria-label="Learn"
@@ -81,9 +81,9 @@ export default function Home() {
           />
         </svg>
         <span className="text-sm font-bold text-[var(--middleground1)]">
-Free Learn
-                  </span>
-      </button>
+          Free Learn
+        </span>
+      </button> */}
     </div>
   );
 

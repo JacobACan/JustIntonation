@@ -1,10 +1,27 @@
 import { Key } from "@/constants/keys";
+import {
+  SCALES_MASTERY_STORAGE_KEY,
+  DEGREE_MASTERY_STORAGE_KEY,
+} from "@/constants/masteryConfig";
 import { JIMIDINote, Note } from "@/constants/notes";
 import {
   defaultScalesQuizSettings,
+  ScalesQuizMode,
   ScalesQuizSettings,
 } from "@/constants/scalesQuizSettings";
 import { SkipReview } from "@/constants/settings";
+import {
+  loadMasteryStore,
+  recordResult,
+  recordSequenceResult,
+  saveMasteryStore,
+  loadDegreeMasteryStore,
+  recordDegreeResult,
+  saveDegreeMasteryStore,
+  createDegreeFinalTestQueue,
+  getCurrentMelodyMasteryLevel,
+  createMelodyFinalTestQueue,
+} from "@/lib/mastery";
 import { playScalesQuizQuestion } from "@/lib/scalesQuizActors";
 import {
   beginLearningPhaseAudio,
@@ -73,6 +90,12 @@ export interface ScalesQuestionContext {
   questionTime: number;
   numberOfReplays: number;
   isReplaying: boolean;
+  currentDegreePairs: [number, number][] | undefined;
+  currentSequenceKey: string | undefined;
+  finalTestActive: boolean;
+  finalTestQueue: string[]; // items remaining to test (degree semitones or pair keys)
+  finalTestProgress: number; // correct in current run
+  finalTestTotal: number; // total items in the test
 }
 
 const defaultQuestionContext: ScalesQuestionContext = {
@@ -90,6 +113,12 @@ const defaultQuestionContext: ScalesQuestionContext = {
   questionTime: 0,
   numberOfReplays: 0,
   isReplaying: false,
+  currentDegreePairs: undefined,
+  currentSequenceKey: undefined,
+  finalTestActive: false,
+  finalTestQueue: [],
+  finalTestProgress: 0,
+  finalTestTotal: 0,
 };
 
 export interface ScalesQuizContext {
@@ -136,12 +165,16 @@ export const scalesQuizMachine = setup({
         questionsCorrect: 0,
         currentKey:
           c.context.settings.questionKeys[
-            Math.floor(
-              Math.random() * c.context.settings.questionKeys.length,
-            )
+            Math.floor(Math.random() * c.context.settings.questionKeys.length)
           ],
         previousKey: undefined,
         questionTime: 0,
+        currentDegreePairs: undefined,
+        currentSequenceKey: undefined,
+        finalTestActive: false,
+        finalTestQueue: [],
+        finalTestProgress: 0,
+        finalTestTotal: 0,
       };
     },
     replayQuestion: (c) => {
@@ -154,6 +187,173 @@ export const scalesQuizMachine = setup({
     },
     correctGuess: (c) => {
       c.context.questionContext.questionsCorrect++;
+    },
+    recordMasteryCorrect: (c) => {
+      if (!c.context.settings.masteryMode) return;
+      if (c.context.questionContext.currentDegreePairs) {
+        // Melody mastery
+        let store = loadMasteryStore(SCALES_MASTERY_STORAGE_KEY);
+        store = recordResult(
+          store,
+          c.context.questionContext.currentKey,
+          c.context.questionContext.currentDegreePairs,
+          true,
+          c.context.settings.includedDegrees,
+        );
+
+        // Also record sequence for level 2+ tracking
+        const qc = c.context.questionContext;
+        if (qc.currentSequenceKey) {
+          const keyData = store.keys[qc.currentKey];
+          const level = keyData
+            ? getCurrentMelodyMasteryLevel(
+                keyData,
+                c.context.settings.includedDegrees,
+              )
+            : 2;
+          store = recordSequenceResult(
+            store,
+            qc.currentKey,
+            qc.currentSequenceKey,
+            level,
+            true,
+          );
+        }
+
+        // Melody final test progress
+        if (qc.finalTestActive && qc.finalTestQueue.length > 0) {
+          qc.finalTestQueue = qc.finalTestQueue.slice(1);
+          qc.finalTestProgress++;
+          if (qc.finalTestQueue.length === 0) {
+            // Final test complete — mark level as passed
+            const keyData = store.keys[qc.currentKey];
+            if (keyData) {
+              if (!keyData.melodyMasteryLevels)
+                keyData.melodyMasteryLevels = {};
+              const level = getCurrentMelodyMasteryLevel(
+                keyData,
+                c.context.settings.includedDegrees,
+              );
+              keyData.melodyMasteryLevels[level] = [
+                ...c.context.settings.includedDegrees,
+              ];
+              keyData.consecutiveReviewErrors = 0;
+            }
+            qc.finalTestActive = false;
+          }
+        }
+
+        saveMasteryStore(SCALES_MASTERY_STORAGE_KEY, store);
+      } else if (
+        c.context.settings.quizMode === ScalesQuizMode.Degree &&
+        c.context.questionContext.expectedDegree !== undefined
+      ) {
+        // Degree mastery
+        const store = loadDegreeMasteryStore(DEGREE_MASTERY_STORAGE_KEY);
+        const updated = recordDegreeResult(
+          store,
+          c.context.questionContext.currentKey,
+          c.context.questionContext.expectedDegree,
+          true,
+        );
+
+        // Final test progress
+        const qc = c.context.questionContext;
+        if (qc.finalTestActive && qc.finalTestQueue.length > 0) {
+          qc.finalTestQueue = qc.finalTestQueue.slice(1);
+          qc.finalTestProgress++;
+          // Check if final test is complete
+          if (qc.finalTestQueue.length === 0) {
+            const keyData = updated.keys[qc.currentKey] ?? {
+              degrees: {},
+              fullyMasteredWith: null,
+              consecutiveReviewErrors: 0,
+            };
+            keyData.fullyMasteredWith = [...c.context.settings.includedDegrees];
+            keyData.consecutiveReviewErrors = 0;
+            updated.keys[qc.currentKey] = keyData;
+            qc.finalTestActive = false;
+          }
+        }
+
+        saveDegreeMasteryStore(DEGREE_MASTERY_STORAGE_KEY, updated);
+      }
+    },
+    recordMasteryIncorrect: (c) => {
+      if (!c.context.settings.masteryMode) return;
+      if (c.context.questionContext.currentDegreePairs) {
+        // Melody mastery
+        let store = loadMasteryStore(SCALES_MASTERY_STORAGE_KEY);
+        store = recordResult(
+          store,
+          c.context.questionContext.currentKey,
+          c.context.questionContext.currentDegreePairs,
+          false,
+          c.context.settings.includedDegrees,
+        );
+
+        // Also record sequence for level 2+ tracking
+        const qc = c.context.questionContext;
+        if (qc.currentSequenceKey) {
+          const keyData = store.keys[qc.currentKey];
+          const level = keyData
+            ? getCurrentMelodyMasteryLevel(
+                keyData,
+                c.context.settings.includedDegrees,
+              )
+            : 2;
+          store = recordSequenceResult(
+            store,
+            qc.currentKey,
+            qc.currentSequenceKey,
+            level,
+            false,
+          );
+        }
+
+        // Melody final test: one wrong resets everything
+        if (qc.finalTestActive) {
+          const keyData = store.keys[qc.currentKey];
+          const level = keyData
+            ? getCurrentMelodyMasteryLevel(
+                keyData,
+                c.context.settings.includedDegrees,
+              )
+            : 1;
+          const testLength = level + 1;
+          qc.finalTestQueue = createMelodyFinalTestQueue(
+            c.context.settings.includedDegrees,
+            testLength,
+          );
+          qc.finalTestProgress = 0;
+          qc.finalTestTotal = qc.finalTestQueue.length;
+        }
+
+        saveMasteryStore(SCALES_MASTERY_STORAGE_KEY, store);
+      } else if (
+        c.context.settings.quizMode === ScalesQuizMode.Degree &&
+        c.context.questionContext.expectedDegree !== undefined
+      ) {
+        // Degree mastery
+        const store = loadDegreeMasteryStore(DEGREE_MASTERY_STORAGE_KEY);
+        const updated = recordDegreeResult(
+          store,
+          c.context.questionContext.currentKey,
+          c.context.questionContext.expectedDegree,
+          false,
+        );
+
+        // Final test: one wrong resets everything
+        const qc = c.context.questionContext;
+        if (qc.finalTestActive) {
+          qc.finalTestQueue = createDegreeFinalTestQueue(
+            c.context.settings.includedDegrees,
+          );
+          qc.finalTestProgress = 0;
+        }
+
+        saveDegreeMasteryStore(DEGREE_MASTERY_STORAGE_KEY, updated);
+      }
     },
   },
   delays: {
@@ -243,7 +443,7 @@ export const scalesQuizMachine = setup({
                 stmch.context.settings.skipReviewOn === SkipReview.Correct) &&
               stmch.context.questionContext.questionNumber <
                 stmch.context.settings.numberOfQuestions - 1,
-            actions: "correctGuess",
+            actions: ["correctGuess", "recordMasteryCorrect"],
           },
           {
             target: ScalesQuizState.VIEWING_RESULTS,
@@ -252,12 +452,13 @@ export const scalesQuizMachine = setup({
                 stmch.context.settings.skipReviewOn === SkipReview.Correct) &&
               stmch.context.questionContext.questionNumber >=
                 stmch.context.settings.numberOfQuestions - 1,
-            actions: "correctGuess",
+            actions: ["correctGuess", "recordMasteryCorrect"],
           },
           {
             target: ScalesQuizState.REVIEWING,
             guard: (stmch) =>
               stmch.context.settings.skipReviewOn === SkipReview.None,
+            actions: ["correctGuess", "recordMasteryCorrect"],
           },
         ],
         [ScalesQuizEvent.INCORRECT_GUESS]: [
@@ -266,13 +467,16 @@ export const scalesQuizMachine = setup({
             guard: (stmch) =>
               stmch.context.settings.skipReviewOn === SkipReview.None ||
               stmch.context.settings.skipReviewOn === SkipReview.Correct,
-            actions: assign({
-              questionContext: ({ context, event }) => ({
-                ...context.questionContext,
-                melodyWrongIndex: (event as IncorrectGuessEvent).wrongIndex,
-                melodyWrongNote: (event as IncorrectGuessEvent).wrongNote,
+            actions: [
+              "recordMasteryIncorrect",
+              assign({
+                questionContext: ({ context, event }) => ({
+                  ...context.questionContext,
+                  melodyWrongIndex: (event as IncorrectGuessEvent).wrongIndex,
+                  melodyWrongNote: (event as IncorrectGuessEvent).wrongNote,
+                }),
               }),
-            }),
+            ],
           },
           {
             target: ScalesQuizState.PLAYING_QUESTION,
@@ -280,6 +484,7 @@ export const scalesQuizMachine = setup({
               stmch.context.settings.skipReviewOn === SkipReview.Both &&
               stmch.context.questionContext.questionNumber <
                 stmch.context.settings.numberOfQuestions - 1,
+            actions: "recordMasteryIncorrect",
           },
           {
             target: ScalesQuizState.VIEWING_RESULTS,
@@ -287,6 +492,7 @@ export const scalesQuizMachine = setup({
               stmch.context.settings.skipReviewOn === SkipReview.Both &&
               stmch.context.questionContext.questionNumber >=
                 stmch.context.settings.numberOfQuestions - 1,
+            actions: "recordMasteryIncorrect",
           },
         ],
         [ScalesQuizEvent.CHANGE_SETTINGS]: {
