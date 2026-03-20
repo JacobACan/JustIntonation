@@ -6,15 +6,22 @@ import { DEGREE_OPTIONS } from "@/constants/scalesQuizSettings";
 import {
   DegreePairRecord,
   SCALES_MASTERY_STORAGE_KEY,
-  PAIRS_TO_UNLOCK_NEXT_LENGTH,
+  SequenceRecord,
 } from "@/constants/masteryConfig";
 import {
   loadMasteryStore,
   isPairMastered,
+  isSequenceMastered,
+  isLevelCompleteForDegrees,
   getActivePairs,
   getMasteredPairs,
   generatePairOrder,
   getUnlockedMelodyLength,
+  getCurrentMelodyMasteryLevel,
+  allPairsIndividuallyMastered,
+  getActiveSequences,
+  getMasteredSequences,
+  getAllSequencesForLevel,
 } from "@/lib/mastery";
 import ArrowLeftIcon from "@/components/icon/arrowLeft";
 import ArrowRightIcon from "@/components/icon/arrowRight";
@@ -42,15 +49,21 @@ const degreeLabel = (semitone: number): string =>
 const pairLabel = (from: number, to: number): string =>
   `${degreeLabel(from)}\u2192${degreeLabel(to)}`;
 
-const accuracy = (record: DegreePairRecord): number => {
+const accuracy = (record: { rollingWindow: boolean[] }): number => {
   if (record.rollingWindow.length === 0) return 0;
   return (
     record.rollingWindow.filter(Boolean).length / record.rollingWindow.length
   );
 };
 
-const accuracyPercent = (record: DegreePairRecord): string =>
+const accuracyPercent = (record: { rollingWindow: boolean[] }): string =>
   `${Math.round(accuracy(record) * 100)}%`;
+
+const sequenceLabel = (seq: string): string =>
+  seq
+    .split(",")
+    .map((s) => degreeLabel(Number(s)))
+    .join("\u2192");
 
 interface MasteryProgressPanelProps {
   currentKey: Key;
@@ -102,11 +115,33 @@ export default function MasteryProgressPanel({
   const masteredCount = masteredPairs.length;
   const totalPairs = allPairsOrder.length;
   const melodyLength = getUnlockedMelodyLength(keyData, includedDegrees);
+  const currentLevel = getCurrentMelodyMasteryLevel(keyData, includedDegrees);
+  const allPairsMastered = allPairsIndividuallyMastered(
+    keyData,
+    includedDegrees,
+  );
+  const levels = keyData.melodyMasteryLevels ?? {};
+  const completedLevelsForCurrentDegrees = Object.keys(levels)
+    .map(Number)
+    .filter((l) => isLevelCompleteForDegrees(keyData, l, includedDegrees));
 
-  const threshold = Math.min(PAIRS_TO_UNLOCK_NEXT_LENGTH, totalPairs);
-  const pairsInCurrentTier = threshold > 0 ? masteredCount % threshold : 0;
-  const pairsUntilNextLength =
-    threshold > 0 ? threshold - pairsInCurrentTier : 0;
+  // Level 2+ sequence data
+  const isLevel2Plus = currentLevel >= 2;
+  const allSeqsAtLevel = isLevel2Plus
+    ? getAllSequencesForLevel(includedDegrees, currentLevel)
+    : [];
+  const activeSeqs = isLevel2Plus
+    ? getActiveSequences(keyData, includedDegrees, currentLevel)
+    : [];
+  const masteredSeqs = isLevel2Plus
+    ? getMasteredSequences(keyData, includedDegrees, currentLevel)
+    : [];
+  const activeSeqSet = new Set(activeSeqs);
+  const masteredSeqSet = new Set(masteredSeqs);
+  const upcomingSeqs = allSeqsAtLevel
+    .filter((s) => !activeSeqSet.has(s) && !masteredSeqSet.has(s))
+    .slice(0, 5);
+  const levelData = keyData.levelSequences?.[currentLevel] ?? {};
 
   const goLeft = () =>
     setViewIndex((i) => (i - 1 + questionKeys.length) % questionKeys.length);
@@ -159,139 +194,211 @@ export default function MasteryProgressPanel({
         )}
       </div>
 
-      {/* Overall progress */}
+      {/* Overall progress — shows current level's items */}
       <div>
         <div className="mb-1 flex items-center gap-2">
           <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--middleground2)]">
             <div
               className="h-full rounded-full bg-[#4ade80] transition-all"
               style={{
-                width: `${totalPairs > 0 ? (masteredCount / totalPairs) * 100 : 0}%`,
+                width: `${
+                  isLevel2Plus
+                    ? allSeqsAtLevel.length > 0
+                      ? (masteredSeqs.length / allSeqsAtLevel.length) * 100
+                      : 0
+                    : totalPairs > 0
+                      ? (masteredCount / totalPairs) * 100
+                      : 0
+                }%`,
               }}
             />
           </div>
           <span className="font-bold">
-            {masteredCount}/{totalPairs}
+            {isLevel2Plus
+              ? `${masteredSeqs.length}/${allSeqsAtLevel.length}`
+              : `${masteredCount}/${totalPairs}`}
           </span>
         </div>
+        <p className="opacity-60">
+          {isLevel2Plus ? `${melodyLength}-note sequences` : "2-note pairs"}
+        </p>
       </div>
 
-      {/* Melody length status */}
+      {/* Melody length & level status */}
       <div>
         <h4 className="mb-1 text-sm font-bold">
-          Melody Length: {melodyLength} notes
+          Level {currentLevel} — {melodyLength}-note melodies
         </h4>
-        {pairsUntilNextLength > 0 && masteredCount < totalPairs && (
-          <div>
-            <div className="mb-1 flex items-center gap-2">
-              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--middleground2)]">
-                <div
-                  className="h-full rounded-full bg-[#60a5fa] transition-all"
-                  style={{
-                    width: `${(pairsInCurrentTier / threshold) * 100}%`,
-                  }}
-                />
-              </div>
-              <span className="opacity-60">
-                {pairsInCurrentTier}/{threshold}
+        {/* Show completed levels (valid for current degrees) */}
+        {completedLevelsForCurrentDegrees.length > 0 && (
+          <div className="mt-1 flex flex-wrap gap-1">
+            {completedLevelsForCurrentDegrees.map((l) => (
+              <span
+                key={l}
+                className="rounded bg-[#4ade80]/20 px-1.5 py-0.5 text-[0.6rem] text-[#4ade80]"
+              >
+                Level {l} passed
               </span>
-            </div>
-            <p className="opacity-60">
-              {pairsUntilNextLength} more mastered to unlock {melodyLength + 1}
-              -note melodies
-            </p>
+            ))}
           </div>
         )}
       </div>
 
-      {/* Currently practicing */}
-      {activePairs.length > 0 && (
-        <div>
-          <h4 className="mb-2 text-sm font-bold">Practicing</h4>
-          <div className="space-y-2">
-            {activePairs.map(([f, t]) => {
-              const k = `${f}->${t}`;
-              const record = keyData.pairs[k];
-              const attempts = record?.rollingWindow.length ?? 0;
-
-              return (
-                <div key={k}>
-                  <div className="mb-0.5 flex items-center justify-between">
-                    <span className="font-bold">{pairLabel(f, t)}</span>
-                    <span className="opacity-60">
-                      {record ? accuracyPercent(record) : "0%"}
-                      {attempts > 0 && ` (${attempts} recent)`}
-                    </span>
+      {/* Currently practicing — switches between pairs (level 1) and sequences (level 2+) */}
+      {isLevel2Plus ? (
+        <>
+          {activeSeqs.length > 0 && (
+            <div>
+              <h4 className="mb-2 text-sm font-bold">Practicing</h4>
+              <div className="space-y-2">
+                {activeSeqs.map((seq) => {
+                  const record = levelData[seq];
+                  const attempts = record?.rollingWindow.length ?? 0;
+                  return (
+                    <div key={seq}>
+                      <div className="mb-0.5 flex items-center justify-between">
+                        <span className="font-bold">{sequenceLabel(seq)}</span>
+                        <span className="opacity-60">
+                          {record ? accuracyPercent(record) : "0%"}
+                        </span>
+                      </div>
+                      <div className="flex gap-px">
+                        {record?.rollingWindow.map((correct, i) => (
+                          <div
+                            key={i}
+                            className={`h-1.5 flex-1 rounded-sm ${correct ? "bg-[#4ade80]" : "bg-[#f87171]"}`}
+                          />
+                        )) ?? null}
+                        {Array.from({ length: Math.max(0, 10 - attempts) }).map(
+                          (_, i) => (
+                            <div
+                              key={`empty-${i}`}
+                              className="h-1.5 flex-1 rounded-sm bg-[var(--middleground2)]"
+                            />
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
+        activePairs.length > 0 && (
+          <div>
+            <h4 className="mb-2 text-sm font-bold">Practicing</h4>
+            <div className="space-y-2">
+              {activePairs.map(([f, t]) => {
+                const k = `${f}->${t}`;
+                const record = keyData.pairs[k];
+                const attempts = record?.rollingWindow.length ?? 0;
+                return (
+                  <div key={k}>
+                    <div className="mb-0.5 flex items-center justify-between">
+                      <span className="font-bold">{pairLabel(f, t)}</span>
+                      <span className="opacity-60">
+                        {record ? accuracyPercent(record) : "0%"}
+                        {attempts > 0 && ` (${attempts} recent)`}
+                      </span>
+                    </div>
+                    <div className="flex gap-px">
+                      {record?.rollingWindow.map((correct, i) => (
+                        <div
+                          key={i}
+                          className={`h-1.5 flex-1 rounded-sm ${correct ? "bg-[#4ade80]" : "bg-[#f87171]"}`}
+                        />
+                      )) ?? null}
+                      {Array.from({ length: Math.max(0, 10 - attempts) }).map(
+                        (_, i) => (
+                          <div
+                            key={`empty-${i}`}
+                            className="h-1.5 flex-1 rounded-sm bg-[var(--middleground2)]"
+                          />
+                        ),
+                      )}
+                    </div>
                   </div>
-                  <div className="flex gap-px">
-                    {record?.rollingWindow.map((correct, i) => (
-                      <div
-                        key={i}
-                        className={`h-1.5 flex-1 rounded-sm ${correct ? "bg-[#4ade80]" : "bg-[#f87171]"}`}
-                      />
-                    )) ?? null}
-                    {Array.from({
-                      length: Math.max(0, 10 - attempts),
-                    }).map((_, i) => (
-                      <div
-                        key={`empty-${i}`}
-                        className="h-1.5 flex-1 rounded-sm bg-[var(--middleground2)]"
-                      />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )
       )}
 
       {/* Mastered */}
-      {masteredPairs.length > 0 && (
+      {(isLevel2Plus ? masteredSeqs.length > 0 : masteredPairs.length > 0) && (
         <div>
           <h4 className="mb-1 text-sm font-bold">Mastered</h4>
           <div className="flex flex-wrap gap-1">
-            {masteredPairs.map(([f, t]) => {
-              const k = `${f}->${t}`;
-              const record = keyData.pairs[k];
-              return (
-                <span
-                  key={k}
-                  className="rounded bg-[#4ade80]/20 px-1.5 py-0.5 text-[#4ade80]"
-                  title={record ? `${accuracyPercent(record)} accuracy` : ""}
-                >
-                  {pairLabel(f, t)}
-                </span>
-              );
-            })}
+            {isLevel2Plus
+              ? masteredSeqs.map((seq) => (
+                  <span
+                    key={seq}
+                    className="rounded bg-[#4ade80]/20 px-1.5 py-0.5 text-[#4ade80]"
+                  >
+                    {sequenceLabel(seq)}
+                  </span>
+                ))
+              : masteredPairs.map(([f, t]) => {
+                  const k = `${f}->${t}`;
+                  const record = keyData.pairs[k];
+                  return (
+                    <span
+                      key={k}
+                      className="rounded bg-[#4ade80]/20 px-1.5 py-0.5 text-[#4ade80]"
+                      title={
+                        record ? `${accuracyPercent(record)} accuracy` : ""
+                      }
+                    >
+                      {pairLabel(f, t)}
+                    </span>
+                  );
+                })}
           </div>
         </div>
       )}
 
       {/* Up next */}
-      {upcoming.length > 0 && (
+      {(isLevel2Plus ? upcomingSeqs.length > 0 : upcoming.length > 0) && (
         <div>
           <h4 className="mb-1 text-sm font-bold">Up Next</h4>
           <div className="flex flex-wrap gap-1">
-            {upcoming.map(([f, t]) => (
-              <span
-                key={`${f}->${t}`}
-                className="rounded bg-[var(--middleground2)] px-1.5 py-0.5 text-[var(--middleground1)]"
-              >
-                {pairLabel(f, t)}
-              </span>
-            ))}
-            {upcoming.length <
-              totalPairs - masteredCount - activePairs.length && (
-              <span className="px-1.5 py-0.5 opacity-40">
-                +
-                {totalPairs -
-                  masteredCount -
-                  activePairs.length -
-                  upcoming.length}{" "}
-                more
-              </span>
-            )}
+            {isLevel2Plus
+              ? upcomingSeqs.map((seq) => (
+                  <span
+                    key={seq}
+                    className="rounded bg-[var(--middleground2)] px-1.5 py-0.5 text-[var(--middleground1)]"
+                  >
+                    {sequenceLabel(seq)}
+                  </span>
+                ))
+              : upcoming.map(([f, t]) => (
+                  <span
+                    key={`${f}->${t}`}
+                    className="rounded bg-[var(--middleground2)] px-1.5 py-0.5 text-[var(--middleground1)]"
+                  >
+                    {pairLabel(f, t)}
+                  </span>
+                ))}
+            {(() => {
+              const totalRemaining = isLevel2Plus
+                ? allSeqsAtLevel.length -
+                  masteredSeqs.length -
+                  activeSeqs.length
+                : totalPairs - masteredCount - activePairs.length;
+              const shownCount = isLevel2Plus
+                ? upcomingSeqs.length
+                : upcoming.length;
+              return (
+                shownCount < totalRemaining && (
+                  <span className="px-1.5 py-0.5 opacity-40">
+                    +{totalRemaining - shownCount} more
+                  </span>
+                )
+              );
+            })()}
           </div>
         </div>
       )}

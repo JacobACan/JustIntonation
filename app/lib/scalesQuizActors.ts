@@ -25,17 +25,18 @@ import {
 } from "@/constants/masteryConfig";
 import {
   getNextMasteryMelody,
+  getNextMasteryMelodyFromDegrees,
   loadMasteryStore,
   loadDegreeMasteryStore,
   getActiveDegrees,
   getMasteredDegrees,
   getMasteredPairs,
+  getActiveSequences,
   shouldStartDegreeFinalTest,
   createDegreeFinalTestQueue,
   shouldStartMelodyFinalTest,
   createMelodyFinalTestQueue,
   getCurrentMelodyMasteryLevel,
-  recordMelodyReviewResult,
 } from "./mastery";
 
 /**
@@ -194,33 +195,109 @@ export const playScalesQuizQuestion = async (input: ScalesQuizContext) => {
     if (input.settings.masteryMode) {
       // Mastery mode: generate degree-constrained melodies
       const store = loadMasteryStore(SCALES_MASTERY_STORAGE_KEY);
+      const included = input.settings.includedDegrees;
+      const keyMasteryData = store.keys[newKey] ?? {
+        pairs: {},
+        unlockedMelodyLength: 2,
+        melodyMasteryLevels: {},
+        consecutiveReviewErrors: 0,
+      };
 
-      // Check if this question should review mastered pairs
-      const freq = input.settings.masteryReviewFrequency;
-      const qNum = input.questionContext.questionNumber;
-      const keyMasteryData = store.keys[newKey];
-      const masteredMelodyPairs = keyMasteryData
-        ? getMasteredPairs(keyMasteryData, input.settings.includedDegrees)
-        : [];
-      const isReviewQuestion =
-        freq > 0 &&
-        masteredMelodyPairs.length > 0 &&
-        qNum > 0 &&
-        qNum % freq === 0;
-
-      const result = getNextMasteryMelody(
-        newKey,
-        input.settings.includedDegrees,
-        input.settings.startingDegree,
-        input.settings.octaves,
-        store,
-        input.settings.melodyIntervalMin,
-        input.settings.melodyIntervalMax,
-        isReviewQuestion,
+      // Check if melody final test should start
+      const currentLevel = getCurrentMelodyMasteryLevel(
+        keyMasteryData,
+        included,
       );
+      if (
+        shouldStartMelodyFinalTest(keyMasteryData, included, currentLevel) &&
+        !input.questionContext.finalTestActive
+      ) {
+        // Level N final test uses melody length N+1 permutations
+        const testLength = currentLevel + 1;
+        input.questionContext.finalTestActive = true;
+        input.questionContext.finalTestQueue = createMelodyFinalTestQueue(
+          included,
+          testLength,
+        );
+        input.questionContext.finalTestProgress = 0;
+        input.questionContext.finalTestTotal =
+          input.questionContext.finalTestQueue.length;
+      }
+
+      let result;
+
+      if (
+        input.questionContext.finalTestActive &&
+        input.questionContext.finalTestQueue.length > 0
+      ) {
+        // Final test: generate melody from the next item in the queue
+        const nextItem = input.questionContext.finalTestQueue[0];
+        const degrees = nextItem.split(",").map(Number);
+        // Build the melody from the specific degree sequence
+        result = getNextMasteryMelodyFromDegrees(
+          newKey,
+          degrees,
+          input.settings.startingDegree,
+          input.settings.octaves,
+          input.settings.melodyIntervalMin,
+          input.settings.melodyIntervalMax,
+        );
+      } else if (currentLevel >= 2) {
+        // Level 2+: pick from active sequences at this level
+        const activeSeqs = getActiveSequences(
+          keyMasteryData,
+          included,
+          currentLevel,
+        );
+        if (activeSeqs.length > 0) {
+          const seq = activeSeqs[Math.floor(Math.random() * activeSeqs.length)];
+          const degrees = seq.split(",").map(Number);
+          result = getNextMasteryMelodyFromDegrees(
+            newKey,
+            degrees,
+            input.settings.startingDegree,
+            input.settings.octaves,
+            input.settings.melodyIntervalMin,
+            input.settings.melodyIntervalMax,
+          );
+        } else {
+          // Fallback to normal generation
+          result = getNextMasteryMelody(
+            newKey,
+            included,
+            input.settings.startingDegree,
+            input.settings.octaves,
+            store,
+            input.settings.melodyIntervalMin,
+            input.settings.melodyIntervalMax,
+          );
+        }
+      } else {
+        // Level 1: normal pair mastery flow
+        const freq = input.settings.masteryReviewFrequency;
+        const qNum = input.questionContext.questionNumber;
+        const masteredMelodyPairs = getMasteredPairs(keyMasteryData, included);
+        const isReviewQuestion =
+          freq > 0 &&
+          masteredMelodyPairs.length > 0 &&
+          qNum > 0 &&
+          qNum % freq === 0;
+
+        result = getNextMasteryMelody(
+          newKey,
+          included,
+          input.settings.startingDegree,
+          input.settings.octaves,
+          store,
+          input.settings.melodyIntervalMin,
+          input.settings.melodyIntervalMax,
+          isReviewQuestion,
+        );
+      }
 
       input.questionContext.currentMelody = result.melody;
       input.questionContext.currentDegreePairs = result.degreePairs;
+      input.questionContext.currentSequenceKey = result.sequenceKey;
       input.questionContext.expectedDegree = undefined;
       input.questionContext.expectedAnswer = midiToNote[result.melody[0].note];
       input.questionContext.questionTime =

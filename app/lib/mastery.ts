@@ -12,8 +12,10 @@ import {
   MASTERY_WINDOW_SIZE,
   MAX_ACTIVE_DEGREES,
   MAX_ACTIVE_PAIRS,
+  MAX_ACTIVE_SEQUENCES,
   MIN_ATTEMPTS_FOR_MASTERY,
   PAIRS_TO_UNLOCK_NEXT_LENGTH,
+  SequenceRecord,
 } from "@/constants/masteryConfig";
 import { keyToMidi, midiNotesValues, noteToMidi } from "@/constants/midi";
 import { Duration, JIMIDINote, midiToNote } from "@/constants/notes";
@@ -80,12 +82,19 @@ const getOrCreateKeyMastery = (
   if (!store.keys[key]) {
     store.keys[key] = {
       pairs: {},
+      levelSequences: {},
       unlockedMelodyLength: 2,
       melodyMasteryLevels: {},
       consecutiveReviewErrors: 0,
     };
   }
-  return store.keys[key];
+  // Backfill fields that may be missing from old localStorage data
+  const data = store.keys[key];
+  if (!data.melodyMasteryLevels) data.melodyMasteryLevels = {};
+  if (!data.levelSequences) data.levelSequences = {};
+  if (data.consecutiveReviewErrors === undefined)
+    data.consecutiveReviewErrors = 0;
+  return data;
 };
 
 const getOrCreatePairRecord = (
@@ -200,21 +209,36 @@ export const recordResult = (
 };
 
 /**
- * Compute the unlocked melody length based on how many pairs are mastered.
- * Requires includedDegrees to know the total possible pairs.
+ * Compute the unlocked melody length based on completed mastery levels.
+ * Length N+1 only unlocks after the level N final test is passed.
+ * Level 1 = length 2 (pairs), Level 2 = length 3 (triples), etc.
  */
+/**
+ * Check if a melody mastery level is complete for the current included degrees.
+ * A level is only valid if every currently-included degree was part of the set when it was passed.
+ */
+export const isLevelCompleteForDegrees = (
+  keyMastery: KeyMasteryData,
+  level: number,
+  includedDegrees: number[],
+): boolean => {
+  const levels = keyMastery.melodyMasteryLevels ?? {};
+  const passedWith = levels[level];
+  if (!passedWith || !Array.isArray(passedWith)) return false;
+  const passedSet = new Set(passedWith);
+  return includedDegrees.every((d) => passedSet.has(d));
+};
+
 export const getUnlockedMelodyLength = (
   keyMastery: KeyMasteryData,
   includedDegrees: number[],
 ): number => {
-  const mastered = getMasteredPairs(keyMastery, includedDegrees);
-  const masteredCount = mastered.length;
-  const totalPossible = generatePairOrder(includedDegrees).length;
-  const threshold = Math.min(PAIRS_TO_UNLOCK_NEXT_LENGTH, totalPossible);
-
-  if (threshold === 0) return 2;
-  const extraLengths = Math.floor(masteredCount / threshold);
-  return 2 + extraLengths;
+  let length = 2; // always start at 2
+  // Each completed level unlocks the next length, but only if valid for current degrees
+  while (isLevelCompleteForDegrees(keyMastery, length - 1, includedDegrees)) {
+    length++;
+  }
+  return length;
 };
 
 // --- Melody generation ---
@@ -270,6 +294,73 @@ const randomDuration = (): number =>
   [Duration.QuarterNote, Duration.EigthNote, Duration.SixteenthNote][
     Math.floor(Math.random() * 3)
   ];
+
+/**
+ * Generate a melody from a specific sequence of degree semitone offsets.
+ * Used for final test where the exact degree sequence is predetermined.
+ */
+export const getNextMasteryMelodyFromDegrees = (
+  key: Key,
+  degrees: number[],
+  startingDegree: number,
+  octaves: 1 | 2,
+  minInterval: number,
+  maxInterval: number,
+): MasteryMelodyResult => {
+  const [rangeStart, rangeEnd] = getScaleDisplayRange(
+    key,
+    Scale.major,
+    startingDegree,
+    octaves,
+  );
+  const rangeMin = noteToMidi[rangeStart];
+  const rangeMax = noteToMidi[rangeEnd];
+
+  const melody: JIMIDINote[] = [];
+  const degreePairs: [number, number][] = [];
+  let lastMidi: number | undefined;
+
+  for (let i = 0; i < degrees.length; i++) {
+    const midi = pickNoteForDegree(
+      key,
+      degrees[i],
+      rangeMin,
+      rangeMax,
+      lastMidi,
+      minInterval,
+      maxInterval,
+    );
+
+    if (midi === undefined) {
+      // Fallback: pick without interval constraints
+      const notes = getNotesForDegree(key, degrees[i], rangeMin, rangeMax);
+      if (notes.length === 0) break;
+      const fallback = notes[Math.floor(Math.random() * notes.length)];
+      melody.push({
+        secondsSinceLastNote: i === 0 ? 0 : randomDuration(),
+        note: fallback,
+        channel: 1,
+        on: true,
+        velocity: 1,
+      });
+      if (i > 0) degreePairs.push([degrees[i - 1], degrees[i]]);
+      lastMidi = fallback;
+    } else {
+      melody.push({
+        secondsSinceLastNote: i === 0 ? 0 : randomDuration(),
+        note: midi,
+        channel: 1,
+        on: true,
+        velocity: 1,
+      });
+      if (i > 0) degreePairs.push([degrees[i - 1], degrees[i]]);
+      lastMidi = midi;
+    }
+  }
+
+  const sequenceKey = degrees.length > 2 ? degrees.join(",") : undefined;
+  return { melody, degreePairs, sequenceKey };
+};
 
 export const getNextMasteryMelody = (
   key: Key,
@@ -470,7 +561,150 @@ export const getNextMasteryMelody = (
     }
   }
 
-  return { melody, degreePairs };
+  // Compute sequence key from the degree pairs
+  const sequenceDegrees: number[] = [];
+  if (degreePairs.length > 0) {
+    sequenceDegrees.push(degreePairs[0][0]);
+    for (const [, to] of degreePairs) {
+      sequenceDegrees.push(to);
+    }
+  }
+  const sequenceKey =
+    sequenceDegrees.length > 2 ? sequenceDegrees.join(",") : undefined;
+
+  return { melody, degreePairs, sequenceKey };
+};
+
+// =============================================
+// SEQUENCE MASTERY (level 2+ melody tracking)
+// =============================================
+
+export const isSequenceMastered = (record: SequenceRecord): boolean =>
+  record.rollingWindow.length >= MIN_ATTEMPTS_FOR_MASTERY &&
+  record.rollingWindow.filter(Boolean).length / record.rollingWindow.length >=
+    MASTERY_THRESHOLD;
+
+/**
+ * Get all possible sequences for a given level (melody length).
+ * Level 2 = length 3 sequences, level 3 = length 4, etc.
+ */
+export const getAllSequencesForLevel = (
+  includedDegrees: number[],
+  level: number,
+): string[] => {
+  const melodyLength = level + 1;
+  const sequences: string[] = [];
+  const generate = (current: number[]) => {
+    if (current.length === melodyLength) {
+      sequences.push(current.join(","));
+      return;
+    }
+    for (const d of includedDegrees) {
+      if (current.length === 0 || d !== current[current.length - 1]) {
+        generate([...current, d]);
+      }
+    }
+  };
+  generate([]);
+  return sequences;
+};
+
+export const getActiveSequences = (
+  keyMastery: KeyMasteryData,
+  includedDegrees: number[],
+  level: number,
+): string[] => {
+  const levelData = keyMastery.levelSequences[level] ?? {};
+  const allSeqs = getAllSequencesForLevel(includedDegrees, level);
+  const allSet = new Set(allSeqs);
+
+  // In-progress: started but not mastered
+  const inProgress: string[] = [];
+  for (const [key, record] of Object.entries(levelData)) {
+    if (record.attempts > 0 && !isSequenceMastered(record) && allSet.has(key)) {
+      inProgress.push(key);
+    }
+  }
+
+  const active = inProgress.slice(0, MAX_ACTIVE_SEQUENCES);
+
+  if (active.length < MAX_ACTIVE_SEQUENCES) {
+    const activeSet = new Set(active);
+    const masteredSet = new Set(
+      Object.entries(levelData)
+        .filter(([k, r]) => isSequenceMastered(r) && allSet.has(k))
+        .map(([k]) => k),
+    );
+
+    // Fill with random unstarted sequences
+    const unstarted = allSeqs.filter(
+      (s) => !activeSet.has(s) && !masteredSet.has(s) && !levelData[s],
+    );
+    for (let i = unstarted.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [unstarted[i], unstarted[j]] = [unstarted[j], unstarted[i]];
+    }
+    for (const s of unstarted) {
+      if (active.length >= MAX_ACTIVE_SEQUENCES) break;
+      active.push(s);
+    }
+  }
+
+  return active;
+};
+
+export const getMasteredSequences = (
+  keyMastery: KeyMasteryData,
+  includedDegrees: number[],
+  level: number,
+): string[] => {
+  const levelData = keyMastery.levelSequences[level] ?? {};
+  const allSet = new Set(getAllSequencesForLevel(includedDegrees, level));
+  return Object.entries(levelData)
+    .filter(([k, r]) => isSequenceMastered(r) && allSet.has(k))
+    .map(([k]) => k);
+};
+
+export const allSequencesMasteredAtLevel = (
+  keyMastery: KeyMasteryData,
+  includedDegrees: number[],
+  level: number,
+): boolean => {
+  const allSeqs = getAllSequencesForLevel(includedDegrees, level);
+  const mastered = getMasteredSequences(keyMastery, includedDegrees, level);
+  return mastered.length >= allSeqs.length && allSeqs.length > 0;
+};
+
+export const recordSequenceResult = (
+  store: MasteryStore,
+  key: Key,
+  sequenceKey: string,
+  level: number,
+  correct: boolean,
+): MasteryStore => {
+  const updated = { ...store, keys: { ...store.keys } };
+  const keyMastery = getOrCreateKeyMastery(updated, key);
+
+  if (!keyMastery.levelSequences[level]) {
+    keyMastery.levelSequences[level] = {};
+  }
+  const levelData = keyMastery.levelSequences[level];
+
+  if (!levelData[sequenceKey]) {
+    levelData[sequenceKey] = {
+      sequence: sequenceKey,
+      attempts: 0,
+      rollingWindow: [],
+    };
+  }
+  const record = levelData[sequenceKey];
+  record.attempts++;
+  record.rollingWindow.push(correct);
+  if (record.rollingWindow.length > MASTERY_WINDOW_SIZE) {
+    record.rollingWindow.shift();
+  }
+
+  return updated;
 };
 
 // =============================================
@@ -527,7 +761,12 @@ const getOrCreateKeyDegreeMastery = (
       consecutiveReviewErrors: 0,
     };
   }
-  return store.keys[key];
+  // Backfill fields that may be missing from old localStorage data
+  const data = store.keys[key];
+  if (data.fullyMasteredWith === undefined) data.fullyMasteredWith = null;
+  if (data.consecutiveReviewErrors === undefined)
+    data.consecutiveReviewErrors = 0;
+  return data;
 };
 
 const getOrCreateDegreeRecord = (
@@ -701,9 +940,14 @@ export const shouldStartMelodyFinalTest = (
   includedDegrees: number[],
   level: number,
 ): boolean => {
-  const levels = keyMastery.melodyMasteryLevels ?? {};
-  if (levels[level]) return false; // already completed this level
-  return allPairsIndividuallyMastered(keyMastery, includedDegrees);
+  if (isLevelCompleteForDegrees(keyMastery, level, includedDegrees))
+    return false; // already completed for current degrees
+
+  if (level === 1) {
+    return allPairsIndividuallyMastered(keyMastery, includedDegrees);
+  } else {
+    return allSequencesMasteredAtLevel(keyMastery, includedDegrees, level);
+  }
 };
 
 /**
@@ -738,10 +982,17 @@ export const createMelodyFinalTestQueue = (
  */
 export const getCurrentMelodyMasteryLevel = (
   keyMastery: KeyMasteryData,
+  includedDegrees?: number[],
 ): number => {
-  const levels = keyMastery.melodyMasteryLevels ?? {};
   let level = 1;
-  while (levels[level]) level++;
+  if (includedDegrees) {
+    while (isLevelCompleteForDegrees(keyMastery, level, includedDegrees))
+      level++;
+  } else {
+    // Fallback: check any truthy value (backwards compat)
+    const levels = keyMastery.melodyMasteryLevels ?? {};
+    while (levels[level]) level++;
+  }
   return level;
 };
 
@@ -753,7 +1004,7 @@ export const recordMelodyReviewResult = (
   correct: boolean,
 ): void => {
   const hasAnyLevel = Object.values(keyMastery.melodyMasteryLevels ?? {}).some(
-    Boolean,
+    (v) => v !== null && v !== undefined,
   );
   if (!hasAnyLevel) return;
 
@@ -767,10 +1018,10 @@ export const recordMelodyReviewResult = (
       const levels = keyMastery.melodyMasteryLevels ?? {};
       const completedLevels = Object.keys(levels)
         .map(Number)
-        .filter((l) => levels[l])
+        .filter((l) => levels[l] !== null && levels[l] !== undefined)
         .sort((a, b) => b - a);
       if (completedLevels.length > 0) {
-        levels[completedLevels[0]] = false;
+        levels[completedLevels[0]] = null;
       }
       keyMastery.consecutiveReviewErrors = 0;
     }
