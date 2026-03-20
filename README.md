@@ -44,9 +44,8 @@ Scale Degree, Melodic and Chord recognition form the foundation of creative, exp
 ## Key Features
 
 - **Instant Feedback**: Get immediate feedback on your answers
-- **Customizable Difficulty**: Adjust range, mode, and musical context
+- **Customizable Difficulty**: Adjust difficulty of learning
 - **No Installation**: Works directly in your browser
-- **Accessible**: Info icons and descriptions help beginners understand each setting
 
 ## Project Structure
 
