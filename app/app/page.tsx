@@ -58,10 +58,10 @@ export default function Home() {
           Master Diatonic Shapes
         </span>
       </button>
-      {/* <button
+      <button
         className="flex flex-col items-center gap-3 transition-transform hover:scale-110 hover:cursor-pointer active:scale-95"
-        onClick={() => (window.location.href = "/learn")}
-        aria-label="Learn"
+        onClick={() => (window.location.href = "/transcribe")}
+        aria-label="Transcribe audio"
       >
         <svg
           width="120"
@@ -73,17 +73,16 @@ export default function Home() {
           strokeLinecap="round"
           strokeLinejoin="round"
         >
-          <polygon
-            points="20,16 34,24 20,32"
-            fill="var(--middleground1)"
-            stroke="var(--middleground1)"
-            strokeLinejoin="round"
-          />
+          <rect x="8" y="18" width="4" height="12" rx="1" fill="var(--middleground1)" />
+          <rect x="15" y="12" width="4" height="24" rx="1" fill="var(--middleground1)" />
+          <rect x="22" y="16" width="4" height="16" rx="1" fill="var(--middleground1)" />
+          <rect x="29" y="10" width="4" height="28" rx="1" fill="var(--middleground1)" />
+          <rect x="36" y="14" width="4" height="20" rx="1" fill="var(--middleground1)" />
         </svg>
         <span className="text-sm font-bold text-[var(--middleground1)]">
-          Free Learn
+          Transcribe
         </span>
-      </button> */}
+      </button>
     </div>
   );
 
