@@ -14,6 +14,7 @@ export enum TranscribeEvent {
   DROP_MARKER = "DROP_MARKER",
   DELETE_MARKER = "DELETE_MARKER",
   MOVE_MARKER = "MOVE_MARKER",
+  RENAME_MARKER = "RENAME_MARKER",
   SELECT_REGION = "SELECT_REGION",
   SELECT_MARKER_SECTION = "SELECT_MARKER_SECTION",
   CLEAR_LOOP = "CLEAR_LOOP",
@@ -72,6 +73,12 @@ type MoveMarkerEvent = {
   time: number;
 };
 
+type RenameMarkerEvent = {
+  type: TranscribeEvent.RENAME_MARKER;
+  id: string;
+  label: string;
+};
+
 type SelectRegionEvent = {
   type: TranscribeEvent.SELECT_REGION;
   region: Region;
@@ -103,6 +110,7 @@ export type TranscribeEvents =
   | DropMarkerEvent
   | DeleteMarkerEvent
   | MoveMarkerEvent
+  | RenameMarkerEvent
   | SelectRegionEvent
   | SelectMarkerSectionEvent
   | { type: TranscribeEvent.CLEAR_LOOP }
@@ -116,6 +124,7 @@ export type TranscribeEvents =
 
 export interface TranscribeContext {
   audioBuffer: AudioBuffer | null;
+  fileUrl: string;
   waveformPeaks: WaveformPeak[];
   duration: number;
   currentTime: number;
@@ -130,6 +139,7 @@ export interface TranscribeContext {
 
 const defaultContext: TranscribeContext = {
   audioBuffer: null,
+  fileUrl: "",
   waveformPeaks: [],
   duration: 0,
   currentTime: 0,
@@ -150,9 +160,9 @@ export const transcribeMachine = setup({
   actors: {
     decodeAudio: fromPromise(
       async ({ input }: { input: { file: File } }) => {
-        const audioBuffer = await decodeAudioFile(input.file);
+        const { audioBuffer, fileUrl } = await decodeAudioFile(input.file);
         const waveformPeaks = computeWaveformPeaks(audioBuffer);
-        return { audioBuffer, waveformPeaks };
+        return { audioBuffer, fileUrl, waveformPeaks };
       },
     ),
   },
@@ -204,6 +214,16 @@ export const transcribeMachine = setup({
         },
       }),
     },
+    [TranscribeEvent.RENAME_MARKER]: {
+      actions: assign({
+        markers: ({ context, event }) => {
+          const e = event as RenameMarkerEvent;
+          return context.markers.map((m) =>
+            m.id === e.id ? { ...m, label: e.label } : m,
+          );
+        },
+      }),
+    },
     [TranscribeEvent.SELECT_REGION]: {
       actions: assign({
         loopRegion: ({ event }) => (event as SelectRegionEvent).region,
@@ -252,6 +272,7 @@ export const transcribeMachine = setup({
           target: TranscribeState.READY,
           actions: assign({
             audioBuffer: ({ event }) => event.output.audioBuffer,
+            fileUrl: ({ event }) => event.output.fileUrl,
             waveformPeaks: ({ event }) => event.output.waveformPeaks,
             duration: ({ event }) => event.output.audioBuffer.duration,
           }),

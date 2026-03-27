@@ -7,6 +7,8 @@ const LOOP_BORDER_COLOR = "rgba(222, 184, 135, 0.6)";
 const MARKER_COLOR = "#fff5e1";
 const MARKER_LABEL_BG = "rgba(30, 30, 30, 0.8)";
 const SELECTION_COLOR = "rgba(222, 184, 135, 0.15)";
+const SELECTED_MARKER_COLOR = "#ffffff";
+const SELECTED_MARKER_LINE = "rgba(255, 255, 255, 0.7)";
 
 export function drawWaveform(
   canvas: HTMLCanvasElement,
@@ -40,6 +42,7 @@ export function drawOverlay(
     markers: Marker[];
     loopRegion: Region | null;
     selectionRegion: Region | null;
+    selectedMarkerId: string | null;
   },
 ): void {
   const ctx = canvas.getContext("2d");
@@ -77,16 +80,19 @@ export function drawOverlay(
   // Draw markers
   for (const marker of opts.markers) {
     const x = timeToX(marker.time);
-    ctx.strokeStyle = MARKER_COLOR;
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([4, 3]);
+    const isSelected = marker.id === opts.selectedMarkerId;
+
+    // Line
+    ctx.strokeStyle = isSelected ? SELECTED_MARKER_LINE : MARKER_COLOR;
+    ctx.lineWidth = isSelected ? 2 : 1.5;
+    ctx.setLineDash(isSelected ? [] : [4, 3]);
     ctx.beginPath();
     ctx.moveTo(x, 0);
     ctx.lineTo(x, height);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Marker label
+    // Label
     const label = marker.label;
     ctx.font = "11px M PLUS 1 Code, monospace";
     const textWidth = ctx.measureText(label).width;
@@ -96,9 +102,11 @@ export function drawOverlay(
     const labelX = Math.min(x - labelWidth / 2, width - labelWidth);
     const clampedLabelX = Math.max(0, labelX);
 
-    ctx.fillStyle = MARKER_LABEL_BG;
+    ctx.fillStyle = isSelected
+      ? "rgba(255, 255, 255, 0.15)"
+      : MARKER_LABEL_BG;
     ctx.fillRect(clampedLabelX, 2, labelWidth, labelHeight);
-    ctx.fillStyle = MARKER_COLOR;
+    ctx.fillStyle = isSelected ? SELECTED_MARKER_COLOR : MARKER_COLOR;
     ctx.fillText(label, clampedLabelX + padding, 14);
   }
 

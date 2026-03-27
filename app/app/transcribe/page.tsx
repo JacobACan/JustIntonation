@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useEffect, useCallback, useRef } from "react";
+import { useContext, useEffect, useCallback, useRef, useState } from "react";
 import { useSelector } from "@xstate/react";
 import { TranscribeMachineContext } from "@/components/providers/transcribeProvider";
 import {
@@ -14,10 +14,16 @@ import PlaybackControls from "@/components/transcribe/playbackControls";
 import MarkerList from "@/components/transcribe/markerList";
 import RecordingControls from "@/components/transcribe/recordingControls";
 import RecordingsList from "@/components/transcribe/recordingsList";
+import KeybindsPanel from "@/components/transcribe/keybindsPanel";
+
+const NUDGE_FRACTION = 0.1; // nudge 10% of visible window
 
 export default function TranscribePage() {
   const service = useContext(TranscribeMachineContext);
   const engineRef = useRef<TranscribePlaybackEngine | null>(null);
+
+  const [showKeybinds, setShowKeybinds] = useState(false);
+  const [zoom, setZoom] = useState(1);
 
   const isIdle = useSelector(service!, (state) =>
     state.matches(TranscribeState.IDLE),
@@ -36,10 +42,7 @@ export default function TranscribePage() {
       [TranscribeState.READY]: { playback: TranscribeState.PLAYING },
     }),
   );
-  const audioBuffer = useSelector(
-    service!,
-    (state) => state.context.audioBuffer,
-  );
+  const fileUrl = useSelector(service!, (state) => state.context.fileUrl);
   const playbackRate = useSelector(
     service!,
     (state) => state.context.playbackRate,
@@ -49,6 +52,7 @@ export default function TranscribePage() {
     (state) => state.context.loopRegion,
   );
   const isLooping = useSelector(service!, (state) => state.context.isLooping);
+  const duration = useSelector(service!, (state) => state.context.duration);
   const currentTime = useSelector(
     service!,
     (state) => state.context.currentTime,
@@ -59,10 +63,10 @@ export default function TranscribePage() {
     (state) => state.context.errorMessage,
   );
 
-  // Initialize engine when audio buffer is ready
+  // Initialize engine when file URL is ready
   useEffect(() => {
-    if (audioBuffer && !engineRef.current) {
-      const engine = new TranscribePlaybackEngine(audioBuffer);
+    if (fileUrl && !engineRef.current) {
+      const engine = new TranscribePlaybackEngine(fileUrl);
       engine.setOnTimeUpdate((time) => {
         service?.send({ type: TranscribeEvent.UPDATE_TIME, time });
       });
@@ -76,12 +80,19 @@ export default function TranscribePage() {
       engineRef.current?.dispose();
       engineRef.current = null;
     };
-  }, [audioBuffer, service]);
+  }, [fileUrl, service]);
 
-  // Sync playback state with engine
+  // Effect 1: Play or pause engine when isPlaying changes.
+  // This is the ONLY effect that calls engine.play() or engine.pause().
+  // Reads all playback intent from closure (always fresh from this render).
+  // No cascading events — never sends events back to the machine.
   useEffect(() => {
     const engine = engineRef.current;
     if (!engine) return;
+
+    // Sync loop state to engine BEFORE playing, so play() sees current values.
+    engine.setLoopRegion(loopRegion);
+    engine.setLooping(isLooping);
 
     if (isPlaying) {
       engine.play(currentTime);
@@ -90,29 +101,47 @@ export default function TranscribePage() {
     }
   }, [isPlaying]);
 
-  // Sync playback rate
-  useEffect(() => {
-    engineRef.current?.setPlaybackRate(playbackRate);
-  }, [playbackRate]);
-
-  // Sync loop region
-  useEffect(() => {
-    engineRef.current?.setLoopRegion(loopRegion);
-    engineRef.current?.setLooping(isLooping);
-  }, [loopRegion, isLooping]);
-
-  // Handle seek from state machine
-  const lastSeekRef = useRef<number | null>(null);
+  // Effect 2: Seek engine when currentTime changes.
+  // When paused: any SEEK event should move the engine.
+  // When playing: only move engine if time jumped (user SEEK, not UPDATE_TIME).
+  //
+  // CRITICAL: This must NOT run on the same render that isPlaying changes,
+  // because Effect 1 may have repositioned the audio (e.g., to loop start)
+  // and this effect would overwrite it with the stale machine currentTime.
+  // We use a ref to track isPlaying transitions and skip one cycle.
+  const prevIsPlayingRef = useRef(isPlaying);
   useEffect(() => {
     const engine = engineRef.current;
     if (!engine) return;
 
-    // Only seek engine when user explicitly seeks (not from time updates)
-    if (lastSeekRef.current !== currentTime && !isPlaying) {
-      engine.seek(currentTime);
+    // If isPlaying just changed, Effect 1 owns the audio position — skip.
+    if (prevIsPlayingRef.current !== isPlaying) {
+      prevIsPlayingRef.current = isPlaying;
+      return;
     }
-    lastSeekRef.current = currentTime;
+
+    if (!isPlaying) {
+      engine.seek(currentTime);
+    } else {
+      // During playback, UPDATE_TIME events track the engine (~60fps).
+      // A user SEEK will jump discontinuously. Detect that.
+      const delta = Math.abs(currentTime - engine.getCurrentTime());
+      if (delta > 0.25) {
+        engine.seek(currentTime);
+      }
+    }
   }, [currentTime, isPlaying]);
+
+  // Effect 3: Sync playback rate
+  useEffect(() => {
+    engineRef.current?.setPlaybackRate(playbackRate);
+  }, [playbackRate]);
+
+  // Effect 4: Sync loop region to engine
+  useEffect(() => {
+    engineRef.current?.setLoopRegion(loopRegion);
+    engineRef.current?.setLooping(isLooping);
+  }, [loopRegion, isLooping]);
 
   // Keyboard shortcuts
   const handleKeyDown = useCallback(
@@ -144,8 +173,30 @@ export default function TranscribePage() {
       if (e.code === "Escape") {
         service.send({ type: TranscribeEvent.CLEAR_LOOP });
       }
+
+      // Ctrl + Left/Right arrow: nudge playhead by fraction of visible window
+      if ((e.ctrlKey || e.metaKey) && e.code === "ArrowLeft" && isReady) {
+        e.preventDefault();
+        const visibleDuration = duration / zoom;
+        const nudge = visibleDuration * NUDGE_FRACTION;
+        const time = engineRef.current?.getCurrentTime() ?? currentTime;
+        const newTime = Math.max(0, time - nudge);
+        engineRef.current?.seek(newTime);
+        service.send({ type: TranscribeEvent.SEEK, time: newTime });
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.code === "ArrowRight" && isReady) {
+        e.preventDefault();
+        const visibleDuration = duration / zoom;
+        const nudge = visibleDuration * NUDGE_FRACTION;
+        const time = engineRef.current?.getCurrentTime() ?? currentTime;
+        const dur = engineRef.current?.duration ?? duration;
+        const newTime = Math.min(dur, time + nudge);
+        engineRef.current?.seek(newTime);
+        service.send({ type: TranscribeEvent.SEEK, time: newTime });
+      }
     },
-    [service, isPlaying, isReady, currentTime],
+    [service, isPlaying, isReady, currentTime, duration, zoom],
   );
 
   useEffect(() => {
@@ -160,7 +211,13 @@ export default function TranscribePage() {
   }, [service]);
 
   return (
-    <div className="bg-background1 flex min-h-screen flex-col items-center px-4 py-8">
+    <div className="bg-background1 flex min-h-screen flex-col items-center px-4 pt-8 pb-24">
+      {/* Keybinds side panel */}
+      <KeybindsPanel
+        open={showKeybinds}
+        onClose={() => setShowKeybinds(false)}
+      />
+
       {/* Header */}
       <div className="mb-8 flex w-full max-w-3xl items-center justify-between">
         <button
@@ -172,7 +229,27 @@ export default function TranscribePage() {
         <h1 className="text-lg font-bold text-[var(--foreground2)]">
           Transcribe
         </h1>
-        <div className="w-8" />
+        <button
+          onClick={() => setShowKeybinds((prev) => !prev)}
+          className="text-xs text-[var(--middleground1)]/60 transition-colors hover:cursor-pointer hover:text-[var(--middleground1)]"
+          aria-label="Toggle keybinds panel"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect x="2" y="4" width="20" height="16" rx="2" />
+            <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01" />
+            <path d="M6 12h.01M10 12h.01M14 12h.01M18 12h.01" />
+            <path d="M8 16h8" />
+          </svg>
+        </button>
       </div>
 
       {/* Idle — file upload */}
@@ -217,18 +294,11 @@ export default function TranscribePage() {
             </button>
           </div>
 
-          <WaveformDisplay />
+          <WaveformDisplay zoom={zoom} onZoomChange={setZoom} />
           <PlaybackControls />
           <MarkerList />
           <RecordingControls />
           <RecordingsList />
-
-          {/* Keyboard shortcuts hint */}
-          <div className="mt-4 flex gap-6 text-xs text-[var(--middleground1)]/30">
-            <span>Space: Play/Pause</span>
-            <span>M: Drop Marker</span>
-            <span>Esc: Clear Loop</span>
-          </div>
         </div>
       )}
     </div>

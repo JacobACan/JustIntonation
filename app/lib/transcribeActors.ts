@@ -1,12 +1,15 @@
 import { WaveformPeak } from "@/types/transcribe";
 import { WAVEFORM_SAMPLES } from "@/constants/transcribeSettings";
 
-export async function decodeAudioFile(file: File): Promise<AudioBuffer> {
+export async function decodeAudioFile(
+  file: File,
+): Promise<{ audioBuffer: AudioBuffer; fileUrl: string }> {
+  const fileUrl = URL.createObjectURL(file);
   const arrayBuffer = await file.arrayBuffer();
   const audioContext = new AudioContext();
   const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
   await audioContext.close();
-  return audioBuffer;
+  return { audioBuffer, fileUrl };
 }
 
 export function computeWaveformPeaks(
