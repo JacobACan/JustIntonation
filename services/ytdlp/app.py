@@ -87,15 +87,15 @@ def extract_audio():
         output_path = os.path.join(tmp_dir, f"{uuid.uuid4().hex}")
 
         ydl_opts = {
-            "format": "bestaudio[ext=m4a]/bestaudio/best",
+            "format": "bestaudio/best",
             "outtmpl": output_path + ".%(ext)s",
             "quiet": True,
             "no_warnings": True,
             "postprocessors": [
                 {
                     "key": "FFmpegExtractAudio",
-                    "preferredcodec": "m4a",
-                    "preferredquality": "128",
+                    "preferredcodec": "mp3",
+                    "preferredquality": "192",
                 }
             ],
         }
@@ -123,9 +123,9 @@ def extract_audio():
 
         return send_file(
             audio_file,
-            mimetype="audio/mp4",
+            mimetype="audio/mpeg",
             as_attachment=True,
-            download_name=f"{safe_title}{ext}",
+            download_name=f"{safe_title}.mp3",
         )
 
     except yt_dlp.utils.DownloadError as e:
