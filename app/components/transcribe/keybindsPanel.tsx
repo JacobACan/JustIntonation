@@ -1,12 +1,41 @@
 "use client";
 
-const KEYBINDS = [
-  { keys: "Space", description: "Play / Pause" },
-  { keys: "M", description: "Drop marker at playhead" },
-  { keys: "Escape", description: "Clear loop region" },
-  { keys: "Ctrl + ←", description: "Nudge playhead back 5s" },
-  { keys: "Ctrl + →", description: "Nudge playhead forward 5s" },
-  { keys: "Ctrl + Scroll", description: "Zoom waveform in / out" },
+const KEYBIND_GROUPS = [
+  {
+    label: "Playback",
+    binds: [
+      { keys: "Space", description: "Play / Pause both tracks (snaps back)" },
+      { keys: "Hold 1", description: "Play reference track only" },
+      { keys: "Hold 2", description: "Play transcription only" },
+      { keys: "Hold 1+2", description: "Play both tracks" },
+      { keys: "K", description: "Stop and reset speed to 1x" },
+    ],
+  },
+  {
+    label: "Speed",
+    binds: [
+      { keys: "J", description: "Slow down playback" },
+      { keys: "L", description: "Speed up playback" },
+    ],
+  },
+  {
+    label: "Navigation",
+    binds: [
+      { keys: "Shift + ←", description: "Previous section" },
+      { keys: "Shift + →", description: "Next section" },
+      { keys: "Ctrl + ←", description: "Nudge playhead back" },
+      { keys: "Ctrl + →", description: "Nudge playhead forward" },
+    ],
+  },
+  {
+    label: "Editing",
+    binds: [
+      { keys: "T", description: "Start / Stop transcribing" },
+      { keys: "M", description: "Drop marker at playhead" },
+      { keys: "Escape", description: "Clear loop region" },
+      { keys: "Ctrl + Scroll", description: "Zoom waveform in / out" },
+    ],
+  },
 ];
 
 export default function KeybindsPanel({
@@ -39,15 +68,27 @@ export default function KeybindsPanel({
           Keybinds
         </h2>
 
-        <div className="flex flex-col gap-4">
-          {KEYBINDS.map((bind) => (
-            <div key={bind.keys} className="flex items-start justify-between gap-4">
-              <kbd className="shrink-0 rounded border border-[var(--middleground1)]/20 bg-[var(--background2)] px-2 py-0.5 text-xs text-[var(--foreground2)]">
-                {bind.keys}
-              </kbd>
-              <span className="text-right text-xs text-[var(--middleground1)]/70">
-                {bind.description}
-              </span>
+        <div className="flex flex-col gap-6">
+          {KEYBIND_GROUPS.map((group) => (
+            <div key={group.label}>
+              <h3 className="mb-2 text-xs font-bold text-[var(--middleground1)]/40 uppercase tracking-wider">
+                {group.label}
+              </h3>
+              <div className="flex flex-col gap-3">
+                {group.binds.map((bind) => (
+                  <div
+                    key={bind.keys}
+                    className="flex items-start justify-between gap-4"
+                  >
+                    <kbd className="shrink-0 rounded border border-[var(--middleground1)]/20 bg-[var(--background2)] px-2 py-0.5 text-xs text-[var(--foreground2)]">
+                      {bind.keys}
+                    </kbd>
+                    <span className="text-right text-xs text-[var(--middleground1)]/70">
+                      {bind.description}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>

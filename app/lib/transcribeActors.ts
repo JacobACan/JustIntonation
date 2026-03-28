@@ -37,3 +37,31 @@ export function computeWaveformPeaks(
 
   return peaks;
 }
+
+const RECORDING_PEAKS_SAMPLES = 400;
+
+export interface DecodedRecording {
+  peaks: WaveformPeak[];
+  duration: number;
+  audioBuffer: AudioBuffer;
+}
+
+const peaksCache = new Map<string, DecodedRecording>();
+
+export async function decodeRecordingBlob(
+  recordingId: string,
+  blob: Blob,
+): Promise<DecodedRecording> {
+  const cached = peaksCache.get(recordingId);
+  if (cached) return cached;
+
+  const arrayBuffer = await blob.arrayBuffer();
+  // Use OfflineAudioContext to avoid competing for the audio device
+  const offlineCtx = new OfflineAudioContext(1, 1, 48000);
+  const audioBuffer = await offlineCtx.decodeAudioData(arrayBuffer);
+
+  const peaks = computeWaveformPeaks(audioBuffer, RECORDING_PEAKS_SAMPLES);
+  const result = { peaks, duration: audioBuffer.duration, audioBuffer };
+  peaksCache.set(recordingId, result);
+  return result;
+}

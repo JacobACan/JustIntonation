@@ -5,10 +5,6 @@ import { decodeAudioFile, computeWaveformPeaks } from "@/lib/transcribeActors";
 
 export enum TranscribeEvent {
   LOAD_FILE = "LOAD_FILE",
-  PLAY = "PLAY",
-  PAUSE = "PAUSE",
-  STOP = "STOP",
-  PLAYBACK_ENDED = "PLAYBACK_ENDED",
   SET_SPEED = "SET_SPEED",
   SEEK = "SEEK",
   DROP_MARKER = "DROP_MARKER",
@@ -18,12 +14,12 @@ export enum TranscribeEvent {
   SELECT_REGION = "SELECT_REGION",
   SELECT_MARKER_SECTION = "SELECT_MARKER_SECTION",
   CLEAR_LOOP = "CLEAR_LOOP",
-  TOGGLE_LOOP = "TOGGLE_LOOP",
   START_RECORDING = "START_RECORDING",
   STOP_RECORDING = "STOP_RECORDING",
   SAVE_RECORDING = "SAVE_RECORDING",
   DISCARD_RECORDING = "DISCARD_RECORDING",
   UPDATE_TIME = "UPDATE_TIME",
+  SET_TRANSCRIPTION_VOLUME = "SET_TRANSCRIPTION_VOLUME",
   RESET = "RESET",
 }
 
@@ -32,10 +28,6 @@ export enum TranscribeState {
   LOADING = "loading",
   ERROR = "error",
   READY = "ready",
-  // Playback substates
-  STOPPED = "stopped",
-  PLAYING = "playing",
-  PAUSED = "paused",
   // Recording substates
   RECORDING_IDLE = "recording_idle",
   RECORDING = "recording",
@@ -99,12 +91,13 @@ type UpdateTimeEvent = {
   time: number;
 };
 
+type SetTranscriptionVolumeEvent = {
+  type: TranscribeEvent.SET_TRANSCRIPTION_VOLUME;
+  volume: number;
+};
+
 export type TranscribeEvents =
   | LoadFileEvent
-  | { type: TranscribeEvent.PLAY }
-  | { type: TranscribeEvent.PAUSE }
-  | { type: TranscribeEvent.STOP }
-  | { type: TranscribeEvent.PLAYBACK_ENDED }
   | SetSpeedEvent
   | SeekEvent
   | DropMarkerEvent
@@ -114,12 +107,12 @@ export type TranscribeEvents =
   | SelectRegionEvent
   | SelectMarkerSectionEvent
   | { type: TranscribeEvent.CLEAR_LOOP }
-  | { type: TranscribeEvent.TOGGLE_LOOP }
   | { type: TranscribeEvent.START_RECORDING }
   | { type: TranscribeEvent.STOP_RECORDING }
   | SaveRecordingEvent
   | { type: TranscribeEvent.DISCARD_RECORDING }
   | UpdateTimeEvent
+  | SetTranscriptionVolumeEvent
   | { type: TranscribeEvent.RESET };
 
 export interface TranscribeContext {
@@ -133,6 +126,7 @@ export interface TranscribeContext {
   loopRegion: Region | null;
   isLooping: boolean;
   recordings: Recording[];
+  transcriptionVolume: number;
   fileName: string;
   errorMessage: string;
 }
@@ -148,6 +142,7 @@ const defaultContext: TranscribeContext = {
   loopRegion: null,
   isLooping: false,
   recordings: [],
+  transcriptionVolume: 0.2,
   fileName: "",
   errorMessage: "",
 };
@@ -158,13 +153,11 @@ export const transcribeMachine = setup({
     events: {} as TranscribeEvents,
   },
   actors: {
-    decodeAudio: fromPromise(
-      async ({ input }: { input: { file: File } }) => {
-        const { audioBuffer, fileUrl } = await decodeAudioFile(input.file);
-        const waveformPeaks = computeWaveformPeaks(audioBuffer);
-        return { audioBuffer, fileUrl, waveformPeaks };
-      },
-    ),
+    decodeAudio: fromPromise(async ({ input }: { input: { file: File } }) => {
+      const { audioBuffer, fileUrl } = await decodeAudioFile(input.file);
+      const waveformPeaks = computeWaveformPeaks(audioBuffer);
+      return { audioBuffer, fileUrl, waveformPeaks };
+    }),
   },
 }).createMachine({
   id: "transcribeMachine",
@@ -176,9 +169,20 @@ export const transcribeMachine = setup({
         playbackRate: ({ event }) => (event as SetSpeedEvent).rate,
       }),
     },
+    [TranscribeEvent.SET_TRANSCRIPTION_VOLUME]: {
+      actions: assign({
+        transcriptionVolume: ({ event }) =>
+          (event as SetTranscriptionVolumeEvent).volume,
+      }),
+    },
     [TranscribeEvent.UPDATE_TIME]: {
       actions: assign({
         currentTime: ({ event }) => (event as UpdateTimeEvent).time,
+      }),
+    },
+    [TranscribeEvent.SEEK]: {
+      actions: assign({
+        currentTime: ({ event }) => (event as SeekEvent).time,
       }),
     },
     [TranscribeEvent.DROP_MARKER]: {
@@ -232,8 +236,7 @@ export const transcribeMachine = setup({
     },
     [TranscribeEvent.SELECT_MARKER_SECTION]: {
       actions: assign({
-        loopRegion: ({ event }) =>
-          (event as SelectMarkerSectionEvent).region,
+        loopRegion: ({ event }) => (event as SelectMarkerSectionEvent).region,
         isLooping: true,
       }),
     },
@@ -243,9 +246,22 @@ export const transcribeMachine = setup({
         isLooping: false,
       }),
     },
-    [TranscribeEvent.TOGGLE_LOOP]: {
+    [TranscribeEvent.SAVE_RECORDING]: {
       actions: assign({
-        isLooping: ({ context }) => !context.isLooping,
+        recordings: ({ context, event }) => {
+          const newRec = (event as SaveRecordingEvent).recording;
+          // Replace existing recording for the same region (one per section)
+          if (newRec.region) {
+            const filtered = context.recordings.filter(
+              (r) =>
+                !r.region ||
+                Math.abs(r.region.start - newRec.region!.start) > 0.5 ||
+                Math.abs(r.region.end - newRec.region!.end) > 0.5,
+            );
+            return [...filtered, newRec];
+          }
+          return [...context.recordings, newRec];
+        },
       }),
     },
   },
@@ -309,57 +325,6 @@ export const transcribeMachine = setup({
         },
       },
       states: {
-        playback: {
-          initial: TranscribeState.STOPPED,
-          states: {
-            [TranscribeState.STOPPED]: {
-              entry: assign({ currentTime: () => 0 }),
-              on: {
-                [TranscribeEvent.PLAY]: {
-                  target: TranscribeState.PLAYING,
-                },
-                [TranscribeEvent.SEEK]: {
-                  actions: assign({
-                    currentTime: ({ event }) => (event as SeekEvent).time,
-                  }),
-                },
-              },
-            },
-            [TranscribeState.PLAYING]: {
-              on: {
-                [TranscribeEvent.PAUSE]: {
-                  target: TranscribeState.PAUSED,
-                },
-                [TranscribeEvent.STOP]: {
-                  target: TranscribeState.STOPPED,
-                },
-                [TranscribeEvent.PLAYBACK_ENDED]: {
-                  target: TranscribeState.STOPPED,
-                },
-                [TranscribeEvent.SEEK]: {
-                  actions: assign({
-                    currentTime: ({ event }) => (event as SeekEvent).time,
-                  }),
-                },
-              },
-            },
-            [TranscribeState.PAUSED]: {
-              on: {
-                [TranscribeEvent.PLAY]: {
-                  target: TranscribeState.PLAYING,
-                },
-                [TranscribeEvent.STOP]: {
-                  target: TranscribeState.STOPPED,
-                },
-                [TranscribeEvent.SEEK]: {
-                  actions: assign({
-                    currentTime: ({ event }) => (event as SeekEvent).time,
-                  }),
-                },
-              },
-            },
-          },
-        },
         recording: {
           initial: TranscribeState.RECORDING_IDLE,
           states: {

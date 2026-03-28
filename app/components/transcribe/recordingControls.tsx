@@ -3,10 +3,7 @@
 import { useContext, useCallback, useRef, useState } from "react";
 import { useSelector } from "@xstate/react";
 import { TranscribeMachineContext } from "@/components/providers/transcribeProvider";
-import {
-  TranscribeEvent,
-  TranscribeState,
-} from "@/machines/transcribeProcess";
+import { TranscribeEvent, TranscribeState } from "@/machines/transcribeProcess";
 import { AudioRecorder } from "@/lib/mediaRecorder";
 
 export default function RecordingControls() {
@@ -28,10 +25,7 @@ export default function RecordingControls() {
       },
     }),
   );
-  const loopRegion = useSelector(
-    service!,
-    (state) => state.context.loopRegion,
-  );
+  const loopRegion = useSelector(service!, (state) => state.context.loopRegion);
 
   const pendingRecordingRef = useRef<{
     objectUrl: string;
@@ -52,9 +46,6 @@ export default function RecordingControls() {
     recorderRef.current = recorder;
     recorder.start();
     service.send({ type: TranscribeEvent.START_RECORDING });
-
-    // Also start playback if not already playing
-    service.send({ type: TranscribeEvent.PLAY });
   }, [service]);
 
   const handleStopRecording = useCallback(async () => {
@@ -68,7 +59,6 @@ export default function RecordingControls() {
     };
 
     service.send({ type: TranscribeEvent.STOP_RECORDING });
-    service.send({ type: TranscribeEvent.PAUSE });
   }, [service, loopRegion]);
 
   const handleSave = useCallback(() => {

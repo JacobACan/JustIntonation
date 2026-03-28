@@ -3,7 +3,7 @@
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useSelector } from "@xstate/react";
 import { TranscribeMachineContext } from "@/components/providers/transcribeProvider";
-import { TranscribeEvent, TranscribeState } from "@/machines/transcribeProcess";
+import { TranscribeEvent } from "@/machines/transcribeProcess";
 import {
   drawWaveform,
   drawOverlay,
@@ -21,9 +21,15 @@ const ZOOM_STEP = 0.15;
 export default function WaveformDisplay({
   zoom,
   onZoomChange,
+  onSeek,
 }: {
   zoom: number;
   onZoomChange: (zoom: number) => void;
+  /** Called on any user-initiated seek so the page can sync the engine. */
+  onSeek?: (
+    time: number,
+    options?: { isSection?: boolean; sectionStart?: number },
+  ) => void;
 }) {
   const service = useContext(TranscribeMachineContext);
   const waveformCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -41,14 +47,7 @@ export default function WaveformDisplay({
     (state) => state.context.currentTime,
   );
   const markers = useSelector(service!, (state) => state.context.markers);
-  const loopRegion = useSelector(
-    service!,
-    (state) => state.context.loopRegion,
-  );
-  const isPlaying = useSelector(service!, (state) =>
-    state.matches({ [TranscribeState.READY]: { playback: TranscribeState.PLAYING } }),
-  );
-
+  const loopRegion = useSelector(service!, (state) => state.context.loopRegion);
   const [selectionRegion, setSelectionRegion] = useState<Region | null>(null);
   const [isDraggingMarker, setIsDraggingMarker] = useState<string | null>(null);
   const [isSelecting, setIsSelecting] = useState(false);
@@ -106,7 +105,16 @@ export default function WaveformDisplay({
       selectionRegion,
       selectedMarkerId,
     });
-  }, [currentTime, markers, loopRegion, selectionRegion, selectedMarkerId, duration, zoom, getCanvasWidth]);
+  }, [
+    currentTime,
+    markers,
+    loopRegion,
+    selectionRegion,
+    selectedMarkerId,
+    duration,
+    zoom,
+    getCanvasWidth,
+  ]);
 
   // Auto-scroll to keep cursor visible during playback
   useEffect(() => {
@@ -127,16 +135,13 @@ export default function WaveformDisplay({
   }, [currentTime, duration, getCanvasWidth]);
 
   // Get x position relative to the canvas (accounting for scroll)
-  const getCanvasX = useCallback(
-    (e: React.MouseEvent) => {
-      const container = scrollContainerRef.current;
-      const outer = outerContainerRef.current;
-      if (!container || !outer) return 0;
-      const rect = outer.getBoundingClientRect();
-      return e.clientX - rect.left + container.scrollLeft;
-    },
-    [],
-  );
+  const getCanvasX = useCallback((e: React.MouseEvent) => {
+    const container = scrollContainerRef.current;
+    const outer = outerContainerRef.current;
+    if (!container || !outer) return 0;
+    const rect = outer.getBoundingClientRect();
+    return e.clientX - rect.left + container.scrollLeft;
+  }, []);
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
@@ -210,13 +215,26 @@ export default function WaveformDisplay({
       );
       if (nearMarker) {
         setCursorStyle("ew-resize");
-      } else if (loopRegion && time >= loopRegion.start && time <= loopRegion.end) {
+      } else if (
+        loopRegion &&
+        time >= loopRegion.start &&
+        time <= loopRegion.end
+      ) {
         setCursorStyle("default");
       } else {
         setCursorStyle("pointer");
       }
     },
-    [isDraggingMarker, isSelecting, service, duration, markers, loopRegion, getCanvasX, getCanvasWidth],
+    [
+      isDraggingMarker,
+      isSelecting,
+      service,
+      duration,
+      markers,
+      loopRegion,
+      getCanvasX,
+      getCanvasWidth,
+    ],
   );
 
   const handleMouseUp = useCallback(
@@ -233,6 +251,15 @@ export default function WaveformDisplay({
         service.send({
           type: TranscribeEvent.SELECT_REGION,
           region: selectionRegion,
+        });
+        // Seek playhead to start of the dragged region
+        service.send({
+          type: TranscribeEvent.SEEK,
+          time: selectionRegion.start,
+        });
+        onSeek?.(selectionRegion.start, {
+          isSection: true,
+          sectionStart: selectionRegion.start,
         });
         setSelectionRegion(null);
         setIsSelecting(false);
@@ -259,9 +286,14 @@ export default function WaveformDisplay({
               type: TranscribeEvent.SELECT_REGION,
               region: extendedRegion,
             });
-            if (isPlaying) {
-              service.send({ type: TranscribeEvent.SEEK, time: extendedRegion.start });
-            }
+            service.send({
+              type: TranscribeEvent.SEEK,
+              time: extendedRegion.start,
+            });
+            onSeek?.(extendedRegion.start, {
+              isSection: true,
+              sectionStart: extendedRegion.start,
+            });
             return;
           }
 
@@ -269,15 +301,31 @@ export default function WaveformDisplay({
             type: TranscribeEvent.SELECT_MARKER_SECTION,
             region: section,
           });
-          // When playing, jump to the start of the section
-          if (isPlaying) {
-            service.send({ type: TranscribeEvent.SEEK, time: section.start });
-            return;
-          }
+          service.send({ type: TranscribeEvent.SEEK, time: section.start });
+          onSeek?.(section.start, {
+            isSection: true,
+            sectionStart: section.start,
+          });
+          return;
         }
       }
 
+      // Click inside existing loop region → seek to region start
+      if (
+        loopRegion &&
+        time >= loopRegion.start &&
+        time <= loopRegion.end
+      ) {
+        service.send({ type: TranscribeEvent.SEEK, time: loopRegion.start });
+        onSeek?.(loopRegion.start, {
+          isSection: true,
+          sectionStart: loopRegion.start,
+        });
+        return;
+      }
+
       service.send({ type: TranscribeEvent.SEEK, time });
+      onSeek?.(time);
     },
     [
       service,
@@ -286,9 +334,10 @@ export default function WaveformDisplay({
       isSelecting,
       selectionRegion,
       markers,
-      isPlaying,
+      loopRegion,
       getCanvasX,
       getCanvasWidth,
+      onSeek,
     ],
   );
 
@@ -357,9 +406,16 @@ export default function WaveformDisplay({
       ) {
         return;
       }
-      if ((e.code === "Backspace" || e.code === "Delete") && selectedMarkerId && service) {
+      if (
+        (e.code === "Backspace" || e.code === "Delete") &&
+        selectedMarkerId &&
+        service
+      ) {
         e.preventDefault();
-        service.send({ type: TranscribeEvent.DELETE_MARKER, id: selectedMarkerId });
+        service.send({
+          type: TranscribeEvent.DELETE_MARKER,
+          id: selectedMarkerId,
+        });
         setSelectedMarkerId(null);
       }
     };
@@ -393,7 +449,10 @@ export default function WaveformDisplay({
       const timeFraction = mouseXInCanvas / oldCanvasWidth;
 
       const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
-      const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom * (1 + delta)));
+      const newZoom = Math.max(
+        MIN_ZOOM,
+        Math.min(MAX_ZOOM, zoom * (1 + delta)),
+      );
 
       onZoomChange(newZoom);
 
@@ -411,13 +470,15 @@ export default function WaveformDisplay({
     const container = scrollContainerRef.current;
     if (!container) return;
 
-    const centerTime = (container.scrollLeft + container.clientWidth / 2) / getCanvasWidth();
+    const centerTime =
+      (container.scrollLeft + container.clientWidth / 2) / getCanvasWidth();
     const newZoom = Math.min(MAX_ZOOM, zoom * (1 + ZOOM_STEP * 3));
     onZoomChange(newZoom);
 
     requestAnimationFrame(() => {
       const newCanvasWidth = getContainerWidth() * newZoom;
-      container.scrollLeft = centerTime * newCanvasWidth - container.clientWidth / 2;
+      container.scrollLeft =
+        centerTime * newCanvasWidth - container.clientWidth / 2;
     });
   }, [zoom, getCanvasWidth, getContainerWidth]);
 
@@ -425,13 +486,15 @@ export default function WaveformDisplay({
     const container = scrollContainerRef.current;
     if (!container) return;
 
-    const centerTime = (container.scrollLeft + container.clientWidth / 2) / getCanvasWidth();
+    const centerTime =
+      (container.scrollLeft + container.clientWidth / 2) / getCanvasWidth();
     const newZoom = Math.max(MIN_ZOOM, zoom * (1 - ZOOM_STEP * 3));
     onZoomChange(newZoom);
 
     requestAnimationFrame(() => {
       const newCanvasWidth = getContainerWidth() * newZoom;
-      container.scrollLeft = centerTime * newCanvasWidth - container.clientWidth / 2;
+      container.scrollLeft =
+        centerTime * newCanvasWidth - container.clientWidth / 2;
     });
   }, [zoom, getCanvasWidth, getContainerWidth]);
 
@@ -442,41 +505,18 @@ export default function WaveformDisplay({
   }, []);
 
   return (
-    <div ref={outerContainerRef} className="flex w-full max-w-3xl flex-col gap-2">
-      {/* Zoom controls */}
-      <div className="flex items-center justify-end gap-3">
-        <button
-          onClick={handleZoomOut}
-          disabled={zoom <= MIN_ZOOM}
-          className="flex h-6 w-6 items-center justify-center rounded border border-[var(--middleground1)]/30 text-xs text-[var(--middleground1)] transition-transform hover:scale-110 hover:cursor-pointer active:scale-95 disabled:opacity-30 disabled:hover:scale-100"
-          aria-label="Zoom out"
-        >
-          -
-        </button>
-        <button
-          onClick={handleZoomReset}
-          className="text-xs text-[var(--middleground1)]/60 transition-colors hover:cursor-pointer hover:text-[var(--middleground1)]"
-        >
-          {zoom === 1 ? "1x" : `${zoom.toFixed(1)}x`}
-        </button>
-        <button
-          onClick={handleZoomIn}
-          disabled={zoom >= MAX_ZOOM}
-          className="flex h-6 w-6 items-center justify-center rounded border border-[var(--middleground1)]/30 text-xs text-[var(--middleground1)] transition-transform hover:scale-110 hover:cursor-pointer active:scale-95 disabled:opacity-30 disabled:hover:scale-100"
-          aria-label="Zoom in"
-        >
-          +
-        </button>
-      </div>
-
+    <div ref={outerContainerRef} className="flex w-full max-w-3xl flex-col">
       {/* Scrollable waveform container */}
       <div
         ref={scrollContainerRef}
-        className="relative overflow-x-auto rounded-lg border border-[var(--middleground1)]/10"
+        className="relative overflow-x-auto overflow-y-hidden rounded-b-lg border border-[var(--middleground1)]/10"
         style={{ height: "160px" }}
         onWheel={handleWheel}
       >
-        <div className="relative" style={{ width: `${getCanvasWidth()}px`, height: "160px" }}>
+        <div
+          className="relative"
+          style={{ width: `${getCanvasWidth()}px`, height: "160px" }}
+        >
           <canvas
             ref={waveformCanvasRef}
             className="absolute top-0 left-0"
@@ -526,7 +566,9 @@ export default function WaveformDisplay({
       {/* Rename input */}
       {renameMarkerId && (
         <div className="flex items-center gap-2">
-          <span className="text-xs text-[var(--middleground1)]/60">Rename:</span>
+          <span className="text-xs text-[var(--middleground1)]/60">
+            Rename:
+          </span>
           <input
             autoFocus
             value={renameValue}
@@ -542,13 +584,6 @@ export default function WaveformDisplay({
             className="rounded border border-[var(--middleground1)]/30 bg-[var(--background2)] px-2 py-1 text-xs text-[var(--foreground2)] outline-none focus:border-[var(--middleground1)]"
           />
         </div>
-      )}
-
-      {/* Zoom hint */}
-      {zoom === 1 && (
-        <p className="text-center text-xs text-[var(--middleground1)]/30">
-          Ctrl+Scroll to zoom
-        </p>
       )}
     </div>
   );

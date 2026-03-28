@@ -179,3 +179,23 @@ export function findMarkerSection(
 
   return null;
 }
+
+export function drawTranscriptionCursor(
+  canvas: HTMLCanvasElement,
+  currentTime: number,
+  duration: number,
+): void {
+  const ctx = canvas.getContext("2d");
+  if (!ctx || duration === 0) return;
+
+  const { width, height } = canvas;
+  ctx.clearRect(0, 0, width, height);
+
+  const cursorX = (currentTime / duration) * width;
+  ctx.strokeStyle = CURSOR_COLOR;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cursorX, 0);
+  ctx.lineTo(cursorX, height);
+  ctx.stroke();
+}

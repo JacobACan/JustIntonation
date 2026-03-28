@@ -1,130 +1,295 @@
 import { Region } from "@/types/transcribe";
+import { SoundTouchNode } from "@soundtouchjs/audio-worklet";
 
-type TimeUpdateCallback = (time: number) => void;
-type PlaybackEndedCallback = () => void;
+/**
+ * DualTrackAudioEngine — manages synchronized playback of reference + transcription
+ * audio on a single AudioContext for zero-drift sync.
+ *
+ * Architecture per track:
+ *   AudioBufferSourceNode (playbackRate = speed)
+ *     → SoundTouchNode (pitch = 1/speed for pitch preservation)
+ *     → GainNode (muting)
+ *     → AudioContext.destination
+ *
+ * AudioBufferSourceNodes are one-shot — seeking requires stopping the current
+ * source and creating a new one at the desired offset.
+ *
+ * Position tracking:
+ *   position = startOffset + (audioContext.currentTime - contextStartTime) * playbackRate
+ */
 
-export class TranscribePlaybackEngine {
-  private audio: HTMLAudioElement;
-  private _isPlaying: boolean = false;
-  private loopRegion: Region | null = null;
-  private _isLooping: boolean = false;
-  private animationFrameId: number | null = null;
-  private onTimeUpdateCb: TimeUpdateCallback | null = null;
-  private onPlaybackEndedCb: PlaybackEndedCallback | null = null;
+interface TrackState {
+  buffer: AudioBuffer | null;
+  source: AudioBufferSourceNode | null;
+  soundTouch: SoundTouchNode;
+  gain: GainNode;
+  /** audioContext.currentTime when the source was started */
+  contextStartTime: number;
+  /** offset into the buffer where playback started (seconds) */
+  startOffset: number;
+  /** true if this track has an active, playing source */
+  playing: boolean;
+}
 
-  constructor(fileUrl: string) {
-    this.audio = new Audio(fileUrl);
-    this.audio.preservesPitch = true;
+export class DualTrackAudioEngine {
+  private ctx: AudioContext;
+  private ref: TrackState;
+  private trans: TrackState;
+  private _playbackRate: number = 1;
+  private _disposed: boolean = false;
 
-    this.audio.addEventListener("ended", () => {
-      this._isPlaying = false;
-      this.stopAnimationLoop();
-      this.onPlaybackEndedCb?.();
-    });
+  private constructor(
+    ctx: AudioContext,
+    refBuffer: AudioBuffer,
+    refST: SoundTouchNode,
+    transST: SoundTouchNode,
+  ) {
+    this.ctx = ctx;
+
+    const refGain = ctx.createGain();
+    refGain.connect(ctx.destination);
+    refST.connect(refGain);
+
+    const transGain = ctx.createGain();
+    transGain.connect(ctx.destination);
+    transST.connect(transGain);
+
+    this.ref = {
+      buffer: refBuffer,
+      source: null,
+      soundTouch: refST,
+      gain: refGain,
+      contextStartTime: 0,
+      startOffset: 0,
+      playing: false,
+    };
+
+    this.trans = {
+      buffer: null,
+      source: null,
+      soundTouch: transST,
+      gain: transGain,
+      contextStartTime: 0,
+      startOffset: 0,
+      playing: false,
+    };
   }
 
-  get isPlaying(): boolean {
-    return this._isPlaying;
+  /**
+   * Create and initialize the engine. Registers the SoundTouch AudioWorklet
+   * processor and sets up the audio graph.
+   */
+  static async create(refBuffer: AudioBuffer): Promise<DualTrackAudioEngine> {
+    const ctx = new AudioContext();
+    await SoundTouchNode.register(ctx, "/soundtouch-processor.js");
+    const refST = new SoundTouchNode(ctx);
+    const transST = new SoundTouchNode(ctx);
+    return new DualTrackAudioEngine(ctx, refBuffer, refST, transST);
+  }
+
+  // ── Reference track ──────────────────────────────────────────────────
+
+  playRef(fromTime: number): void {
+    this.stopRefSource();
+    this.startSource(this.ref, fromTime);
+  }
+
+  stopRef(): void {
+    this.stopRefSource();
+  }
+
+  seekRef(time: number): void {
+    if (this.ref.playing) {
+      // Seamless seek during playback: stop and restart at new position
+      this.stopRefSource();
+      this.startSource(this.ref, time);
+    } else {
+      this.ref.startOffset = time;
+    }
+  }
+
+  getCurrentRefTime(): number {
+    return this.getTrackTime(this.ref);
+  }
+
+  getRefDuration(): number {
+    return this.ref.buffer?.duration ?? 0;
+  }
+
+  muteRef(muted: boolean): void {
+    this.ref.gain.gain.value = muted ? 0 : 1;
+  }
+
+  setRefVolume(volume: number): void {
+    this.ref.gain.gain.value = Math.max(0, Math.min(1, volume));
+  }
+
+  // ── Transcription track ──────────────────────────────────────────────
+
+  loadTranscription(buffer: AudioBuffer): void {
+    this.stopTransSource();
+    this.trans.buffer = buffer;
+  }
+
+  unloadTranscription(): void {
+    this.stopTransSource();
+    this.trans.buffer = null;
+  }
+
+  hasTranscription(): boolean {
+    return this.trans.buffer !== null;
+  }
+
+  playTrans(fromTime: number): void {
+    if (!this.trans.buffer) return;
+    this.stopTransSource();
+    this.startSource(this.trans, fromTime);
+  }
+
+  stopTrans(): void {
+    this.stopTransSource();
+  }
+
+  seekTrans(time: number): void {
+    if (!this.trans.buffer) return;
+    if (this.trans.playing) {
+      this.stopTransSource();
+      this.startSource(this.trans, time);
+    } else {
+      this.trans.startOffset = time;
+    }
+  }
+
+  getCurrentTransTime(): number {
+    return this.getTrackTime(this.trans);
+  }
+
+  getTransDuration(): number {
+    return this.trans.buffer?.duration ?? 0;
+  }
+
+  muteTrans(muted: boolean): void {
+    this.trans.gain.gain.value = muted ? 0 : 1;
+  }
+
+  // ── Shared ───────────────────────────────────────────────────────────
+
+  get isRefPlaying(): boolean {
+    return this.ref.playing;
+  }
+
+  get isTransPlaying(): boolean {
+    return this.trans.playing;
+  }
+
+  setRate(rate: number): void {
+    this._playbackRate = rate;
+    const pitchCorrection = 1 / rate;
+
+    // Update ref
+    this.ref.soundTouch.pitch.value = pitchCorrection;
+    if (this.ref.source) {
+      // Seamlessly update: record current position, recreate source at new rate
+      const currentTime = this.getTrackTime(this.ref);
+      if (this.ref.playing) {
+        this.stopRefSource();
+        this.startSource(this.ref, currentTime);
+      }
+    }
+
+    // Update trans
+    this.trans.soundTouch.pitch.value = pitchCorrection;
+    if (this.trans.source) {
+      const currentTime = this.getTrackTime(this.trans);
+      if (this.trans.playing) {
+        this.stopTransSource();
+        this.startSource(this.trans, currentTime);
+      }
+    }
   }
 
   get playbackRate(): number {
-    return this.audio.playbackRate;
-  }
-
-  get duration(): number {
-    return this.audio.duration || 0;
-  }
-
-  setOnTimeUpdate(callback: TimeUpdateCallback): void {
-    this.onTimeUpdateCb = callback;
-  }
-
-  setOnPlaybackEnded(callback: PlaybackEndedCallback): void {
-    this.onPlaybackEndedCb = callback;
-  }
-
-  play(fromTime?: number): void {
-    // Always pause first to ensure clean state — prevents promise races
-    this.audio.pause();
-
-    if (fromTime !== undefined) {
-      this.audio.currentTime = fromTime;
-    }
-
-    // If looping, always start from loop region beginning
-    if (this._isLooping && this.loopRegion) {
-      this.audio.currentTime = this.loopRegion.start;
-    }
-
-    this._isPlaying = true;
-    this.startAnimationLoop();
-    // Fire-and-forget — AbortError from a future pause() is harmless
-    this.audio.play().catch(() => {});
-  }
-
-  pause(): void {
-    this._isPlaying = false;
-    this.stopAnimationLoop();
-    this.audio.pause();
-  }
-
-  stop(): void {
-    this._isPlaying = false;
-    this.stopAnimationLoop();
-    this.audio.pause();
-    this.audio.currentTime = 0;
-  }
-
-  seek(time: number): void {
-    this.audio.currentTime = time;
-  }
-
-  setPlaybackRate(rate: number): void {
-    this.audio.playbackRate = rate;
-  }
-
-  setLoopRegion(region: Region | null): void {
-    this.loopRegion = region;
-  }
-
-  setLooping(enabled: boolean): void {
-    this._isLooping = enabled;
-  }
-
-  getCurrentTime(): number {
-    return this.audio.currentTime;
+    return this._playbackRate;
   }
 
   dispose(): void {
-    this._isPlaying = false;
-    this.stopAnimationLoop();
-    this.audio.pause();
-    this.audio.src = "";
-    this.audio.load();
+    if (this._disposed) return;
+    this._disposed = true;
+    this.stopRefSource();
+    this.stopTransSource();
+    this.ref.soundTouch.disconnect();
+    this.trans.soundTouch.disconnect();
+    this.ref.gain.disconnect();
+    this.trans.gain.disconnect();
+    this.ctx.close().catch(() => {});
   }
 
-  private startAnimationLoop(): void {
-    this.stopAnimationLoop();
-    const tick = () => {
-      if (!this._isPlaying) return;
+  // ── Internal ─────────────────────────────────────────────────────────
 
-      // Handle loop boundary
-      if (this._isLooping && this.loopRegion) {
-        if (this.audio.currentTime >= this.loopRegion.end) {
-          this.audio.currentTime = this.loopRegion.start;
-        }
-      }
+  private startSource(track: TrackState, fromTime: number): void {
+    if (!track.buffer || this._disposed) return;
 
-      this.onTimeUpdateCb?.(this.audio.currentTime);
-      this.animationFrameId = requestAnimationFrame(tick);
-    };
-    this.animationFrameId = requestAnimationFrame(tick);
-  }
-
-  private stopAnimationLoop(): void {
-    if (this.animationFrameId !== null) {
-      cancelAnimationFrame(this.animationFrameId);
-      this.animationFrameId = null;
+    // Resume context if suspended (browser autoplay policy)
+    if (this.ctx.state === "suspended") {
+      this.ctx.resume().catch(() => {});
     }
+
+    const source = this.ctx.createBufferSource();
+    source.buffer = track.buffer;
+    source.playbackRate.value = this._playbackRate;
+    source.connect(track.soundTouch);
+
+    // Clamp offset to valid range
+    const offset = Math.max(0, Math.min(fromTime, track.buffer.duration));
+
+    track.source = source;
+    track.contextStartTime = this.ctx.currentTime;
+    track.startOffset = offset;
+    track.playing = true;
+
+    // Handle natural end of buffer
+    source.onended = () => {
+      if (track.source === source) {
+        track.playing = false;
+        track.source = null;
+      }
+    };
+
+    source.start(0, offset);
+  }
+
+  private stopRefSource(): void {
+    this.stopSource(this.ref);
+  }
+
+  private stopTransSource(): void {
+    this.stopSource(this.trans);
+  }
+
+  private stopSource(track: TrackState): void {
+    if (track.source) {
+      // Record final position before stopping
+      if (track.playing) {
+        track.startOffset = this.getTrackTime(track);
+      }
+      track.source.onended = null;
+      try {
+        track.source.stop();
+      } catch {
+        // Already stopped
+      }
+      track.source.disconnect();
+      track.source = null;
+    }
+    track.playing = false;
+  }
+
+  private getTrackTime(track: TrackState): number {
+    if (!track.buffer) return 0;
+    if (!track.playing) return track.startOffset;
+
+    const elapsed = this.ctx.currentTime - track.contextStartTime;
+    const position = track.startOffset + elapsed * this._playbackRate;
+    return Math.min(position, track.buffer.duration);
   }
 }

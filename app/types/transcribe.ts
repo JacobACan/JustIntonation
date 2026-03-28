@@ -22,3 +22,9 @@ export interface WaveformPeak {
   min: number;
   max: number;
 }
+
+export interface SectionGroup {
+  label: string;
+  region: Region;
+  recordings: Recording[]; // sorted by createdAt descending (most recent first)
+}
