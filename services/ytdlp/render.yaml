@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: ytdlp-audio
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: API_KEY
+        generateValue: true
+      - key: MAX_DURATION
+        value: "600"
