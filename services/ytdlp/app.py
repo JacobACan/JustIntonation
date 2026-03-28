@@ -3,6 +3,7 @@ yt-dlp audio extraction microservice.
 Accepts a YouTube URL, extracts audio-only, returns the audio file.
 """
 
+import base64
 import os
 import tempfile
 import uuid
@@ -15,6 +16,14 @@ app = Flask(__name__)
 
 API_KEY = os.environ.get("API_KEY", "")
 MAX_DURATION = int(os.environ.get("MAX_DURATION", "600"))  # 10 min default
+
+# Write cookies from env var (base64-encoded cookies.txt) to a file on startup
+COOKIES_FILE = None
+COOKIES_B64 = os.environ.get("YOUTUBE_COOKIES_B64", "")
+if COOKIES_B64:
+    COOKIES_FILE = "/tmp/cookies.txt"
+    with open(COOKIES_FILE, "w") as f:
+        f.write(base64.b64decode(COOKIES_B64).decode("utf-8"))
 
 
 def require_api_key(f):
@@ -55,7 +64,10 @@ def extract_audio():
 
     try:
         # First, get video info to check duration
-        with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True}) as ydl:
+        info_opts = {"quiet": True, "no_warnings": True}
+        if COOKIES_FILE:
+            info_opts["cookiefile"] = COOKIES_FILE
+        with yt_dlp.YoutubeDL(info_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             duration = info.get("duration", 0)
             title = info.get("title", "audio")
@@ -87,6 +99,8 @@ def extract_audio():
                 }
             ],
         }
+        if COOKIES_FILE:
+            ydl_opts["cookiefile"] = COOKIES_FILE
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
