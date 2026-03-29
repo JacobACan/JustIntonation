@@ -35,7 +35,7 @@ export default function MarkerList() {
   if (markers.length === 0) {
     return (
       <div className="w-full max-w-3xl">
-        <p className="text-center text-xs text-[var(--middleground1)]/50">
+        <p className="text-center text-xs text-[var(--text-tertiary)]">
           Press M to drop markers during playback
         </p>
       </div>
@@ -49,7 +49,7 @@ export default function MarkerList() {
         {markers.map((marker) => (
           <div
             key={marker.id}
-            className="flex items-center gap-2 rounded border border-[var(--middleground1)]/20 px-3 py-1.5"
+            className="flex items-center gap-2 rounded border border-[var(--surface-border-medium)] px-3 py-1.5"
           >
             <button
               onClick={() => handleSeek(marker.time)}
@@ -57,12 +57,12 @@ export default function MarkerList() {
             >
               {marker.label}
             </button>
-            <span className="text-xs text-[var(--middleground1)]/60">
+            <span className="text-xs text-[var(--text-secondary)]">
               {formatTimestamp(marker.time)}
             </span>
             <button
               onClick={() => handleDelete(marker.id)}
-              className="ml-1 text-xs text-[var(--middleground1)]/40 transition-colors hover:cursor-pointer hover:text-[var(--foreground2)]"
+              className="ml-1 text-xs text-[var(--text-tertiary)] transition-colors hover:cursor-pointer hover:text-[var(--foreground2)]"
               aria-label={`Delete marker ${marker.label}`}
             >
               x

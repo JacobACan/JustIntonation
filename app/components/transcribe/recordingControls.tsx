@@ -115,13 +115,13 @@ export default function RecordingControls() {
         <div className="flex gap-4">
           <button
             onClick={handleSave}
-            className="rounded border border-[var(--middleground1)]/40 px-4 py-2 text-xs text-[var(--middleground1)] transition-transform hover:scale-105 hover:cursor-pointer hover:border-[var(--middleground1)] active:scale-95"
+            className="rounded border border-[var(--surface-border-medium)] px-4 py-2 text-xs text-[var(--middleground1)] transition-transform hover:scale-105 hover:cursor-pointer hover:border-[var(--middleground1)] active:scale-95"
           >
             Save
           </button>
           <button
             onClick={handleDiscard}
-            className="rounded border border-[var(--middleground1)]/20 px-4 py-2 text-xs text-[var(--middleground1)]/60 transition-transform hover:scale-105 hover:cursor-pointer hover:text-[var(--middleground1)] active:scale-95"
+            className="rounded border border-[var(--surface-border-medium)] px-4 py-2 text-xs text-[var(--text-secondary)] transition-transform hover:scale-105 hover:cursor-pointer hover:text-[var(--middleground1)] active:scale-95"
           >
             Discard
           </button>
@@ -143,7 +143,7 @@ export default function RecordingControls() {
       ) : (
         <button
           onClick={handleStartRecording}
-          className="flex items-center gap-2 rounded border border-[var(--middleground1)]/40 px-6 py-3 text-sm text-[var(--middleground1)] transition-transform hover:scale-105 hover:cursor-pointer hover:border-[var(--middleground1)] active:scale-95"
+          className="flex items-center gap-2 rounded border border-[var(--surface-border-medium)] px-6 py-3 text-sm text-[var(--middleground1)] transition-transform hover:scale-105 hover:cursor-pointer hover:border-[var(--middleground1)] active:scale-95"
         >
           <svg
             width="16"

@@ -509,7 +509,7 @@ export default function WaveformDisplay({
       {/* Scrollable waveform container */}
       <div
         ref={scrollContainerRef}
-        className="relative overflow-x-auto overflow-y-hidden rounded-b-lg border border-[var(--middleground1)]/10"
+        className="relative overflow-x-auto overflow-y-hidden rounded-b-lg border border-[var(--surface-border)]"
         style={{ height: "160px" }}
         onWheel={handleWheel}
       >
@@ -544,19 +544,19 @@ export default function WaveformDisplay({
       {/* Context menu */}
       {contextMenu && (
         <div
-          className="fixed z-50 rounded border border-[var(--middleground1)]/20 bg-[var(--background2)] py-1 shadow-lg"
+          className="fixed z-50 rounded border border-[var(--surface-border-medium)] bg-[var(--background2)] py-1 shadow-lg"
           style={{ left: contextMenu.x, top: contextMenu.y }}
           onClick={(e) => e.stopPropagation()}
         >
           <button
             onClick={handleStartRename}
-            className="flex w-full px-4 py-1.5 text-left text-xs text-[var(--foreground2)] transition-colors hover:bg-[var(--middleground1)]/10"
+            className="flex w-full px-4 py-1.5 text-left text-xs text-[var(--foreground2)] transition-colors hover:bg-[var(--surface-border)]"
           >
             Rename
           </button>
           <button
             onClick={handleDeleteSelected}
-            className="flex w-full px-4 py-1.5 text-left text-xs text-red-400 transition-colors hover:bg-[var(--middleground1)]/10"
+            className="flex w-full px-4 py-1.5 text-left text-xs text-red-400 transition-colors hover:bg-[var(--surface-border)]"
           >
             Delete
           </button>
@@ -566,7 +566,7 @@ export default function WaveformDisplay({
       {/* Rename input */}
       {renameMarkerId && (
         <div className="flex items-center gap-2">
-          <span className="text-xs text-[var(--middleground1)]/60">
+          <span className="text-xs text-[var(--text-secondary)]">
             Rename:
           </span>
           <input
@@ -581,7 +581,7 @@ export default function WaveformDisplay({
               }
             }}
             onBlur={handleRenameSubmit}
-            className="rounded border border-[var(--middleground1)]/30 bg-[var(--background2)] px-2 py-1 text-xs text-[var(--foreground2)] outline-none focus:border-[var(--middleground1)]"
+            className="rounded border border-[var(--surface-border-medium)] bg-[var(--background2)] px-2 py-1 text-xs text-[var(--foreground2)] outline-none focus:border-[var(--middleground1)]"
           />
         </div>
       )}

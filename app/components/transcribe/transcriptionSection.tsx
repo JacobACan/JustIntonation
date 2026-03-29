@@ -46,8 +46,8 @@ export default function TranscriptionSection({
     <div
       className={`rounded border transition-colors ${
         isExpanded
-          ? "border-[var(--middleground1)]/20"
-          : "border-transparent hover:border-[var(--middleground1)]/10"
+          ? "border-[var(--surface-border-medium)]"
+          : "border-transparent hover:border-[var(--surface-border)]"
       }`}
     >
       {/* Header */}
@@ -68,7 +68,7 @@ export default function TranscriptionSection({
               >
                 &lt;
               </button>
-              <span className="text-xs text-[var(--middleground1)]/60">
+              <span className="text-xs text-[var(--text-secondary)]">
                 Take {totalTakes - selectedTakeIndex} of {totalTakes}
               </span>
               <button
@@ -81,7 +81,7 @@ export default function TranscriptionSection({
             </div>
           )}
           {totalTakes === 1 && (
-            <span className="text-xs text-[var(--middleground1)]/40">
+            <span className="text-xs text-[var(--text-tertiary)]">
               1 take
             </span>
           )}

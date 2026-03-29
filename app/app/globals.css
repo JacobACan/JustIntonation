@@ -15,11 +15,31 @@ The style of this app is handdrawn vector art this means:
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  /* === Base Palette (dark default) === */
   --background: #000000;
-  --background2: #1f1f1f;
+  --background2: #1a1a1a;
   --middleground1: #deb887;
+  --middleground2: #3a2e1e;
   --foreground: #fff5e1;
   --foreground2: #ffffff;
+
+  /* Semantic tokens — tuned per theme for readability */
+  --surface-border: rgba(222, 184, 135, 0.12);
+  --surface-border-medium: rgba(222, 184, 135, 0.25);
+  --text-secondary: rgba(222, 184, 135, 0.65);
+  --text-tertiary: rgba(222, 184, 135, 0.35);
+
+  /* Canvas/waveform colors */
+  --waveform-color: #e8c9a0;
+  --cursor-color: #fff5e1;
+  --marker-color: #fff5e1;
+  --marker-label-bg: rgba(30, 30, 30, 0.8);
+  --marker-selected-color: #ffffff;
+  --marker-selected-line: rgba(255, 255, 255, 0.7);
+  --loop-region-color: rgba(232, 201, 160, 0.2);
+  --loop-border-color: rgba(232, 201, 160, 0.6);
+  --selection-color: rgba(232, 201, 160, 0.15);
+
   /* Piano accent colors */
   --piano-white: #fdf3e6;
   --piano-white-down1: #aaf;
@@ -27,13 +47,6 @@ The style of this app is handdrawn vector art this means:
   --piano-black: var(--middleground1);
   --piano-black-down1: #55f;
   --piano-black-down2: #f55;
-
-  /* === Base Palette === */
-  --background: #000000;
-  --background2: #1f1f1f;
-  --middleground1: #deb887;
-  --foreground: #fff5e1;
-  --foreground2: #ffffff;
 
   /* === Tailwind Theme Variables === */
   --radius: 0.625rem;
@@ -49,7 +62,7 @@ The style of this app is handdrawn vector art this means:
   --primary-foreground: var(--background);
 
   /* Secondary (Softer version of primary) */
-  --secondary: #cfae74; /* slightly muted version of --middleground1 */
+  --secondary: #cfae74;
   --secondary-foreground: var(--background);
 
   /* Muted Backgrounds and Borders */
@@ -60,7 +73,7 @@ The style of this app is handdrawn vector art this means:
   --accent: var(--middleground1);
   --accent-foreground: var(--background);
 
-  /* Destructive (use a red accent variant) */
+  /* Destructive */
   --destructive: #c94f4f;
   --destructive-foreground: var(--foreground2);
 
@@ -69,7 +82,7 @@ The style of this app is handdrawn vector art this means:
   --input: #3a3a3a;
   --ring: var(--middleground1);
 
-  /* Charts (optional custom tints) */
+  /* Charts */
   --chart-1: #deb887;
   --chart-2: #cfae74;
   --chart-3: #b8915e;
@@ -127,23 +140,48 @@ The style of this app is handdrawn vector art this means:
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background1: #000000;
-    --background2: #1f1f1f;
-    --middleground1: #deb887;
-    --foreground1: #ffffff;
-    --foreground2: #fff5e1;
-  }
-}
-
 @media (prefers-color-scheme: light) {
   :root {
-    --foreground1: #000000;
-    --foreground2: #1f1f1f;
-    --middleground1: #deb887;
-    --background1: #ffffff;
-    --background2: #fff5e1;
+    --background: #ffffff;
+    --background2: #fff9f1;
+    --middleground1: #c48a50;
+    --middleground2: #f0e0cc;
+    --foreground: #5c3d1e;
+    --foreground2: #4a3015;
+
+    /* Semantic tokens — saturated warm amber */
+    --surface-border: rgba(196, 138, 80, 0.25);
+    --surface-border-medium: rgba(196, 138, 80, 0.4);
+    --text-secondary: rgba(92, 61, 30, 0.7);
+    --text-tertiary: rgba(92, 61, 30, 0.45);
+
+    /* Canvas/waveform — the original burlywood on white */
+    --waveform-color: #deb887;
+    --cursor-color: #c48a50;
+    --marker-color: #5c3d1e;
+    --marker-label-bg: rgba(255, 249, 241, 0.9);
+    --marker-selected-color: #4a3015;
+    --marker-selected-line: rgba(74, 48, 21, 0.7);
+    --loop-region-color: rgba(222, 184, 135, 0.2);
+    --loop-border-color: rgba(196, 138, 80, 0.5);
+    --selection-color: rgba(222, 184, 135, 0.15);
+
+    --piano-white: #fdf3e6;
+    --piano-black: #5c3d1e;
+
+    --secondary: #d4a060;
+    --muted: #fff4e8;
+    --muted-foreground: #a07850;
+    --border: #e8d0b0;
+    --input: #e8d0b0;
+    --sidebar-border: #e8d0b0;
+    --sidebar-accent: #d4a060;
+
+    --chart-1: #c48a50;
+    --chart-2: #d4a060;
+    --chart-3: #a87040;
+    --chart-4: #5c3d1e;
+    --chart-5: #4a3015;
   }
 }
 
@@ -151,45 +189,6 @@ body {
   background: var(--background2);
   color: var(--middleground1);
   font-size: 2em;
-}
-
-/*
----break---
-
-*/
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
 }
 
 /*

@@ -43,7 +43,7 @@ export default function TranscriptionsPanel({
         <h3 className="mb-2 text-xs font-bold text-[var(--foreground2)]">
           Your Transcriptions
         </h3>
-        <p className="text-center text-xs text-[var(--middleground1)]/40">
+        <p className="text-center text-xs text-[var(--text-tertiary)]">
           Record a transcription to see it here
         </p>
       </div>

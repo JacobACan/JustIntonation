@@ -1,14 +1,31 @@
 import { Marker, Region, WaveformPeak } from "@/types/transcribe";
 
-const WAVEFORM_COLOR = "#deb887";
-const CURSOR_COLOR = "#fff5e1";
-const LOOP_REGION_COLOR = "rgba(222, 184, 135, 0.2)";
-const LOOP_BORDER_COLOR = "rgba(222, 184, 135, 0.6)";
-const MARKER_COLOR = "#fff5e1";
-const MARKER_LABEL_BG = "rgba(30, 30, 30, 0.8)";
-const SELECTION_COLOR = "rgba(222, 184, 135, 0.15)";
-const SELECTED_MARKER_COLOR = "#ffffff";
-const SELECTED_MARKER_LINE = "rgba(255, 255, 255, 0.7)";
+/** Read a CSS custom property from :root, with a fallback. */
+function cssVar(name: string, fallback: string): string {
+  if (typeof document === "undefined") return fallback;
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue(name)
+    .trim();
+  return value || fallback;
+}
+
+function getThemeColors() {
+  return {
+    waveform: cssVar("--waveform-color", "#deb887"),
+    cursor: cssVar("--cursor-color", "#fff5e1"),
+    loopRegion: cssVar("--loop-region-color", "rgba(222, 184, 135, 0.2)"),
+    loopBorder: cssVar("--loop-border-color", "rgba(222, 184, 135, 0.6)"),
+    marker: cssVar("--marker-color", "#fff5e1"),
+    markerLabelBg: cssVar("--marker-label-bg", "rgba(30, 30, 30, 0.8)"),
+    selection: cssVar("--selection-color", "rgba(222, 184, 135, 0.15)"),
+    selectedMarker: cssVar("--marker-selected-color", "#ffffff"),
+    selectedMarkerLine: cssVar(
+      "--marker-selected-line",
+      "rgba(255, 255, 255, 0.7)",
+    ),
+    selectedLabelBg: cssVar("--marker-label-bg", "rgba(255, 255, 255, 0.15)"),
+  };
+}
 
 export function drawWaveform(
   canvas: HTMLCanvasElement,
@@ -22,7 +39,8 @@ export function drawWaveform(
   const barWidth = width / peaks.length;
 
   ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = WAVEFORM_COLOR;
+  const colors = getThemeColors();
+  ctx.fillStyle = colors.waveform;
 
   for (let i = 0; i < peaks.length; i++) {
     const peak = peaks[i];
@@ -50,6 +68,7 @@ export function drawOverlay(
 
   const { width, height } = canvas;
   ctx.clearRect(0, 0, width, height);
+  const colors = getThemeColors();
 
   const timeToX = (time: number) => (time / opts.duration) * width;
 
@@ -57,9 +76,9 @@ export function drawOverlay(
   if (opts.loopRegion) {
     const startX = timeToX(opts.loopRegion.start);
     const endX = timeToX(opts.loopRegion.end);
-    ctx.fillStyle = LOOP_REGION_COLOR;
+    ctx.fillStyle = colors.loopRegion;
     ctx.fillRect(startX, 0, endX - startX, height);
-    ctx.strokeStyle = LOOP_BORDER_COLOR;
+    ctx.strokeStyle = colors.loopBorder;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(startX, 0);
@@ -73,7 +92,7 @@ export function drawOverlay(
   if (opts.selectionRegion) {
     const startX = timeToX(opts.selectionRegion.start);
     const endX = timeToX(opts.selectionRegion.end);
-    ctx.fillStyle = SELECTION_COLOR;
+    ctx.fillStyle = colors.selection;
     ctx.fillRect(startX, 0, endX - startX, height);
   }
 
@@ -83,7 +102,7 @@ export function drawOverlay(
     const isSelected = marker.id === opts.selectedMarkerId;
 
     // Line
-    ctx.strokeStyle = isSelected ? SELECTED_MARKER_LINE : MARKER_COLOR;
+    ctx.strokeStyle = isSelected ? colors.selectedMarkerLine : colors.marker;
     ctx.lineWidth = isSelected ? 2 : 1.5;
     ctx.setLineDash(isSelected ? [] : [4, 3]);
     ctx.beginPath();
@@ -102,17 +121,15 @@ export function drawOverlay(
     const labelX = Math.min(x - labelWidth / 2, width - labelWidth);
     const clampedLabelX = Math.max(0, labelX);
 
-    ctx.fillStyle = isSelected
-      ? "rgba(255, 255, 255, 0.15)"
-      : MARKER_LABEL_BG;
+    ctx.fillStyle = isSelected ? colors.selectedLabelBg : colors.markerLabelBg;
     ctx.fillRect(clampedLabelX, 2, labelWidth, labelHeight);
-    ctx.fillStyle = isSelected ? SELECTED_MARKER_COLOR : MARKER_COLOR;
+    ctx.fillStyle = isSelected ? colors.selectedMarker : colors.marker;
     ctx.fillText(label, clampedLabelX + padding, 14);
   }
 
   // Draw cursor
   const cursorX = timeToX(opts.currentTime);
-  ctx.strokeStyle = CURSOR_COLOR;
+  ctx.strokeStyle = colors.cursor;
   ctx.lineWidth = 2;
   ctx.setLineDash([]);
   ctx.beginPath();
@@ -192,7 +209,8 @@ export function drawTranscriptionCursor(
   ctx.clearRect(0, 0, width, height);
 
   const cursorX = (currentTime / duration) * width;
-  ctx.strokeStyle = CURSOR_COLOR;
+  const colors = getThemeColors();
+  ctx.strokeStyle = colors.cursor;
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(cursorX, 0);

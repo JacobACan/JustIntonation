@@ -9,107 +9,87 @@ export interface ContentChunk {
 export function getContent(): ContentChunk[] {
   const chunks: ContentChunk[] = [];
 
-  // Start with the main title and tagline
+  // Main tagline
   chunks.push({
     title: "JustIntonation",
-    content: "Play what you hear on the piano with relative pitch.",
+    content: "Train your ear to hear music and play it back on the piano.",
   });
 
-  // Overview section
+  // How it works
   chunks.push({
-    title: "Overview",
+    title: "How It Works",
     content:
-      "JustIntonation is a piano based ear training application that helps musicians develop relative pitch on piano.",
+      "Listen to a note, melody, or chord played in a key — then play it back on your MIDI keyboard. Immediate feedback tells you if you got it right.",
   });
 
   chunks.push({
-    title: "How it works",
+    title: "Why Tonal Context?",
     content:
-      "By practicing in the context of a musical center (tonal reference), you'll develop the ability to identify scale degrees.",
+      "Every exercise is grounded in a key. By always hearing sounds against a tonal center, you develop real relative pitch — not just interval guessing.",
   });
 
   chunks.push({
-    title: "Your Journey",
+    title: "The Goal",
     content:
-      "With dedication, and the combination of interval, quality and scale degree recognition you can learn how to directly translate these aspects to the piano in real time.",
+      "Build the ear-to-hand connection: hear something, know what it is, and play it. That's the skill behind learning songs by ear, improvising, and transcribing.",
   });
 
-  // Why JustIntonation
+  // Training modes
   chunks.push({
-    title: "Why JustIntonation?",
+    title: "Train with Notes",
     content:
-      "Scale Degree, Melodic and Chord recognition form the foundation of creative, expressive musicianship.",
+      "Start by identifying individual scale degrees — the foundation of everything you'll hear.",
   });
 
   chunks.push({
-    title: "Accurate Relative Pitch",
+    title: "Train with Melodies",
     content:
-      "Learn to hear and identify notes, chords, and melodies with precision.",
+      "Hear and play back melodic sequences to develop your ear for longer phrases.",
   });
 
   chunks.push({
-    title: "Direct Muscle Memory",
+    title: "Train with Chords",
     content:
-      "Connect what you hear directly to finger positions on your keyboard.",
+      "Recognize chord qualities and voicings by ear — the harmonic side of ear training.",
   });
 
+  // Tools
   chunks.push({
-    title: "Musical Context",
-    content: "Practice within different keys, scales, and harmonic contexts.",
-  });
-
-  chunks.push({
-    title: "Progressive Learning",
+    title: "Conceptualize Scales",
     content:
-      "Start with individual notes, advance to melodies and then chords.",
+      "Visualize diatonic shapes across the keyboard and quiz yourself on scale patterns.",
   });
 
-  // Three Learning Modes
   chunks.push({
-    title: "🎵 Notes",
+    title: "Transcribe by Ear",
     content:
-      "Build your foundation by identifying individual notes in different keys and ranges.",
+      "Upload audio, slow it down, loop sections, and record yourself playing along — a workflow for learning songs by ear.",
   });
 
+  // Features
   chunks.push({
-    title: "🎶 Melodies",
+    title: "Immediate Feedback",
     content:
-      "Master melodic sequences and develop the ability to follow longer musical phrases.",
+      "Know right away whether you played correctly, so you can adjust and improve in real time.",
   });
 
   chunks.push({
-    title: "🎼 Chords",
+    title: "Match Your Level",
     content:
-      "Challenge yourself with chord recognition and harmonic understanding.",
-  });
-
-  // Key Features
-  chunks.push({
-    title: "Instant Feedback",
-    content: "Get immediate feedback on your answers.",
+      "Control the key, scale, range, and mode so the exercises fit where you are right now.",
   });
 
   chunks.push({
-    title: "Customizable",
-    content: "Adjust range, mode, and musical context to match your level.",
-  });
-
-  chunks.push({
-    title: "Accessible",
-    content: "No installation needed. Works directly in your browser.",
-  });
-
-  chunks.push({
-    title: "User Friendly",
+    title: "No Setup Required",
     content:
-      "Info icons and descriptions help beginners understand each setting.",
+      "Runs entirely in your browser. Just connect a MIDI keyboard and start training.",
   });
 
   // Mission
   chunks.push({
-    title: "Our Mission",
+    title: "Why This Exists",
     content:
-      "Provide musicians with focused, effective ear training that connects auditory feedback directly to kinesthetic memory on the keyboard.",
+      "Music is more enjoyable when you can play what you hear. Ear training closes the gap between the music in your head and the music under your fingers.",
   });
 
   return chunks;

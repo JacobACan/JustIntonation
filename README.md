@@ -1,62 +1,55 @@
 # JustIntonation
 
-Train your ear to recognize and play what you hear on the piano.
+A piano ear training app that teaches you to hear music and play it back by ear.
 
 ## Overview
 
-JustIntonation is a piano based ear training application that helps musicians develop relative pitch on piano. By practicing in the context of a musical center (tonal reference), you'll develop the ability to identify scale degrees.  With dedication, and the combination of interval, quality and scale degree recognition you can learn how to directly translate these aspects to the piano in real time.
+JustIntonation trains your ear to recognize what you hear and reproduce it on the piano. Each exercise plays a tonal reference (cadence) to ground you in a key, then challenges you to identify and play back notes, melodies, or chords by ear. Over time, you build the connection between what you hear and where it lives on the keyboard.
 
-## Why JustIntonation?
+## How Ear Training Works Here
 
-Scale Degree, Melodic and Chord recognition form the foundation of creative, expressive musicianship. This app focuses on:
+Every exercise follows the same loop: **listen, identify, play back.**
 
-- **Accurate relative pitch recognition**: Learn to hear and identify notes, chords, and melodies with precision.
-- **Direct muscle memory**: Connect what you hear directly to finger positions on your keyboard
-- **Musical context**: Practice within different keys, scales, and harmonic contexts
-- **Progressive learning**: Start with individual notes, advance to melodies and then chords
+1. A cadence establishes the key and scale
+2. You hear a note, melody, or chord
+3. You play what you heard on your MIDI keyboard
+4. You get immediate feedback on accuracy
 
-## Three Learning Modes
+By always practicing within a tonal context, you develop relative pitch — the ability to recognize scale degrees, intervals, and chord qualities by how they sound against a key center. This is the skill that lets musicians learn songs by ear, improvise, and transcribe.
 
-- **🎵 Notes**: Build your foundation by identifying individual notes in different keys and ranges
-- **🎶 Melodies**: Master melodic sequences and develop the ability to follow longer musical phrases
-- **🎼 Chords**: Challenge yourself with chord recognition and harmonic understanding
+## Training Modes
+
+- **Notes**: Identify individual scale degrees — the building block of everything else
+- **Melodies**: Hear and play back melodic sequences to train your ear for longer phrases
+- **Chords**: Recognize chord qualities and voicings by ear
+
+## Additional Tools
+
+- **Conceptualize Diatonic Shapes**: Visualize and quiz yourself on scale patterns across the keyboard
+- **Transcribe**: Upload audio, slow it down, loop sections, and record yourself playing along — a practice workflow for learning songs by ear
 
 ## Getting Started
 
 ### Requirements
 
-- A MIDI keyboard or piano connected to your device
-- Web browser (Chrome, Firefox, Safari, or Edge)
+- A MIDI keyboard connected to your device
+- A modern web browser (Chrome, Firefox, Safari, or Edge)
 
 ### Quick Start
 
 1. Visit [https://just-intonation.vercel.app/](https://just-intonation.vercel.app/)
-2. Connect your MIDI device
+2. Connect your MIDI keyboard
 3. Select your MIDI device in the app
-4. Click the play button to begin
-5. Customize your learning experience with settings:
-   - **Learning Mode**: Choose between Notes, Chords, or Melodies
-   - **Question Range**: Set the piano range for questions
-   - **Key & Scale**: Practice in different musical contexts
-   - **Cadence Volume**: Adjust the tonal reference volume
-   - And more...
+4. Press play and start training your ear
+5. Adjust settings to match your level — key, scale, range, learning mode, and more
 
 ## Key Features
 
-- **Instant Feedback**: Get immediate feedback on your answers
-- **Customizable Difficulty**: Adjust difficulty of learning
-- **No Installation**: Works directly in your browser
-
-## Project Structure
-
-The app is built with [Next.js](https://nextjs.org/) and includes:
-
-- Interactive piano visualization
-- MIDI input handling
-- Comprehensive settings system
-- State machine for learning logic
-- Web Audio API for sound generation
+- **Immediate feedback**: Know right away whether you played correctly
+- **Customizable difficulty**: Control the range, key, scale, and mode to match your skill level
+- **No installation**: Runs entirely in the browser
+- **Tonal context**: Every exercise is grounded in a key, so you develop real relative pitch
 
 ## Mission
 
-I believe that accurate relative pitch, melodic, and chord recognition is essential for creative, expressive musicianship. The goal of this app is to provide musicians with focused, effective ear training that connects auditory feedback directly to kinesthetic memory on the keyboard.
+Music is more enjoyable when you can play what you hear. Ear training closes the gap between the music in your head and the music under your fingers — so you can sit down at a piano and play the way you actually hear it.

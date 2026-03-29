@@ -159,7 +159,7 @@ export default function TranscriptionWaveform({
       <div className="flex items-center gap-3">
         <button
           onClick={handlePlayPause}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--middleground1)]/30 transition-transform hover:scale-110 hover:cursor-pointer active:scale-95"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--surface-border-medium)] transition-transform hover:scale-110 hover:cursor-pointer active:scale-95"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--middleground1)" stroke="none">
             {isPlaying ? (
@@ -172,7 +172,7 @@ export default function TranscriptionWaveform({
             )}
           </svg>
         </button>
-        <p className="text-xs text-[var(--middleground1)]/40">Could not load waveform</p>
+        <p className="text-xs text-[var(--text-tertiary)]">Could not load waveform</p>
       </div>
     );
   }
@@ -182,7 +182,7 @@ export default function TranscriptionWaveform({
       {/* Play/pause button */}
       <button
         onClick={handlePlayPause}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--middleground1)]/30 transition-transform hover:scale-110 hover:cursor-pointer active:scale-95"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--surface-border-medium)] transition-transform hover:scale-110 hover:cursor-pointer active:scale-95"
         aria-label={isPlaying ? "Pause transcription" : "Play transcription"}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--middleground1)" stroke="none">
@@ -204,7 +204,7 @@ export default function TranscriptionWaveform({
             className="flex items-center justify-center rounded bg-[var(--background2)]"
             style={{ height: `${WAVEFORM_HEIGHT}px` }}
           >
-            <div className="h-4 w-4 animate-spin rounded-full border border-[var(--middleground1)]/20 border-t-[var(--middleground1)]" />
+            <div className="h-4 w-4 animate-spin rounded-full border border-[var(--surface-border-medium)] border-t-[var(--middleground1)]" />
           </div>
         )}
         {peaks && (

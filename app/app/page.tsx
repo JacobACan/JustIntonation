@@ -43,16 +43,47 @@ export default function Home() {
           viewBox="0 0 48 48"
           fill="none"
           stroke="var(--middleground1)"
-          strokeWidth="2.5"
+          strokeWidth="1"
           strokeLinecap="round"
           strokeLinejoin="round"
         >
-          <polygon
-            points="20,16 34,24 20,32"
-            fill="var(--middleground1)"
-            stroke="var(--middleground1)"
-            strokeLinejoin="round"
-          />
+          {/* White keys - C D E F G A B */}
+          {[0, 1, 2, 3, 4, 5, 6].map((i) => {
+            const x = 4 + i * 5.7;
+            const diatonic = [0, 1, 2, 3, 4, 5, 6];
+            const isHighlighted = diatonic.includes(i);
+            return (
+              <rect
+                key={`w${i}`}
+                x={x}
+                y={12}
+                width={5.2}
+                height={24}
+                rx={0.5}
+                fill={
+                  isHighlighted ? "var(--middleground1)" : "var(--background)"
+                }
+                stroke="var(--middleground1)"
+              />
+            );
+          })}
+          {/* Black keys - between C-D, D-E, F-G, G-A, A-B */}
+          {[0, 1, 3, 4, 5].map((i) => {
+            const whiteX = 4 + i * 5.7;
+            const x = whiteX + 3.5;
+            return (
+              <rect
+                key={`b${i}`}
+                x={x}
+                y={12}
+                width={3.8}
+                height={15}
+                rx={0.5}
+                fill="var(--background)"
+                stroke="var(--middleground1)"
+              />
+            );
+          })}
         </svg>
         <span className="text-sm font-bold text-[var(--middleground1)]">
           Master Diatonic Shapes

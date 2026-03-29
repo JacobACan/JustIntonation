@@ -2,7 +2,10 @@
 
 import { useContext, useEffect, useCallback, useRef, useState } from "react";
 import { useSelector } from "@xstate/react";
-import { TranscribeMachineContext } from "@/components/providers/transcribeProvider";
+import {
+  TranscribeMachineContext,
+  TrackManagerContext,
+} from "@/components/providers/transcribeProvider";
 import { TranscribeEvent, TranscribeState } from "@/machines/transcribeProcess";
 import type { DualTrackAudioEngine } from "@/lib/transcribeAudio";
 import { decodeRecordingBlob } from "@/lib/transcribeActors";
@@ -14,13 +17,23 @@ import KeybindsPanel from "@/components/transcribe/keybindsPanel";
 import BackIcon from "@/components/icon/backIcon";
 import { SPEED_PRESETS } from "@/constants/transcribeSettings";
 import { Slider } from "@/components/ui/slider";
+import { loadZoom, saveZoom } from "@/lib/transcribeStorage";
 
-const NUDGE_FRACTION = 0.1; // nudge 10% of visible window
+const NUDGE_FRACTION = 0.05; // nudge 5% of visible window
 
 function VolumeIcon({ volume }: { volume: number }) {
   if (volume === 0) {
     return (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <path d="M11 5L6 9H2v6h4l5 4V5z" />
         <line x1="23" y1="9" x2="17" y2="15" />
         <line x1="17" y1="9" x2="23" y2="15" />
@@ -29,14 +42,32 @@ function VolumeIcon({ volume }: { volume: number }) {
   }
   if (volume < 0.5) {
     return (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <path d="M11 5L6 9H2v6h4l5 4V5z" />
         <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
       </svg>
     );
   }
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M11 5L6 9H2v6h4l5 4V5z" />
       <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
       <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
@@ -47,9 +78,31 @@ function VolumeIcon({ volume }: { volume: number }) {
 export default function TranscribePage() {
   const service = useContext(TranscribeMachineContext);
   const engineRef = useRef<DualTrackAudioEngine | null>(null);
+  const trackManager = useContext(TrackManagerContext);
 
   const [showKeybinds, setShowKeybinds] = useState(false);
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoomState] = useState(1);
+  const setZoom = useCallback(
+    (v: number | ((prev: number) => number)) => {
+      setZoomState((prev) => {
+        const next = typeof v === "function" ? v(prev) : v;
+        if (trackManager.activeTrackId) {
+          saveZoom(trackManager.activeTrackId, next);
+        }
+        return next;
+      });
+    },
+    [trackManager.activeTrackId],
+  );
+
+  // Restore zoom when active track changes
+  useEffect(() => {
+    if (trackManager.activeTrackId) {
+      setZoomState(loadZoom(trackManager.activeTrackId));
+    } else {
+      setZoomState(1);
+    }
+  }, [trackManager.activeTrackId]);
 
   // === IMPERATIVE PLAYBACK STATE ===
   const stopRecordingRef = useRef<(() => void) | null>(null);
@@ -61,6 +114,7 @@ export default function TranscribePage() {
   const animLoopRef = useRef<number | null>(null);
   const isRecordingRef = useRef(false);
   const loopRegionRef = useRef<{ start: number; end: number } | null>(null);
+  const syncOffsetMsRef = useRef(0);
 
   // Volume control hover state
   const [showVolume, setShowVolume] = useState(false);
@@ -78,6 +132,7 @@ export default function TranscribePage() {
 
   // Reactive playing state for UI (mirrors isPlayingRef)
   const [isPlayingState, setIsPlayingState] = useState(false);
+  const [engineReady, setEngineReady] = useState(false);
 
   // Which tracks are currently active (audible) — refs for logic, state for UI
   const refActiveRef = useRef(false);
@@ -130,6 +185,10 @@ export default function TranscribePage() {
     service!,
     (state) => state.context.transcriptionVolume,
   );
+  const syncOffsetMs = useSelector(
+    service!,
+    (state) => state.context.syncOffsetMs,
+  );
 
   const handleVolumeChange = useCallback(
     (value: number[]) => {
@@ -168,12 +227,15 @@ export default function TranscribePage() {
         }
         engine.setRate(playbackRate);
         engineRef.current = engine;
+        setEngineReady(true);
       });
 
     return () => {
       cancelled = true;
       engineRef.current?.dispose();
       engineRef.current = null;
+      currentRecordingId.current = null;
+      setEngineReady(false);
     };
   }, [audioBuffer]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -211,9 +273,12 @@ export default function TranscribePage() {
             const refTime = engineRef.current.getCurrentRefTime();
             const regDur = lr.end - lr.start;
             const tDur = engineRef.current.getTransDuration();
+            const offsetSec = syncOffsetMsRef.current / 1000;
             const tTime =
-              regDur > 0 ? ((refTime - lr.start) / regDur) * tDur : 0;
-            engineRef.current.playTrans(Math.max(0, tTime));
+              regDur > 0
+                ? ((refTime - lr.start) / regDur) * tDur - offsetSec
+                : 0;
+            engineRef.current.playTrans(Math.max(0, Math.min(tTime, tDur)));
           }
         }
       },
@@ -222,12 +287,16 @@ export default function TranscribePage() {
     return () => {
       cancelled = true;
     };
-  }, [currentRecording?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentRecording?.id, engineReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Keep loopRegion ref in sync for animation loop closure
   useEffect(() => {
     loopRegionRef.current = loopRegion;
   }, [loopRegion]);
+
+  useEffect(() => {
+    syncOffsetMsRef.current = syncOffsetMs;
+  }, [syncOffsetMs]);
 
   // Sync engine seek when machine currentTime changes while not playing
   useEffect(() => {
@@ -241,7 +310,9 @@ export default function TranscribePage() {
           const tDur = engine.getTransDuration();
           if (regDur > 0) {
             const regionTime = currentTime - loopRegion.start;
-            engine.seekTrans(Math.max(0, (regionTime / regDur) * tDur));
+            const offsetSec = syncOffsetMs / 1000;
+            const mapped = (regionTime / regDur) * tDur - offsetSec;
+            engine.seekTrans(Math.max(0, Math.min(mapped, tDur)));
           }
         }
       }
@@ -263,9 +334,12 @@ export default function TranscribePage() {
       const tDur = engine.getTransDuration();
       if (regDur <= 0) return 0;
       const regionTime = refTime - loopRegion.start;
-      return Math.max(0, (regionTime / regDur) * tDur);
+      // Apply sync offset (positive = transcription starts later)
+      const offsetSec = syncOffsetMs / 1000;
+      const mapped = (regionTime / regDur) * tDur - offsetSec;
+      return Math.max(0, Math.min(mapped, tDur));
     },
-    [loopRegion],
+    [loopRegion, syncOffsetMs],
   );
 
   /** Convert transcription time to reference time */
@@ -300,11 +374,10 @@ export default function TranscribePage() {
         if (engine.hasTranscription() && transActiveRef.current) {
           const regDur = lr.end - lr.start;
           const tDur = engine.getTransDuration();
+          const offsetSec = syncOffsetMsRef.current / 1000;
           const tTime =
-            regDur > 0
-              ? ((loopTo - lr.start) / regDur) * tDur
-              : 0;
-          engine.playTrans(Math.max(0, tTime));
+            regDur > 0 ? ((loopTo - lr.start) / regDur) * tDur - offsetSec : 0;
+          engine.playTrans(Math.max(0, Math.min(tTime, tDur)));
         }
         service?.send({ type: TranscribeEvent.UPDATE_TIME, time: loopTo });
       } else {
@@ -642,11 +715,7 @@ export default function TranscribePage() {
         e.preventDefault();
         const sorted = [...markers].sort((a, b) => a.time - b.time);
         // Build section boundaries: [0, m1, m2, ..., mn, duration]
-        const boundaries = [
-          0,
-          ...sorted.map((m) => m.time),
-          duration,
-        ];
+        const boundaries = [0, ...sorted.map((m) => m.time), duration];
 
         // Find which section the current loopRegion or playhead is in
         const refTime = loopRegion ? loopRegion.start : currentTime;
@@ -684,7 +753,8 @@ export default function TranscribePage() {
         const visibleDuration = duration / zoom;
         const nudge = visibleDuration * NUDGE_FRACTION;
         const time = engineRef.current?.getCurrentRefTime() ?? currentTime;
-        const newTime = Math.max(0, time - nudge);
+        const minBound = loopRegion ? loopRegion.start : 0;
+        const newTime = Math.max(minBound, time - nudge);
         // Nudge does NOT update snap-back
         const engine = engineRef.current;
         if (engine) {
@@ -701,7 +771,8 @@ export default function TranscribePage() {
         const visibleDuration = duration / zoom;
         const nudge = visibleDuration * NUDGE_FRACTION;
         const time = engineRef.current?.getCurrentRefTime() ?? currentTime;
-        const newTime = Math.min(duration, time + nudge);
+        const maxBound = loopRegion ? loopRegion.end : duration;
+        const newTime = Math.min(maxBound, time + nudge);
         const engine = engineRef.current;
         if (engine) {
           engine.seekRef(newTime);
@@ -816,7 +887,14 @@ export default function TranscribePage() {
     loopStartPositionRef.current = startTime;
     service.send({ type: TranscribeEvent.SEEK, time: startTime });
     startAnimLoop();
-  }, [service, currentTime, loopRegion, transcriptionVolume, startAnimLoop, setRefActiveState]);
+  }, [
+    service,
+    currentTime,
+    loopRegion,
+    transcriptionVolume,
+    startAnimLoop,
+    setRefActiveState,
+  ]);
 
   // Stop reference when recording ends
   const handleRecordingStop = useCallback(() => {
@@ -858,7 +936,7 @@ export default function TranscribePage() {
         </h1>
         <button
           onClick={() => setShowKeybinds((prev) => !prev)}
-          className="text-xs text-[var(--middleground1)]/60 transition-colors hover:cursor-pointer hover:text-[var(--middleground1)]"
+          className="text-xs text-[var(--text-secondary)] transition-colors hover:cursor-pointer hover:text-[var(--middleground1)]"
           aria-label="Toggle keybinds panel"
         >
           <svg
@@ -879,74 +957,101 @@ export default function TranscribePage() {
         </button>
       </div>
 
-      {/* Idle — file upload */}
-      {isIdle && <AudioSourceInput />}
-
-      {/* Loading */}
-      {isLoading && (
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--middleground1)]/20 border-t-[var(--middleground1)]" />
-          <p className="text-xs text-[var(--middleground1)]">
-            Decoding {fileName}...
-          </p>
-        </div>
-      )}
-
-      {/* Error */}
-      {isError && (
-        <div className="flex flex-col items-center gap-4">
-          <p className="text-sm text-red-400">{errorMessage}</p>
-          <button
-            onClick={handleReset}
-            className="rounded border border-[var(--middleground1)]/40 px-4 py-2 text-xs text-[var(--middleground1)] transition-transform hover:scale-105 hover:cursor-pointer active:scale-95"
-          >
-            Try Again
-          </button>
-        </div>
-      )}
-
-      {/* Ready — main workspace */}
-      {isReady && (
-        <div className="flex w-full flex-col items-center gap-6">
-          <div className="w-full max-w-3xl">
-            {/* Reference control bar */}
-            <div
-              className="flex items-center gap-4 rounded-t-lg border border-b-0 border-[var(--middleground1)]/10 px-4 py-2"
+      {/* Always show Reference Track + Transcription Track */}
+      <div className="flex w-full flex-col items-center gap-6">
+        <div className="w-full max-w-3xl">
+          {/* Reference Track control bar */}
+          <div className="flex items-center gap-4 rounded-t-lg border border-b-0 border-[var(--surface-border)] px-4 py-2">
+            {/* Hold-to-play button for reference */}
+            <button
+              onPointerDown={handleRefHoldStart}
+              onPointerUp={handleRefHoldEnd}
+              onPointerLeave={handleRefHoldEnd}
+              disabled={!isReady}
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded border border-[var(--surface-border-medium)] text-[var(--middleground1)] transition-colors hover:cursor-pointer hover:border-[var(--middleground1)] active:bg-[var(--surface-border)] disabled:opacity-30 disabled:hover:cursor-default"
+              aria-label={
+                refActive ? "Playing reference" : "Press down to play reference"
+              }
+              title="Press down to play (1)"
             >
-              {/* Hold-to-play button for reference */}
-              <button
-                onPointerDown={handleRefHoldStart}
-                onPointerUp={handleRefHoldEnd}
-                onPointerLeave={handleRefHoldEnd}
-                className="flex h-6 w-6 shrink-0 items-center justify-center rounded border border-[var(--middleground1)]/30 text-[var(--middleground1)] transition-colors hover:cursor-pointer hover:border-[var(--middleground1)] active:bg-[var(--middleground1)]/10"
-                aria-label={refActive ? "Playing reference" : "Press down to play reference"}
-                title="Press down to play (1)"
-              >
-                {refActive ? (
-                  <svg width="10" height="12" viewBox="0 0 10 12" fill="currentColor">
-                    <rect x="0" y="0" width="3.5" height="12" rx="0.5" />
-                    <rect x="6.5" y="0" width="3.5" height="12" rx="0.5" />
+              {refActive ? (
+                <svg
+                  width="10"
+                  height="12"
+                  viewBox="0 0 10 12"
+                  fill="currentColor"
+                >
+                  <rect x="0" y="0" width="3.5" height="12" rx="0.5" />
+                  <rect x="6.5" y="0" width="3.5" height="12" rx="0.5" />
+                </svg>
+              ) : (
+                <svg
+                  width="10"
+                  height="12"
+                  viewBox="0 0 10 12"
+                  fill="currentColor"
+                >
+                  <polygon points="0,0 10,6 0,12" />
+                </svg>
+              )}
+            </button>
+            {/* Track navigation */}
+            {trackManager.tracks.length > 1 && (
+              <div className="flex shrink-0 items-center gap-1">
+                <button
+                  onClick={trackManager.prevTrack}
+                  disabled={trackManager.activeTrackIndex <= 0}
+                  className="flex h-5 w-5 items-center justify-center text-[var(--text-secondary)] transition-colors hover:text-[var(--middleground1)] disabled:opacity-20"
+                  aria-label="Previous track"
+                >
+                  <svg
+                    width="8"
+                    height="10"
+                    viewBox="0 0 8 10"
+                    fill="currentColor"
+                  >
+                    <polygon points="8,0 0,5 8,10" />
                   </svg>
-                ) : (
-                  <svg width="10" height="12" viewBox="0 0 10 12" fill="currentColor">
-                    <polygon points="0,0 10,6 0,12" />
+                </button>
+                <span className="text-xs text-[var(--text-tertiary)] tabular-nums">
+                  {trackManager.activeTrackIndex + 1}/
+                  {trackManager.tracks.length}
+                </span>
+                <button
+                  onClick={trackManager.nextTrack}
+                  disabled={
+                    trackManager.activeTrackIndex >=
+                    trackManager.tracks.length - 1
+                  }
+                  className="flex h-5 w-5 items-center justify-center text-[var(--text-secondary)] transition-colors hover:text-[var(--middleground1)] disabled:opacity-20"
+                  aria-label="Next track"
+                >
+                  <svg
+                    width="8"
+                    height="10"
+                    viewBox="0 0 8 10"
+                    fill="currentColor"
+                  >
+                    <polygon points="0,0 8,5 0,10" />
                   </svg>
-                )}
-              </button>
-              <h3 className="shrink-0 text-xs font-bold text-[var(--foreground2)]">
-                {fileName}
-              </h3>
-              {/* Ref volume during transcription — T label + icon with expanding slider */}
+                </button>
+              </div>
+            )}
+            <h3 className="shrink-0 text-xs font-bold text-[var(--foreground2)]">
+              {fileName || "Reference"}
+            </h3>
+            {/* Ref volume during transcription — T label + icon with expanding slider */}
+            {isReady && (
               <div
                 className="relative flex shrink-0 items-center"
                 onMouseEnter={handleVolumeEnter}
                 onMouseLeave={handleVolumeLeave}
               >
-                <span className="mr-0.5 text-xs font-bold text-[var(--middleground1)]/40">
+                <span className="mr-0.5 text-xs font-bold text-[var(--text-tertiary)]">
                   T
                 </span>
                 <div
-                  className="flex h-5 w-5 items-center justify-center text-[var(--middleground1)]/60 transition-colors hover:text-[var(--middleground1)]"
+                  className="flex h-5 w-5 items-center justify-center text-[var(--text-secondary)] transition-colors hover:text-[var(--middleground1)]"
                   title="Volume during transcription"
                 >
                   <VolumeIcon volume={transcriptionVolume} />
@@ -971,22 +1076,76 @@ export default function TranscribePage() {
                   </span>
                 </div>
               </div>
-              <div className="flex-1" />
-              {/* Zoom controls */}
-              <div className="flex items-center gap-2">
+            )}
+            <div className="flex-1" />
+            {/* Add / Remove track */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={trackManager.prepareNewTrack}
+                className="flex h-5 w-5 items-center justify-center rounded text-[var(--text-tertiary)] transition-colors hover:cursor-pointer hover:text-[var(--middleground1)]"
+                aria-label="Add reference track"
+                title="Add track"
+              >
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                >
+                  <line x1="6" y1="1" x2="6" y2="11" />
+                  <line x1="1" y1="6" x2="11" y2="6" />
+                </svg>
+              </button>
+              {trackManager.tracks.length > 0 && isReady && (
+                <button
+                  onClick={trackManager.removeCurrentTrack}
+                  className="flex h-5 w-5 items-center justify-center rounded text-[var(--text-tertiary)] transition-colors hover:cursor-pointer hover:text-red-400"
+                  aria-label="Remove current track"
+                  title="Remove track"
+                >
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 10 10"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  >
+                    <line x1="1" y1="1" x2="9" y2="9" />
+                    <line x1="9" y1="1" x2="1" y2="9" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Reference Track waveform area */}
+          {isReady ? (
+            <div className="relative">
+              <WaveformDisplay
+                zoom={zoom}
+                onZoomChange={setZoom}
+                onSeek={handleWaveformSeek}
+              />
+              {/* Zoom controls overlaid on waveform */}
+              <div className="absolute top-2 right-3 z-10 flex items-center gap-1.5 rounded border border-[var(--surface-border)] bg-[var(--background)]/40 px-1.5 py-0.5 backdrop-blur-sm">
                 <button
                   onClick={() =>
                     setZoom((z) => Math.max(1, z * (1 - 0.15 * 3)))
                   }
                   disabled={zoom <= 1}
-                  className="flex h-5 w-5 items-center justify-center rounded border border-[var(--middleground1)]/30 text-xs text-[var(--middleground1)] transition-transform hover:scale-110 hover:cursor-pointer active:scale-95 disabled:opacity-30 disabled:hover:scale-100"
+                  className="flex h-4 w-4 items-center justify-center rounded text-xs text-[var(--middleground1)] transition-transform hover:scale-110 hover:cursor-pointer active:scale-95 disabled:opacity-30 disabled:hover:scale-100"
                   aria-label="Zoom out"
                 >
                   -
                 </button>
                 <button
                   onClick={() => setZoom(1)}
-                  className="text-xs text-[var(--middleground1)]/60 transition-colors hover:cursor-pointer hover:text-[var(--middleground1)]"
+                  className="text-xs text-[var(--text-secondary)] transition-colors hover:cursor-pointer hover:text-[var(--middleground1)]"
                 >
                   {zoom === 1 ? "1x" : `${zoom.toFixed(1)}x`}
                 </button>
@@ -995,38 +1154,85 @@ export default function TranscribePage() {
                     setZoom((z) => Math.min(50, z * (1 + 0.15 * 3)))
                   }
                   disabled={zoom >= 50}
-                  className="flex h-5 w-5 items-center justify-center rounded border border-[var(--middleground1)]/30 text-xs text-[var(--middleground1)] transition-transform hover:scale-110 hover:cursor-pointer active:scale-95 disabled:opacity-30 disabled:hover:scale-100"
+                  className="flex h-4 w-4 items-center justify-center rounded text-xs text-[var(--middleground1)] transition-transform hover:scale-110 hover:cursor-pointer active:scale-95 disabled:opacity-30 disabled:hover:scale-100"
                   aria-label="Zoom in"
                 >
                   +
                 </button>
               </div>
             </div>
-            <WaveformDisplay
-              zoom={zoom}
-              onZoomChange={setZoom}
-              onSeek={handleWaveformSeek}
-            />
-          </div>
-          <PlaybackControls
-            isPlaying={isPlayingState}
-            onTogglePlayback={handleTogglePlayback}
-          />
-          <TranscriptionWorkspace
-            referenceRegionTime={referenceRegionTime}
-            regionDuration={regionDuration}
-            onSeekFromTranscription={handleSeekFromTranscription}
-            onRecordingStateChange={handleRecordingStateChange}
-            onTransHoldStart={handleTransHoldStart}
-            onTransHoldEnd={handleTransHoldEnd}
-            onTogglePlayback={handleTogglePlayback}
-            isActive={transActive}
-            onRecordingStart={handleRecordingStart}
-            onRecordingStop={handleRecordingStop}
-            stopRecordingRef={stopRecordingRef}
-          />
+          ) : trackManager.activeTrackId && (isIdle || isLoading) ? (
+            /* Loading skeleton while restoring from storage */
+            <div
+              className="flex items-center justify-center rounded-b-lg border border-[var(--surface-border)]"
+              style={{ height: "160px" }}
+            >
+              <div className="flex w-full flex-col gap-2 px-6">
+                <div className="flex items-end gap-px">
+                  {Array.from({ length: 60 }, (_, i) => {
+                    const h = 8 + Math.sin(i * 0.4) * 20 + Math.random() * 15;
+                    return (
+                      <div
+                        key={i}
+                        className="flex-1 animate-pulse rounded-sm bg-[var(--surface-border)]"
+                        style={{
+                          height: `${h}px`,
+                          animationDelay: `${i * 20}ms`,
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+                <p className="text-center text-xs text-[var(--text-tertiary)]">
+                  Loading track...
+                </p>
+              </div>
+            </div>
+          ) : (
+            <AudioSourceInput />
+          )}
+
+          {/* Loading / Error overlays */}
+          {isLoading && (
+            <div className="flex items-center justify-center py-4">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-[var(--surface-border-medium)] border-t-[var(--middleground1)]" />
+              <p className="ml-3 text-xs text-[var(--middleground1)]">
+                Decoding {fileName}...
+              </p>
+            </div>
+          )}
+          {isError && (
+            <div className="flex items-center justify-center gap-3 py-4">
+              <p className="text-xs text-red-400">{errorMessage}</p>
+              <button
+                onClick={handleReset}
+                className="rounded border border-[var(--surface-border-medium)] px-3 py-1 text-xs text-[var(--middleground1)] transition-transform hover:scale-105 hover:cursor-pointer active:scale-95"
+              >
+                Try Again
+              </button>
+            </div>
+          )}
         </div>
-      )}
+
+        <PlaybackControls
+          isPlaying={isPlayingState}
+          onTogglePlayback={handleTogglePlayback}
+        />
+        <TranscriptionWorkspace
+          referenceRegionTime={referenceRegionTime}
+          regionDuration={regionDuration}
+          onSeekFromTranscription={handleSeekFromTranscription}
+          onRecordingStateChange={handleRecordingStateChange}
+          onTransHoldStart={handleTransHoldStart}
+          onTransHoldEnd={handleTransHoldEnd}
+          onTogglePlayback={handleTogglePlayback}
+          isActive={transActive}
+          onRecordingStart={handleRecordingStart}
+          onRecordingStop={handleRecordingStop}
+          stopRecordingRef={stopRecordingRef}
+          referenceBuffer={audioBuffer}
+        />
+      </div>
     </div>
   );
 }

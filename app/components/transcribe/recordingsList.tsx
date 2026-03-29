@@ -35,15 +35,15 @@ export default function RecordingsList() {
         {recordings.map((recording, index) => (
           <div
             key={recording.id}
-            className="flex items-center gap-4 rounded border border-[var(--middleground1)]/20 px-4 py-3"
+            className="flex items-center gap-4 rounded border border-[var(--surface-border-medium)] px-4 py-3"
           >
             <span className="text-xs text-[var(--middleground1)]">
               Take {index + 1}
             </span>
-            <span className="text-xs text-[var(--middleground1)]/60">
+            <span className="text-xs text-[var(--text-secondary)]">
               {formatDuration(recording.duration)}
             </span>
-            <span className="text-xs text-[var(--middleground1)]/40">
+            <span className="text-xs text-[var(--text-tertiary)]">
               {formatRegion(recording.region)}
             </span>
             <audio

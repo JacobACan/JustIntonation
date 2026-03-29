@@ -54,11 +54,11 @@ export default function KeybindsPanel({
       {/* Gradient fade on left edge */}
       <div className="from-background pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r to-transparent" />
 
-      <div className="bg-background relative z-20 flex h-full flex-col overflow-y-auto border-l border-[var(--middleground1)]/10 px-6 pt-16">
+      <div className="bg-background relative z-20 flex h-full flex-col overflow-y-auto border-l border-[var(--surface-border)] px-6 pt-16">
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 text-xs text-[var(--middleground1)]/50 transition-colors hover:cursor-pointer hover:text-[var(--middleground1)]"
+          className="absolute top-5 right-5 text-xs text-[var(--text-tertiary)] transition-colors hover:cursor-pointer hover:text-[var(--middleground1)]"
           aria-label="Close keybinds panel"
         >
           x
@@ -71,7 +71,7 @@ export default function KeybindsPanel({
         <div className="flex flex-col gap-6">
           {KEYBIND_GROUPS.map((group) => (
             <div key={group.label}>
-              <h3 className="mb-2 text-xs font-bold text-[var(--middleground1)]/40 uppercase tracking-wider">
+              <h3 className="mb-2 text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider">
                 {group.label}
               </h3>
               <div className="flex flex-col gap-3">
@@ -80,10 +80,10 @@ export default function KeybindsPanel({
                     key={bind.keys}
                     className="flex items-start justify-between gap-4"
                   >
-                    <kbd className="shrink-0 rounded border border-[var(--middleground1)]/20 bg-[var(--background2)] px-2 py-0.5 text-xs text-[var(--foreground2)]">
+                    <kbd className="shrink-0 rounded border border-[var(--surface-border-medium)] bg-[var(--background2)] px-2 py-0.5 text-xs text-[var(--foreground2)]">
                       {bind.keys}
                     </kbd>
-                    <span className="text-right text-xs text-[var(--middleground1)]/70">
+                    <span className="text-right text-xs text-[var(--text-secondary)]">
                       {bind.description}
                     </span>
                   </div>

@@ -54,7 +54,7 @@ export default function PlaybackControls({
   }, []);
 
   return (
-    <div className="fixed bottom-0 left-0 z-20 w-full border-t border-[var(--middleground1)]/10 bg-[var(--background)] px-4 py-3">
+    <div className="fixed bottom-0 left-0 z-20 w-full border-t border-[var(--surface-border)] bg-[var(--background)] px-4 py-3">
       <div className="mx-auto flex max-w-3xl flex-col gap-3">
         <div className="flex items-center gap-6">
           {/* Time display */}
@@ -82,9 +82,9 @@ export default function PlaybackControls({
 
           {/* Progress bar */}
           <div className="flex-1">
-            <div className="h-1 w-full rounded-full bg-[var(--middleground1)]/10">
+            <div className="h-1 w-full rounded-full bg-[var(--surface-border)]">
               <div
-                className="h-1 rounded-full bg-[var(--middleground1)]/40 transition-[width] duration-100"
+                className="h-1 rounded-full bg-[var(--surface-border-medium)] transition-[width] duration-100"
                 style={{
                   width: duration > 0 ? `${(currentTime / duration) * 100}%` : "0%",
                 }}
@@ -93,7 +93,7 @@ export default function PlaybackControls({
           </div>
 
           {/* Duration */}
-          <span className="w-16 text-right text-xs text-[var(--middleground1)]/60">
+          <span className="w-16 text-right text-xs text-[var(--text-secondary)]">
             {formatTime(duration)}
           </span>
 
@@ -105,12 +105,12 @@ export default function PlaybackControls({
           >
             <button
               onClick={() => setOpen((v) => !v)}
-              className="rounded border border-[var(--middleground1)]/20 px-2.5 py-1 text-xs text-[var(--middleground1)] transition-colors hover:border-[var(--middleground1)]/40 hover:cursor-pointer"
+              className="rounded border border-[var(--surface-border-medium)] px-2.5 py-1 text-xs text-[var(--middleground1)] transition-colors hover:border-[var(--surface-border-medium)] hover:cursor-pointer"
             >
               {playbackRate}x
             </button>
             {open && (
-              <div className="absolute bottom-full right-0 mb-1 rounded border border-[var(--middleground1)]/20 bg-[var(--background)] py-1 shadow-lg">
+              <div className="absolute bottom-full right-0 mb-1 rounded border border-[var(--surface-border-medium)] bg-[var(--background)] py-1 shadow-lg">
                 {[...SPEED_PRESETS].reverse().map((rate) => (
                   <button
                     key={rate}
@@ -118,10 +118,10 @@ export default function PlaybackControls({
                       setSpeed(rate);
                       setOpen(false);
                     }}
-                    className={`flex w-full px-4 py-1 text-xs transition-colors hover:bg-[var(--middleground1)]/10 ${
+                    className={`flex w-full px-4 py-1 text-xs transition-colors hover:bg-[var(--surface-border)] ${
                       rate === playbackRate
                         ? "text-[var(--foreground2)]"
-                        : "text-[var(--middleground1)]/70"
+                        : "text-[var(--text-secondary)]"
                     }`}
                   >
                     {rate}x

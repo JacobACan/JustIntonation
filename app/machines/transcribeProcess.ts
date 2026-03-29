@@ -20,6 +20,8 @@ export enum TranscribeEvent {
   DISCARD_RECORDING = "DISCARD_RECORDING",
   UPDATE_TIME = "UPDATE_TIME",
   SET_TRANSCRIPTION_VOLUME = "SET_TRANSCRIPTION_VOLUME",
+  SET_SYNC_OFFSET = "SET_SYNC_OFFSET",
+  RESTORE = "RESTORE",
   RESET = "RESET",
 }
 
@@ -96,6 +98,16 @@ type SetTranscriptionVolumeEvent = {
   volume: number;
 };
 
+type SetSyncOffsetEvent = {
+  type: TranscribeEvent.SET_SYNC_OFFSET;
+  offsetMs: number;
+};
+
+type RestoreEvent = {
+  type: TranscribeEvent.RESTORE;
+  context: Partial<TranscribeContext>;
+};
+
 export type TranscribeEvents =
   | LoadFileEvent
   | SetSpeedEvent
@@ -113,6 +125,8 @@ export type TranscribeEvents =
   | { type: TranscribeEvent.DISCARD_RECORDING }
   | UpdateTimeEvent
   | SetTranscriptionVolumeEvent
+  | SetSyncOffsetEvent
+  | RestoreEvent
   | { type: TranscribeEvent.RESET };
 
 export interface TranscribeContext {
@@ -127,6 +141,7 @@ export interface TranscribeContext {
   isLooping: boolean;
   recordings: Recording[];
   transcriptionVolume: number;
+  syncOffsetMs: number;
   fileName: string;
   errorMessage: string;
 }
@@ -143,6 +158,7 @@ const defaultContext: TranscribeContext = {
   isLooping: false,
   recordings: [],
   transcriptionVolume: 0.2,
+  syncOffsetMs: 0,
   fileName: "",
   errorMessage: "",
 };
@@ -173,6 +189,11 @@ export const transcribeMachine = setup({
       actions: assign({
         transcriptionVolume: ({ event }) =>
           (event as SetTranscriptionVolumeEvent).volume,
+      }),
+    },
+    [TranscribeEvent.SET_SYNC_OFFSET]: {
+      actions: assign({
+        syncOffsetMs: ({ event }) => (event as SetSyncOffsetEvent).offsetMs,
       }),
     },
     [TranscribeEvent.UPDATE_TIME]: {
@@ -273,6 +294,13 @@ export const transcribeMachine = setup({
           actions: assign({
             fileName: ({ event }) => (event as LoadFileEvent).file.name,
             errorMessage: () => "",
+          }),
+        },
+        [TranscribeEvent.RESTORE]: {
+          target: TranscribeState.READY,
+          actions: assign(({ event }) => {
+            const e = event as RestoreEvent;
+            return { ...defaultContext, ...e.context };
           }),
         },
       },

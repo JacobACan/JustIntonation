@@ -10,9 +10,13 @@ import {
 } from "react";
 import { useSelector } from "@xstate/react";
 import { TranscribeMachineContext } from "@/components/providers/transcribeProvider";
-import { TranscribeEvent, TranscribeState } from "@/machines/transcribeProcess";
+import { TranscribeEvent } from "@/machines/transcribeProcess";
 import { WaveformPeak } from "@/types/transcribe";
-import { AudioRecorder, padRecordingToLength } from "@/lib/mediaRecorder";
+import {
+  AudioRecorder,
+  padRecordingToLength,
+  normalizeToReference,
+} from "@/lib/mediaRecorder";
 import { decodeRecordingBlob } from "@/lib/transcribeActors";
 import { drawWaveform, drawTranscriptionCursor } from "@/lib/waveformRenderer";
 import { audioContext as globalAudioContext } from "@/lib/webAudio";
@@ -33,6 +37,8 @@ interface TranscriptionWorkspaceProps {
   onRecordingStop?: () => void;
   /** Ref that the parent can use to trigger stop recording externally */
   stopRecordingRef?: React.MutableRefObject<(() => void) | null>;
+  /** Reference track audio buffer for normalization */
+  referenceBuffer?: AudioBuffer | null;
 }
 
 export default function TranscriptionWorkspace({
@@ -47,6 +53,7 @@ export default function TranscriptionWorkspace({
   onRecordingStart,
   onRecordingStop,
   stopRecordingRef,
+  referenceBuffer,
 }: TranscriptionWorkspaceProps) {
   const service = useContext(TranscribeMachineContext);
 
@@ -57,6 +64,10 @@ export default function TranscriptionWorkspace({
     (state) => state.context.duration,
   );
   const loopRegion = useSelector(service!, (state) => state.context.loopRegion);
+  const syncOffsetMs = useSelector(
+    service!,
+    (state) => state.context.syncOffsetMs,
+  );
 
   // Recording state
   const recorderRef = useRef<AudioRecorder | null>(null);
@@ -183,10 +194,15 @@ export default function TranscriptionWorkspace({
       recording.blob,
       targetDuration,
     );
-    const paddedUrl =
-      paddedBlob === recording.blob
+    // Normalize levels to match the reference track
+    const normalizedBlob =
+      referenceBuffer && loopRegion
+        ? await normalizeToReference(paddedBlob, referenceBuffer, loopRegion)
+        : paddedBlob;
+    const finalUrl =
+      normalizedBlob === recording.blob
         ? recording.objectUrl
-        : URL.createObjectURL(paddedBlob);
+        : URL.createObjectURL(normalizedBlob);
 
     // Auto-save (replaces existing recording for this section)
     setSaveStatus("saving");
@@ -194,8 +210,8 @@ export default function TranscriptionWorkspace({
       type: TranscribeEvent.SAVE_RECORDING,
       recording: {
         id: crypto.randomUUID(),
-        blob: paddedBlob,
-        objectUrl: paddedUrl,
+        blob: normalizedBlob,
+        objectUrl: finalUrl,
         createdAt: Date.now(),
         region: loopRegion,
         duration: targetDuration,
@@ -235,7 +251,7 @@ export default function TranscriptionWorkspace({
 
     const centerY = WAVEFORM_HEIGHT / 2;
     const barWidth = width / livePeaks.length;
-    ctx.fillStyle = "#deb887";
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--waveform-color").trim() || "#deb887";
 
     for (let i = 0; i < livePeaks.length; i++) {
       const peak = livePeaks[i];
@@ -333,7 +349,7 @@ export default function TranscriptionWorkspace({
 
       // Cursor at current position
       const cursorX = Math.min(progress, 1) * width;
-      canvasCtx.strokeStyle = "#fff5e1";
+      canvasCtx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--cursor-color").trim() || "#fff5e1";
       canvasCtx.lineWidth = 2;
       canvasCtx.beginPath();
       canvasCtx.moveTo(cursorX, 0);
@@ -403,7 +419,13 @@ export default function TranscriptionWorkspace({
   }, []);
 
   // T key to start/stop transcribing
+  // Short press = toggle, hold = keydown starts / keyup stops
+  const tKeyDownTimeRef = useRef<number | null>(null);
+  const tKeyHeldRef = useRef(false);
+
   useEffect(() => {
+    const HOLD_THRESHOLD = 300; // ms — shorter = tap toggle, longer = hold
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
         e.target instanceof HTMLInputElement ||
@@ -411,34 +433,58 @@ export default function TranscriptionWorkspace({
       ) {
         return;
       }
-      if (e.code === "KeyT" && loopRegion) {
-        e.preventDefault();
-        if (isRecording) {
-          stopRecording();
-        } else {
-          startRecording();
-        }
+      if (e.code !== "KeyT" || e.repeat || !loopRegion) return;
+      e.preventDefault();
+
+      if (isRecording) {
+        // Second tap stops recording
+        stopRecording();
+        tKeyDownTimeRef.current = null;
+      } else {
+        // Start recording, track time to distinguish tap vs hold
+        tKeyDownTimeRef.current = Date.now();
+        startRecording();
       }
     };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code !== "KeyT" || tKeyDownTimeRef.current === null) return;
+
+      const held = Date.now() - tKeyDownTimeRef.current;
+      tKeyDownTimeRef.current = null;
+
+      // If held long enough, stop on release
+      if (held >= HOLD_THRESHOLD && isRecording) {
+        stopRecording();
+      }
+      // If short tap, recording keeps running until next tap
+    };
+
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
   }, [isRecording, loopRegion, startRecording, stopRecording]);
 
   const sectionLabel = loopRegion
-    ? getSectionLabel(loopRegion, markers, audioDuration)
-    : "No region selected";
+    ? "Transcription for " + getSectionLabel(loopRegion, markers, audioDuration)
+    : "Transcription";
 
   return (
     <div className="flex w-full max-w-3xl flex-col">
       {/* Controls bar */}
       <div
-        className="flex items-center gap-4 rounded-t-lg border border-b-0 border-[var(--middleground1)]/10 px-4 py-2"
+        className="relative flex items-center gap-4 rounded-t-lg border border-b-0 border-[var(--surface-border)] px-4 py-2"
       >
         {/* Play/pause button for transcription (same as Space — plays both tracks) */}
         <button
-          onClick={onTogglePlayback}
+          onPointerDown={onTransHoldStart}
+          onPointerUp={onTransHoldEnd}
+          onPointerLeave={onTransHoldEnd}
           disabled={!currentRecording || !loopRegion}
-          className="flex h-6 w-6 shrink-0 items-center justify-center rounded border border-[var(--middleground1)]/30 text-[var(--middleground1)] transition-colors hover:cursor-pointer hover:border-[var(--middleground1)] active:bg-[var(--middleground1)]/10 disabled:opacity-30 disabled:hover:cursor-default"
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded border border-[var(--surface-border-medium)] text-[var(--middleground1)] transition-colors hover:cursor-pointer hover:border-[var(--middleground1)] active:bg-[var(--surface-border)] disabled:opacity-30 disabled:hover:cursor-default"
           aria-label={isActive ? "Pause" : "Play"}
           title="Press down to play (2)"
         >
@@ -454,7 +500,7 @@ export default function TranscriptionWorkspace({
           )}
         </button>
         <h3 className="text-xs font-bold text-[var(--foreground2)]">
-          Transcription for {sectionLabel}
+          {sectionLabel}
         </h3>
 
         {saveStatus === "saved" && !isRecording && (
@@ -480,17 +526,89 @@ export default function TranscriptionWorkspace({
         )}
 
         <div className="flex-1" />
+
+        {/* Sync offset handle — centered on the bottom edge of this bar */}
+        <div
+          className="pointer-events-none absolute right-0 bottom-0 left-0 z-10 translate-y-1/2"
+        >
+          {/* Tick marks every 100ms across ±2000ms range */}
+          {Array.from({ length: 41 }, (_, i) => {
+            const ms = (i - 20) * 100;
+            const pct = ((ms + 2000) / 4000) * 100;
+            const isCenter = ms === 0;
+            const isMajor = ms % 500 === 0;
+            return (
+              <div
+                key={ms}
+                className="absolute -translate-x-1/2 -translate-y-1/2"
+                style={{ left: `${pct}%` }}
+              >
+                <div
+                  className={`w-px ${isCenter ? "h-3 bg-[var(--surface-border-medium)]" : isMajor ? "h-2 bg-[var(--surface-border)]" : "h-1.5 bg-[var(--surface-border)]"}`}
+                />
+              </div>
+            );
+          })}
+          {/* Draggable handle */}
+          <div
+            className="bg-background1 pointer-events-auto absolute top-0 -translate-y-1/2 cursor-grab rounded-full border border-[var(--surface-border-medium)] transition-colors hover:border-[var(--surface-border-medium)] active:cursor-grabbing"
+            style={{
+              left: `${((syncOffsetMs + 2000) / 4000) * 100}%`,
+              transform: "translateX(-50%)",
+              width: "28px",
+              height: "10px",
+            }}
+            title="Drag to adjust sync offset — double-click to reset"
+            onDoubleClick={() => {
+              service?.send({
+                type: TranscribeEvent.SET_SYNC_OFFSET,
+                offsetMs: 0,
+              });
+            }}
+            onPointerDown={(e) => {
+              e.preventDefault();
+              const target = e.currentTarget;
+              const track = target.parentElement!;
+              target.setPointerCapture(e.pointerId);
+
+              const SNAP_THRESHOLD = 50;
+
+              const onMove = (ev: PointerEvent) => {
+                const rect = track.getBoundingClientRect();
+                const x = Math.max(
+                  0,
+                  Math.min(ev.clientX - rect.left, rect.width),
+                );
+                const ratio = x / rect.width;
+                let ms = Math.round(ratio * 4000 - 2000);
+                ms = Math.max(-2000, Math.min(2000, ms));
+                // Snap to 0 when close to center
+                if (Math.abs(ms) <= 50) ms = 0;
+                service?.send({
+                  type: TranscribeEvent.SET_SYNC_OFFSET,
+                  offsetMs: ms,
+                });
+              };
+              const onUp = () => {
+                target.removeEventListener("pointermove", onMove);
+                target.removeEventListener("pointerup", onUp);
+              };
+              target.addEventListener("pointermove", onMove);
+              target.addEventListener("pointerup", onUp);
+            }}
+          />
+        </div>
       </div>
 
       {/* Waveform panel */}
       <div
         ref={containerRef}
-        className="relative rounded-b-lg border border-[var(--middleground1)]/10"
+        className="relative overflow-hidden rounded-b-lg border border-[var(--surface-border)]"
         style={{ height: `${WAVEFORM_HEIGHT}px` }}
       >
         {!loopRegion && !isRecording && (
           <div
-            className="flex items-center justify-center text-xs text-[var(--middleground1)]/30"
+            className="flex items-center justify-center text-xs text-[var(--text-tertiary)]"
             style={{ height: `${WAVEFORM_HEIGHT}px` }}
           >
             Select a region to start transcribing
@@ -505,25 +623,36 @@ export default function TranscriptionWorkspace({
           />
         )}
 
-        {!isRecording && !hasLivePeaks && loopRegion && peaks && (
-          <>
-            <canvas
-              ref={waveformCanvasRef}
-              className="absolute top-0 left-0 w-full"
-              style={{ height: `${WAVEFORM_HEIGHT}px` }}
-            />
-            <canvas
-              ref={cursorCanvasRef}
-              className="absolute top-0 left-0 w-full cursor-pointer"
-              style={{ height: `${WAVEFORM_HEIGHT}px` }}
-              onClick={handleWaveformClick}
-            />
-          </>
-        )}
+        {!isRecording && !hasLivePeaks && loopRegion && peaks && (() => {
+          // Compute pixel shift for sync offset visualization
+          const containerWidth = containerRef.current?.clientWidth ?? 0;
+          const shiftPx =
+            decodedDuration > 0
+              ? (syncOffsetMs / 1000 / decodedDuration) * containerWidth
+              : 0;
+          return (
+            <>
+              <canvas
+                ref={waveformCanvasRef}
+                className="absolute top-0 left-0 w-full transition-transform duration-150"
+                style={{
+                  height: `${WAVEFORM_HEIGHT}px`,
+                  transform: `translateX(${shiftPx}px)`,
+                }}
+              />
+              <canvas
+                ref={cursorCanvasRef}
+                className="absolute top-0 left-0 w-full cursor-pointer"
+                style={{ height: `${WAVEFORM_HEIGHT}px` }}
+                onClick={handleWaveformClick}
+              />
+            </>
+          );
+        })()}
 
         {!isRecording && !hasLivePeaks && loopRegion && !peaks && (
           <div
-            className="flex items-center justify-center text-xs text-[var(--middleground1)]/30"
+            className="flex items-center justify-center text-xs text-[var(--text-tertiary)]"
             style={{ height: `${WAVEFORM_HEIGHT}px` }}
           >
             Press T to transcribe this section

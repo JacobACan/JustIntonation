@@ -37,6 +37,69 @@ export async function padRecordingToLength(
   return new Blob([wav], { type: "audio/wav" });
 }
 
+/**
+ * Normalize a recording blob so its loudness matches a reference AudioBuffer
+ * within a given region. Uses RMS matching.
+ */
+export async function normalizeToReference(
+  blob: Blob,
+  referenceBuffer: AudioBuffer,
+  region: Region,
+): Promise<Blob> {
+  const arrayBuffer = await blob.arrayBuffer();
+  const offlineCtx = new OfflineAudioContext(1, 1, 48000);
+  let decoded: AudioBuffer;
+  try {
+    decoded = await offlineCtx.decodeAudioData(arrayBuffer);
+  } catch {
+    return blob;
+  }
+
+  // Compute RMS of the reference in the region
+  const refData = referenceBuffer.getChannelData(0);
+  const refStart = Math.floor(region.start * referenceBuffer.sampleRate);
+  const refEnd = Math.min(
+    Math.floor(region.end * referenceBuffer.sampleRate),
+    refData.length,
+  );
+  let refSum = 0;
+  for (let i = refStart; i < refEnd; i++) {
+    refSum += refData[i] * refData[i];
+  }
+  const refRms = Math.sqrt(refSum / Math.max(1, refEnd - refStart));
+
+  // Compute RMS of the recording
+  const recData = decoded.getChannelData(0);
+  let recSum = 0;
+  for (let i = 0; i < recData.length; i++) {
+    recSum += recData[i] * recData[i];
+  }
+  const recRms = Math.sqrt(recSum / Math.max(1, recData.length));
+
+  // Skip if recording is silent or gain is negligible
+  if (recRms < 0.0001 || refRms < 0.0001) return blob;
+  const gain = refRms / recRms;
+  if (Math.abs(gain - 1) < 0.05) return blob; // already close enough
+
+  // Apply gain to all channels
+  const channels = decoded.numberOfChannels;
+  const normalized = new AudioBuffer({
+    length: decoded.length,
+    numberOfChannels: channels,
+    sampleRate: decoded.sampleRate,
+  });
+  for (let ch = 0; ch < channels; ch++) {
+    const src = decoded.getChannelData(ch);
+    const dst = normalized.getChannelData(ch);
+    for (let i = 0; i < src.length; i++) {
+      dst[i] = Math.max(-1, Math.min(1, src[i] * gain));
+    }
+  }
+
+  const wav = audioBufferToWav(normalized);
+  return new Blob([wav], { type: "audio/wav" });
+}
+
 function audioBufferToWav(buffer: AudioBuffer): ArrayBuffer {
   const numChannels = buffer.numberOfChannels;
   const sampleRate = buffer.sampleRate;
