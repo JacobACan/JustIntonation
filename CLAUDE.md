@@ -27,11 +27,13 @@ No test framework or linter is configured.
 
 ### State Machines (XState)
 
-The app is driven by two XState state machines, not hooks-first patterns:
+The app is driven by XState state machines, not hooks-first patterns:
 
 1. **musicLearner** (`machines/musicLearningProcess.ts`) — Main learning loop: IDLE → SELECTING_LEARNING_APPROACH → PLAYING_MUSIC_CONTEXT → PLAYING_NEW_QUESTION → GUESSING → REVIEWING → VIEWING_RESULTS. Actor functions live in `lib/learningProcessActors.tsx`.
 
 2. **scalesQuizMachine** (`machines/scalesQuizProcess.ts`) — Diatonic scale conceptualization quiz with similar state flow. Actor functions in `lib/scalesQuizActors.ts`.
+
+3. **transcribeMachine** (`machines/transcribeProcess.ts`) — Audio transcription workflow: IDLE → LOADING → READY (with parallel recording substates). Actors in `lib/transcribeActors.ts`.
 
 ### Provider Pattern
 
@@ -40,10 +42,21 @@ Each feature uses React Context wrapping an XState actor ref:
 - `components/providers/scalesQuizProvider.tsx` — ScalesQuizMachineContext
 - `components/providers/settingsProvider.tsx` — Settings with localStorage persistence
 - `components/providers/countdownProvider.tsx` — Timer state
+- `components/providers/transcribeProvider.tsx` — TranscribeMachineContext
 
 ### Audio System
 
 `lib/webAudio.tsx` wraps Web Audio API with global nodes (audioContext, masterGainNode, learningStateGainNode, cadenceGainNode). Audio samples are OGG files in `public/notes/` and `public/cadences/`. Three playback methods: playNote, playChord, playMelody.
+
+### Transcribe System
+
+The transcribe feature (`/transcribe`) lets users upload audio files, visualize waveforms, and record themselves playing along:
+- `lib/transcribeAudio.ts` — `TranscribePlaybackEngine` wraps HTML Audio for pitch-preserving variable-speed playback with loop regions
+- `lib/mediaRecorder.ts` — `AudioRecorder` captures user audio via MediaRecorder API (Opus/WebM, 48kHz, no AGC/echo cancellation)
+- `lib/waveformRenderer.ts` — Canvas rendering utilities for waveform, overlay, cursor, and markers
+- `lib/transcriptionGrouping.ts` — Groups recordings by marker-defined sections
+- `types/transcribe.ts` — Shared types (Marker, Region, Recording, WaveformPeak, SectionGroup)
+- The page uses imperative playback management (refs) rather than state for real-time audio sync
 
 ### MIDI Input
 
@@ -68,6 +81,7 @@ MIDI event handlers in `components/learn/midiInputUserEvents/` (notes.tsx, melod
 - `/` — Home/welcome page
 - `/learn` — Main ear training mode
 - `/conceptualize/scales` — Diatonic scale visualization and quiz
+- `/transcribe` — Audio transcription with waveform visualization and recording
 
 ## Conventions
 
@@ -78,3 +92,4 @@ MIDI event handlers in `components/learn/midiInputUserEvents/` (notes.tsx, melod
 - `settingDescriptions.tsx` and `constants/` are the single source of truth for domain content
 - CSS custom properties for theming defined in `app/globals.css` (--background, --foreground, --middleground1, piano key colors)
 - Font: M_PLUS_1_Code (Google Fonts)
+- All routes are client-rendered (`"use client"`)

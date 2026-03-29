@@ -44,6 +44,7 @@ import DegreeMasteryProgressPanel from "./degreeMasteryProgressPanel";
 import ShapeSelector from "./shapeSelector";
 import ScalesMidiSelector from "./scalesMidiSelector";
 import PlayIcon from "@/components/icon/playIcon";
+import BackIcon from "@/components/icon/backIcon";
 import { SettingsIcon } from "@/components/icon/settingsIcon";
 import clsx from "clsx";
 
@@ -66,6 +67,13 @@ export default function ScalesQuizSettings() {
 
   return (
     <div className="overflow-hidden">
+      <button
+        className="absolute top-5 left-5 z-20 transition-transform hover:scale-110 hover:cursor-pointer active:scale-95"
+        onClick={() => (window.location.href = "/")}
+        aria-label="Back to home"
+      >
+        <BackIcon height={30} width={30} />
+      </button>
       <button
         className="absolute top-5 right-5 z-20"
         onClick={() => setExtraSettings(!showExtraSettings)}

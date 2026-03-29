@@ -23,6 +23,9 @@ importers:
       '@react-midi/hooks':
         specifier: ^2.0.1
         version: 2.0.1(react@19.1.0)
+      '@soundtouchjs/audio-worklet':
+        specifier: ^1.0.8
+        version: 1.0.8
       '@xstate/react':
         specifier: ^6.0.0
         version: 6.0.0(@types/react@19.1.12)(react@19.1.0)(xstate@5.23.0)
@@ -511,6 +514,12 @@ packages:
     resolution: {integrity: sha512-YRrIiKhV5qegCbqJqM1Yby/sLgUa9vg/RkRNILpLXg2TN7nXJ/J0CipXXdNF9TwD8WmFqIIGr6LhiHh8gxfn8Q==}
     peerDependencies:
       react: ^18.2.0
+
+  '@soundtouchjs/audio-worklet@1.0.8':
+    resolution: {integrity: sha512-sXB8ppUOM8OU/lZF9VxYjepEahfauZCQ6JMTQwj4se5snOCuD5lq1VuIw34zxv960JjkLqovZlt1hnBzOKglAw==}
+
+  '@soundtouchjs/core@1.0.8':
+    resolution: {integrity: sha512-HLNRlaS5Uutv1aqPftFS0gYxaWGB3nuYQdP/oqZnP/XMygSbIHip4wnKXyX0rUxaUB6QliV4TnGha5qXPyZR7g==}
 
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
@@ -1296,6 +1305,12 @@ snapshots:
     dependencies:
       react: 19.1.0
       uniqid: 5.4.0
+
+  '@soundtouchjs/audio-worklet@1.0.8':
+    dependencies:
+      '@soundtouchjs/core': 1.0.8
+
+  '@soundtouchjs/core@1.0.8': {}
 
   '@swc/helpers@0.5.15':
     dependencies:
