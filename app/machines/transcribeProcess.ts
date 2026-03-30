@@ -6,6 +6,7 @@ import { decodeAudioFile, computeWaveformPeaks } from "@/lib/transcribeActors";
 export enum TranscribeEvent {
   LOAD_FILE = "LOAD_FILE",
   SET_SPEED = "SET_SPEED",
+  SET_TRANSPOSE = "SET_TRANSPOSE",
   SEEK = "SEEK",
   DROP_MARKER = "DROP_MARKER",
   DELETE_MARKER = "DELETE_MARKER",
@@ -44,6 +45,11 @@ type LoadFileEvent = {
 type SetSpeedEvent = {
   type: TranscribeEvent.SET_SPEED;
   rate: number;
+};
+
+type SetTransposeEvent = {
+  type: TranscribeEvent.SET_TRANSPOSE;
+  semitones: number;
 };
 
 type SeekEvent = {
@@ -111,6 +117,7 @@ type RestoreEvent = {
 export type TranscribeEvents =
   | LoadFileEvent
   | SetSpeedEvent
+  | SetTransposeEvent
   | SeekEvent
   | DropMarkerEvent
   | DeleteMarkerEvent
@@ -140,6 +147,7 @@ export interface TranscribeContext {
   loopRegion: Region | null;
   isLooping: boolean;
   recordings: Recording[];
+  transpose: number;
   transcriptionVolume: number;
   syncOffsetMs: number;
   fileName: string;
@@ -157,6 +165,7 @@ const defaultContext: TranscribeContext = {
   loopRegion: null,
   isLooping: false,
   recordings: [],
+  transpose: 0,
   transcriptionVolume: 0.2,
   syncOffsetMs: 0,
   fileName: "",
@@ -183,6 +192,11 @@ export const transcribeMachine = setup({
     [TranscribeEvent.SET_SPEED]: {
       actions: assign({
         playbackRate: ({ event }) => (event as SetSpeedEvent).rate,
+      }),
+    },
+    [TranscribeEvent.SET_TRANSPOSE]: {
+      actions: assign({
+        transpose: ({ event }) => (event as SetTransposeEvent).semitones,
       }),
     },
     [TranscribeEvent.SET_TRANSCRIPTION_VOLUME]: {

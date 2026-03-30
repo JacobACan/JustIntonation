@@ -26,6 +26,7 @@ export default function RecordingControls() {
     }),
   );
   const loopRegion = useSelector(service!, (state) => state.context.loopRegion);
+  const transpose = useSelector(service!, (state) => state.context.transpose);
 
   const pendingRecordingRef = useRef<{
     objectUrl: string;
@@ -73,6 +74,7 @@ export default function RecordingControls() {
         createdAt: Date.now(),
         region: loopRegion,
         duration: pendingRecordingRef.current.duration,
+        recordedTranspose: transpose,
       },
     });
 

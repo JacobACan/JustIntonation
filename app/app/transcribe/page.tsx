@@ -185,6 +185,7 @@ export default function TranscribePage() {
     service!,
     (state) => state.context.transcriptionVolume,
   );
+  const transpose = useSelector(service!, (state) => state.context.transpose);
   const syncOffsetMs = useSelector(
     service!,
     (state) => state.context.syncOffsetMs,
@@ -226,6 +227,7 @@ export default function TranscribePage() {
           return;
         }
         engine.setRate(playbackRate);
+        engine.setTranspose(transpose);
         engineRef.current = engine;
         setEngineReady(true);
       });
@@ -243,6 +245,16 @@ export default function TranscribePage() {
   useEffect(() => {
     engineRef.current?.setRate(playbackRate);
   }, [playbackRate]);
+
+  // Sync transpose to engine (ref track gets global transpose,
+  // trans track gets the delta: current - recordedTranspose)
+  useEffect(() => {
+    const engine = engineRef.current;
+    if (!engine) return;
+    engine.setTranspose(transpose);
+    const recordedT = currentRecording?.recordedTranspose ?? 0;
+    engine.setTransTranspose(transpose - recordedT);
+  }, [transpose, currentRecording]);
 
   // Load transcription audio buffer into engine when recording changes
   useEffect(() => {
@@ -265,6 +277,12 @@ export default function TranscribePage() {
         if (cancelled || !engineRef.current) return;
         engineRef.current.loadTranscription(result.audioBuffer);
         currentRecordingId.current = currentRecording.id;
+        // Set trans transpose delta for this recording
+        const snapshot = service!.getSnapshot();
+        const globalT = snapshot.context.transpose;
+        engineRef.current.setTransTranspose(
+          globalT - (currentRecording.recordedTranspose ?? 0),
+        );
 
         // If playing with trans active, start the new transcription in sync
         if (isPlayingRef.current && transActiveRef.current) {
@@ -703,12 +721,33 @@ export default function TranscribePage() {
         service.send({ type: TranscribeEvent.SET_SPEED, rate: 1.0 });
       }
 
-      // Shift + Left/Right arrow: move to previous/next marker section
+      // ArrowUp/ArrowDown or W/S (no modifiers): transpose up/down by 1 semitone
+      if (
+        (e.code === "ArrowUp" ||
+          e.code === "ArrowDown" ||
+          e.code === "KeyW" ||
+          e.code === "KeyS") &&
+        !e.shiftKey &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        isReady
+      ) {
+        e.preventDefault();
+        const delta =
+          e.code === "ArrowUp" || e.code === "KeyW" ? 1 : -1;
+        const next = Math.max(-12, Math.min(12, transpose + delta));
+        service.send({ type: TranscribeEvent.SET_TRANSPOSE, semitones: next });
+      }
+
+      // Shift + Left/Right arrow or Shift + A/D: move to previous/next marker section
       if (
         e.shiftKey &&
         !e.ctrlKey &&
         !e.metaKey &&
-        (e.code === "ArrowLeft" || e.code === "ArrowRight") &&
+        (e.code === "ArrowLeft" ||
+          e.code === "ArrowRight" ||
+          e.code === "KeyA" ||
+          e.code === "KeyD") &&
         isReady &&
         markers.length > 0
       ) {
@@ -728,7 +767,7 @@ export default function TranscribePage() {
         }
 
         const nextIdx =
-          e.code === "ArrowRight"
+          e.code === "ArrowRight" || e.code === "KeyD"
             ? Math.min(currentIdx + 1, boundaries.length - 2)
             : Math.max(currentIdx - 1, 0);
 
@@ -747,8 +786,12 @@ export default function TranscribePage() {
         });
       }
 
-      // Ctrl/Cmd + Left/Right arrow: nudge playhead
-      if ((e.ctrlKey || e.metaKey) && e.code === "ArrowLeft" && isReady) {
+      // Ctrl/Cmd + Left/Right arrow or Ctrl/Cmd + A/D: nudge playhead
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        (e.code === "ArrowLeft" || e.code === "KeyA") &&
+        isReady
+      ) {
         e.preventDefault();
         const visibleDuration = duration / zoom;
         const nudge = visibleDuration * NUDGE_FRACTION;
@@ -766,7 +809,11 @@ export default function TranscribePage() {
         service.send({ type: TranscribeEvent.SEEK, time: newTime });
       }
 
-      if ((e.ctrlKey || e.metaKey) && e.code === "ArrowRight" && isReady) {
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        (e.code === "ArrowRight" || e.code === "KeyD") &&
+        isReady
+      ) {
         e.preventDefault();
         const visibleDuration = duration / zoom;
         const nudge = visibleDuration * NUDGE_FRACTION;
@@ -827,6 +874,7 @@ export default function TranscribePage() {
     loopRegion,
     markers,
     playbackRate,
+    transpose,
     startPlayback,
     stopPlayback,
     seekBoth,
@@ -1217,6 +1265,12 @@ export default function TranscribePage() {
         <PlaybackControls
           isPlaying={isPlayingState}
           onTogglePlayback={handleTogglePlayback}
+          onTransposeChange={(semitones: number) =>
+            service?.send({
+              type: TranscribeEvent.SET_TRANSPOSE,
+              semitones,
+            })
+          }
         />
         <TranscriptionWorkspace
           referenceRegionTime={referenceRegionTime}

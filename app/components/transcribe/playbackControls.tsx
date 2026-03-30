@@ -15,9 +15,11 @@ function formatTime(seconds: number): string {
 export default function PlaybackControls({
   isPlaying,
   onTogglePlayback,
+  onTransposeChange,
 }: {
   isPlaying: boolean;
   onTogglePlayback: () => void;
+  onTransposeChange: (semitones: number) => void;
 }) {
   const service = useContext(TranscribeMachineContext);
   const [open, setOpen] = useState(false);
@@ -32,6 +34,7 @@ export default function PlaybackControls({
     service!,
     (state) => state.context.playbackRate,
   );
+  const transpose = useSelector(service!, (state) => state.context.transpose);
 
   const setSpeed = useCallback(
     (rate: number) => {
@@ -96,6 +99,47 @@ export default function PlaybackControls({
           <span className="w-16 text-right text-xs text-[var(--text-secondary)]">
             {formatTime(duration)}
           </span>
+
+          {/* Transpose control */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() =>
+                onTransposeChange(Math.max(-12, transpose - 1))
+              }
+              disabled={transpose <= -12}
+              className="flex h-5 w-5 items-center justify-center rounded text-[var(--text-secondary)] transition-colors hover:cursor-pointer hover:text-[var(--middleground1)] disabled:opacity-30 disabled:hover:cursor-default"
+              aria-label="Transpose down"
+            >
+              <svg width="8" height="5" viewBox="0 0 8 5" fill="currentColor">
+                <polygon points="0,0 8,0 4,5" />
+              </svg>
+            </button>
+            <button
+              onClick={() => onTransposeChange(0)}
+              className={`min-w-[3.5rem] rounded border px-2 py-1 text-xs transition-colors hover:cursor-pointer ${
+                transpose === 0
+                  ? "border-[var(--surface-border-medium)] text-[var(--middleground1)]"
+                  : "border-[var(--surface-border-medium)] text-[var(--foreground2)]"
+              }`}
+              title="Click to reset transpose"
+            >
+              {transpose === 0
+                ? "0 st"
+                : `${transpose > 0 ? "+" : ""}${transpose} st`}
+            </button>
+            <button
+              onClick={() =>
+                onTransposeChange(Math.min(12, transpose + 1))
+              }
+              disabled={transpose >= 12}
+              className="flex h-5 w-5 items-center justify-center rounded text-[var(--text-secondary)] transition-colors hover:cursor-pointer hover:text-[var(--middleground1)] disabled:opacity-30 disabled:hover:cursor-default"
+              aria-label="Transpose up"
+            >
+              <svg width="8" height="5" viewBox="0 0 8 5" fill="currentColor">
+                <polygon points="0,5 8,5 4,0" />
+              </svg>
+            </button>
+          </div>
 
           {/* Speed dropdown (drops up) */}
           <div

@@ -212,6 +212,7 @@ export class AudioRecorder {
           createdAt: Date.now(),
           region,
           duration,
+          recordedTranspose: 0,
         });
       };
 

@@ -16,6 +16,7 @@ export interface Recording {
   createdAt: number;
   region: Region | null; // section that was looping during recording
   duration: number; // seconds
+  recordedTranspose: number; // global transpose (semitones) when this was recorded
 }
 
 export interface WaveformPeak {
