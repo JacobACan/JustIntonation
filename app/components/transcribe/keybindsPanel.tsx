@@ -12,19 +12,21 @@ const KEYBIND_GROUPS = [
     ],
   },
   {
-    label: "Speed",
+    label: "Speed & Pitch",
     binds: [
       { keys: "J", description: "Slow down playback" },
       { keys: "L", description: "Speed up playback" },
+      { keys: "↑ / W", description: "Transpose up a half step" },
+      { keys: "↓ / S", description: "Transpose down a half step" },
     ],
   },
   {
     label: "Navigation",
     binds: [
-      { keys: "Shift + ←", description: "Previous section" },
-      { keys: "Shift + →", description: "Next section" },
-      { keys: "Ctrl + ←", description: "Nudge playhead back" },
-      { keys: "Ctrl + →", description: "Nudge playhead forward" },
+      { keys: "Shift + ← / A", description: "Previous section" },
+      { keys: "Shift + → / D", description: "Next section" },
+      { keys: "Ctrl + ← / A", description: "Nudge playhead back" },
+      { keys: "Ctrl + → / D", description: "Nudge playhead forward" },
     ],
   },
   {

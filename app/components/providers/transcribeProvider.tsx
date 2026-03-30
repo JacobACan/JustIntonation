@@ -113,6 +113,7 @@ export default function TranscribeProvider({
             isLooping: settings.isLooping,
             recordings,
             playbackRate: settings.playbackRate,
+            transpose: settings.transpose ?? 0,
             transcriptionVolume: settings.transcriptionVolume,
             syncOffsetMs: settings.syncOffsetMs,
             currentTime: settings.currentTime ?? 0,
@@ -135,6 +136,7 @@ export default function TranscribeProvider({
 
     saveTrackSettings(trackId, {
       playbackRate: ctx.playbackRate,
+      transpose: ctx.transpose,
       transcriptionVolume: ctx.transcriptionVolume,
       syncOffsetMs: ctx.syncOffsetMs,
       markers: ctx.markers,
@@ -149,6 +151,7 @@ export default function TranscribeProvider({
         createdAt: r.createdAt,
         region: r.region,
         duration: r.duration,
+        recordedTranspose: r.recordedTranspose ?? 0,
       })),
     });
 

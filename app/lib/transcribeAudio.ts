@@ -36,6 +36,8 @@ export class DualTrackAudioEngine {
   private ref: TrackState;
   private trans: TrackState;
   private _playbackRate: number = 1;
+  private _transposeSemitones: number = 0;
+  private _transTransposeSemitones: number = 0;
   private _disposed: boolean = false;
 
   private constructor(
@@ -184,28 +186,47 @@ export class DualTrackAudioEngine {
 
   setRate(rate: number): void {
     this._playbackRate = rate;
-    const pitchCorrection = 1 / rate;
+    this.applyPitch();
 
-    // Update ref
-    this.ref.soundTouch.pitch.value = pitchCorrection;
-    if (this.ref.source) {
-      // Seamlessly update: record current position, recreate source at new rate
+    // Seamlessly update playing sources at new rate
+    if (this.ref.source && this.ref.playing) {
       const currentTime = this.getTrackTime(this.ref);
-      if (this.ref.playing) {
-        this.stopRefSource();
-        this.startSource(this.ref, currentTime);
-      }
+      this.stopRefSource();
+      this.startSource(this.ref, currentTime);
     }
 
-    // Update trans
-    this.trans.soundTouch.pitch.value = pitchCorrection;
-    if (this.trans.source) {
+    if (this.trans.source && this.trans.playing) {
       const currentTime = this.getTrackTime(this.trans);
-      if (this.trans.playing) {
-        this.stopTransSource();
-        this.startSource(this.trans, currentTime);
-      }
+      this.stopTransSource();
+      this.startSource(this.trans, currentTime);
     }
+  }
+
+  setTranspose(semitones: number): void {
+    this._transposeSemitones = semitones;
+    this.applyPitch();
+  }
+
+  get transpose(): number {
+    return this._transposeSemitones;
+  }
+
+  /**
+   * Set the transpose offset for the transcription track independently.
+   * This is the delta: currentTranspose - recordedTranspose.
+   */
+  setTransTranspose(semitones: number): void {
+    this._transTransposeSemitones = semitones;
+    this.applyPitch();
+  }
+
+  /** Recompute SoundTouch pitch per track: rate correction * transpose shift */
+  private applyPitch(): void {
+    const pitchCorrection = 1 / this._playbackRate;
+    const refShift = Math.pow(2, this._transposeSemitones / 12);
+    this.ref.soundTouch.pitch.value = pitchCorrection * refShift;
+    const transShift = Math.pow(2, this._transTransposeSemitones / 12);
+    this.trans.soundTouch.pitch.value = pitchCorrection * transShift;
   }
 
   get playbackRate(): number {

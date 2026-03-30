@@ -64,6 +64,7 @@ export default function TranscriptionWorkspace({
     (state) => state.context.duration,
   );
   const loopRegion = useSelector(service!, (state) => state.context.loopRegion);
+  const transpose = useSelector(service!, (state) => state.context.transpose);
   const syncOffsetMs = useSelector(
     service!,
     (state) => state.context.syncOffsetMs,
@@ -215,6 +216,7 @@ export default function TranscriptionWorkspace({
         createdAt: Date.now(),
         region: loopRegion,
         duration: targetDuration,
+        recordedTranspose: transpose,
       },
     });
     setSaveStatus("saved");

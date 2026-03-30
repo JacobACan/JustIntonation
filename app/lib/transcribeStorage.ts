@@ -96,6 +96,7 @@ export function saveTrackList(list: TrackList): void {
 
 export interface TrackSettings {
   playbackRate: number;
+  transpose: number;
   transcriptionVolume: number;
   syncOffsetMs: number;
   markers: Marker[];
@@ -110,6 +111,7 @@ export interface TrackSettings {
     createdAt: number;
     region: Region | null;
     duration: number;
+    recordedTranspose: number;
   }>;
 }
 
@@ -195,6 +197,7 @@ export async function saveRecording(recording: Recording): Promise<void> {
     createdAt: recording.createdAt,
     region: recording.region,
     duration: recording.duration,
+    recordedTranspose: recording.recordedTranspose ?? 0,
   });
 }
 
@@ -206,6 +209,7 @@ export async function loadRecording(id: string): Promise<Recording | null> {
     createdAt: number;
     region: Region | null;
     duration: number;
+    recordedTranspose?: number;
   }>(RECORDINGS_STORE, id);
   if (!data) return null;
   const blob = new Blob([data.buffer], { type: data.mimeType });
@@ -216,6 +220,7 @@ export async function loadRecording(id: string): Promise<Recording | null> {
     createdAt: data.createdAt,
     region: data.region,
     duration: data.duration,
+    recordedTranspose: data.recordedTranspose ?? 0,
   };
 }
 
@@ -293,6 +298,7 @@ export function migrateIfNeeded(): void {
     const id = crypto.randomUUID();
     saveTrackSettings(id, {
       playbackRate: old.playbackRate ?? 1,
+      transpose: old.transpose ?? 0,
       transcriptionVolume: old.transcriptionVolume ?? 0.2,
       syncOffsetMs: old.syncOffsetMs ?? 0,
       markers: old.markers ?? [],
